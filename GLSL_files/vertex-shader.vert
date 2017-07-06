@@ -1,6 +1,6 @@
-#version 330
+#version 120
 
-in vec3 position;
+attribute vec3 position;
 
 void main() {
 	gl_Position.xyz = position;

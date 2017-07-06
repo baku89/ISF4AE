@@ -21,6 +21,7 @@ namespace {
 	GLuint attribPositionLocation = 0;
 	GLuint uniformResolutionLocation = 0;
 	GLuint uniformTimeLocation = 0;
+	GLuint uniformMouseLocation = 0;
 	
 	CGLContextObj		renderContext = 0;
 	NSOpenGLContext		*context = 0;
@@ -35,6 +36,7 @@ namespace {
 		attribPositionLocation		= glGetAttribLocation(program, "position");
 		uniformResolutionLocation	= glGetUniformLocation(program, "u_resolution");
 		uniformTimeLocation			= glGetUniformLocation(program, "u_time");
+		uniformMouseLocation		= glGetUniformLocation(program, "u_mouse");
 	}
 	
 	void CreateQuad(u_int16 w, u_int16 h) {
@@ -75,7 +77,7 @@ namespace {
 	}
 	
 	
-	void RenderGL(GLfloat width, GLfloat height, GLfloat time) {
+	void RenderGL(GLfloat width, GLfloat height, GLfloat time, A_FloatPoint mouse) {
 		
 		glViewport(0, 0, width, height);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -85,6 +87,7 @@ namespace {
 		
 		glUniform2f(uniformResolutionLocation, width, height);
 		glUniform1f(uniformTimeLocation, time);
+		glUniform2f(uniformMouseLocation, mouse.x, mouse.y);
 
 		glBindVertexArray(vao);
 		RenderQuad();
@@ -179,7 +182,7 @@ PopDialog (
 		std::cout << "path:" << path << std::endl;
 		InitProgram(path);
 	} else {
-		std::cout << "Not Changed" << std::endl;
+		std::cout << "path: Not Changed" << std::endl;
 	}
 	
 	out_data->out_flags |= PF_OutFlag_SEND_DO_DIALOG;
@@ -314,15 +317,11 @@ Render (
 	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
 	FilterInfo			info;
-	PF_EffectWorld		*inputP		=	&params[FILTER_INPUT]->u.ld;
 	
 	AEFX_CLR_STRUCT(info);
 	
-	
-	info.mouseX = ((long)inputP->width << 15) - params[FILTER_MOUSE]->u.td.x_value;
-	info.mouseY = ((long)inputP->height << 15) - params[FILTER_MOUSE]->u.td.y_value;
-	
-	std::cout << info.mouseX << "\t" << info.mouseY << std::endl;
+	info.mouse.x = FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value);
+	info.mouse.y = FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value);
 
 	/*	Put interesting code here. */
 	try {
@@ -341,7 +340,7 @@ Render (
 		
 		// RenderGL
 		float time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
-		RenderGL(width, height, time);
+		RenderGL(width, height, time, info.mouse);
 		
 		// DownlodTexture
 		size_t pixSize = sizeof(PF_Pixel8);

@@ -27,6 +27,7 @@ typedef short int			int16;
 #include "AE_EffectCB.h"
 #include "AE_Macros.h"
 #include "Param_Utils.h"
+#include "AE_EffectSuites.h"
 #include "AE_EffectCBSuites.h"
 #include "String_Utils.h"
 #include "AE_GeneralPlug.h"
@@ -67,8 +68,7 @@ enum {
 #endif
 		
 typedef struct FilterInfo {
-	PF_Fixed mouseX;
-	PF_Fixed mouseY;
+	A_FloatPoint mouse;
 } FilterInfo, *FilterInfoP, *FilterInfoH;
 
 DllExport	PF_Err 

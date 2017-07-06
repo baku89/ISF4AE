@@ -74,7 +74,8 @@ namespace AESDK_OpenGL {
 		
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 		aAttribs[++nIndex] = NSOpenGLPFAOpenGLProfile;
-		aAttribs[++nIndex] = NSOpenGLProfileVersion3_2Core;
+		//aAttribs[++nIndex] = NSOpenGLProfileVersion3_2Core;
+		aAttribs[++nIndex] = NSOpenGLProfileVersionLegacy;
 #elif MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
 		aAttribs[++nIndex] = NSOpenGLPFAOpenGLProfile;
 		aAttribs[++nIndex] = NSOpenGLProfileVersion4_1Core;
