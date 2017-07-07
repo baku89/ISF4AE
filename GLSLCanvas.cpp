@@ -11,6 +11,11 @@
 
 namespace {
 	
+	// common GL resources
+	CGLContextObj		renderContext = 0;
+	NSOpenGLContext		*context = 0;
+	std::string			resourcePath;
+	
 	GLuint frameBuffer = 0;
 	GLuint vao = 0;
 	GLuint quad = 0;
@@ -23,9 +28,7 @@ namespace {
 	GLuint uniformTimeLocation = 0;
 	GLuint uniformMouseLocation = 0;
 	
-	CGLContextObj		renderContext = 0;
-	NSOpenGLContext		*context = 0;
-	std::string			resourcePath;
+	
 	
 	
 	void InitProgram(std::string fragmentFilePath) {
@@ -177,10 +180,13 @@ PopDialog (
 	
 	std::string path = AESDK_SystemUtil::openFileDialog(fileTypes);
 	
-	
 	if (!path.empty()) {
 		std::cout << "path:" << path << std::endl;
 		InitProgram(path);
+		
+		FilterSeqData *info = *(FilterSeqData**)out_data->sequence_data;
+		strncpy(info->fragPath, path.c_str(), FRAGPATH_MAX_LEN);
+		
 	} else {
 		std::cout << "path: Not Changed" << std::endl;
 	}
@@ -190,7 +196,8 @@ PopDialog (
 	return err;
 }
 
-static PF_Err 
+//---------------------------------------------------------------------------
+static PF_Err
 GlobalSetup (	
 	PF_InData		*in_data,
 	PF_OutData		*out_data,
@@ -237,7 +244,7 @@ GlobalSetup (
 	return err;
 }
 
-
+//---------------------------------------------------------------------------
 static PF_Err
 GlobalSetdown (
 			   PF_InData		*in_data,
@@ -280,7 +287,8 @@ GlobalSetdown (
 	return err;
 }
 
-static PF_Err 
+//---------------------------------------------------------------------------
+static PF_Err
 ParamsSetup (	
 	PF_InData		*in_data,
 	PF_OutData		*out_data,
@@ -305,8 +313,151 @@ ParamsSetup (
 	return err;
 }
 
+//---------------------------------------------------------------------------
+static PF_Err
+SequenceSetup (
+			   PF_InData		*in_data,
+			   PF_OutData		*out_data,
+			   PF_ParamDef		*params[],
+			   PF_LayerDef		*output )
+{
+	FilterSeqData		*info;
+	
+	if (out_data->sequence_data){
+		PF_DISPOSE_HANDLE(out_data->sequence_data);
+	}
+	out_data->sequence_data = PF_NEW_HANDLE(sizeof(FilterSeqData));
+	if (!out_data->sequence_data) {
+		return PF_Err_INTERNAL_STRUCT_DAMAGED;
+	}
+	
+	// generate base table
+	info = *(FilterSeqData**)out_data->sequence_data;
+	strcpy(info->fragPath, "");
+	
+	
+	std::cout << "SsequenceSetup Called" << std::endl;
+	
+	return PF_Err_NONE;
+}
 
-static PF_Err 
+//---------------------------------------------------------------------------
+static PF_Err
+SequenceSetdown (
+	 PF_InData		*in_data,
+	 PF_OutData		*out_data,
+	 PF_ParamDef	*params[],
+	 PF_LayerDef	*output )
+{
+	
+	std::cout << "SequenceSetdown Called" << std::endl;
+	
+	if (in_data->sequence_data) {
+		PF_DISPOSE_HANDLE(in_data->sequence_data);
+		out_data->sequence_data = NULL;
+	}
+	return PF_Err_NONE;
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
+SequenceFlatten(
+	PF_InData		*in_data,
+	PF_OutData		*out_data)
+{
+	PF_Err err = PF_Err_NONE;
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	
+	std::cout << "SequenceFlatten Called" << std::endl;
+	
+	// Make a flat copy of whatever is in the unflat seq data handed to us.
+	
+	if (in_data->sequence_data) {
+		FilterSeqData* unflatSeqDataP = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
+		
+		if (unflatSeqDataP){
+			PF_Handle flatSeqDataH = suites.HandleSuite1()->host_new_handle(sizeof(FilterSeqData));
+			
+			if (flatSeqDataH){
+				FilterSeqData*	flat_seq_dataP = reinterpret_cast<FilterSeqData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
+				
+				if (flat_seq_dataP){
+					AEFX_CLR_STRUCT(*flat_seq_dataP);
+
+#ifdef AE_OS_WIN
+					strncpy_s(flat_seq_dataP->fragPath, unflatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
+#else
+					strncpy(flat_seq_dataP->fragPath, unflatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
+#endif
+					
+					// In SequenceSetdown we toss out the unflat data
+					//delete unflat_seq_dataP->fragPath;
+					suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
+					
+					out_data->sequence_data = flatSeqDataH;
+					suites.HandleSuite1()->host_unlock_handle(flatSeqDataH);
+				}
+			} else {
+				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+			}
+		}
+	} else {
+		err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+	}
+	return err;
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
+GetFlattenedSequenceData(
+	 PF_InData		*in_data,
+	 PF_OutData		*out_data)
+{
+	PF_Err err = PF_Err_NONE;
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	
+	std::cout << "GetFlattenedSequenceData Called" << std::endl;
+	
+	// Make a flat copy of whatever is in the unflat seq data handed to us.
+	
+	if (in_data->sequence_data){
+		FilterSeqData* unflat_seq_dataP = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
+		
+		if (unflat_seq_dataP){
+			PF_Handle flat_seq_dataH = suites.HandleSuite1()->host_new_handle(sizeof(FilterSeqData));
+			
+			if (flat_seq_dataH){
+				FilterSeqData*	flat_seq_dataP = reinterpret_cast<FilterSeqData*>(suites.HandleSuite1()->host_lock_handle(flat_seq_dataH));
+				
+				if (flat_seq_dataP){
+					AEFX_CLR_STRUCT(*flat_seq_dataP);
+					
+#ifdef AE_OS_WIN
+					strncpy_s(flat_seq_dataP->fragPath, unflat_seq_dataP->fragPath, FRAGPATH_MAX_LEN);
+#else
+					strncpy(flat_seq_dataP->fragPath, unflat_seq_dataP->fragPath, FRAGPATH_MAX_LEN);
+#endif
+					
+					// The whole point of this function is that we don't dispose of the unflat data!
+					// delete [] unflat_seq_dataP->stringP;
+					//suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
+					
+					out_data->sequence_data = flat_seq_dataH;
+					suites.HandleSuite1()->host_unlock_handle(flat_seq_dataH);
+				}
+			} else {
+				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+			}
+		}
+	} else {
+		err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+	}
+	
+	return err;
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
 Render (
 	PF_InData		*in_data,
 	PF_OutData		*out_data,
@@ -316,12 +467,9 @@ Render (
 	PF_Err				err			= PF_Err_NONE;
 	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
-	FilterInfo			info;
+	FilterSeqData *seqData = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
 	
-	AEFX_CLR_STRUCT(info);
-	
-	info.mouse.x = FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value);
-	info.mouse.y = FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value);
+	std::cout << "Render Called: " << seqData->fragPath << std::endl;
 
 	/*	Put interesting code here. */
 	try {
@@ -340,7 +488,11 @@ Render (
 		
 		// RenderGL
 		float time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
-		RenderGL(width, height, time, info.mouse);
+		A_FloatPoint	mouse = {
+			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value),
+			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
+		};
+		RenderGL(width, height, time, mouse);
 		
 		// DownlodTexture
 		size_t pixSize = sizeof(PF_Pixel8);
@@ -431,6 +583,32 @@ EntryPointFunc (
 									out_data,
 									params,
 									output);
+				break;
+			
+			case PF_Cmd_SEQUENCE_SETUP:
+				
+				err = SequenceSetup(in_data,
+									out_data,
+									params,
+									output);
+				break;
+			
+			case PF_Cmd_SEQUENCE_SETDOWN:
+				
+				err = SequenceSetdown(in_data,
+									  out_data,
+									  params,
+									  output);
+				break;
+			
+			case PF_Cmd_SEQUENCE_FLATTEN:
+				
+				err = SequenceFlatten(in_data, out_data);
+				break;
+			
+			case PF_Cmd_GET_FLATTENED_SEQUENCE_DATA:
+				
+				GetFlattenedSequenceData(in_data,out_data);
 				break;
 				
 			case PF_Cmd_RENDER:

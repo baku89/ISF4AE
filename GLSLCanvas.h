@@ -53,6 +53,8 @@ typedef short int			int16;
 
 #define RESTRICT_BOUNDS		0
 
+#define FRAGPATH_MAX_LEN	512
+
 enum {
 	FILTER_INPUT = 0,
 	FILTER_MOUSE,
@@ -67,9 +69,9 @@ enum {
 	extern "C" {
 #endif
 		
-typedef struct FilterInfo {
-	A_FloatPoint mouse;
-} FilterInfo, *FilterInfoP, *FilterInfoH;
+typedef struct {
+	A_char			fragPath[FRAGPATH_MAX_LEN + 1];
+} FilterSeqData;
 
 DllExport	PF_Err 
 EntryPointFunc(	
