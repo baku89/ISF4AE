@@ -22,6 +22,12 @@ typedef short int			int16;
 	#include <Windows.h>
 #endif
 
+#ifdef AE_OS_WIN
+	#define STRNCPY(dest, src, len) strncpy_s(dest, src, len)
+#else
+	#define STRNCPY(dest, src, len) strncpy(dest, src, len)
+#endif
+
 #include "entry.h"
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
@@ -65,13 +71,55 @@ enum {
 	MOUSE_DISK_ID = 1
 };
 
+
+typedef struct EffectRenderData
+{
+	
+	EffectRenderData() :
+		initialized(false),
+		width(0), height(0),
+		frameBuffer(0),
+		outputFrameTexture(0),
+		program(0)
+	{
+	};
+	
+	virtual ~EffectRenderData() {
+		//local OpenGL resource un-loading
+		if (outputFrameTexture)
+			glDeleteTextures(1, &outputFrameTexture);
+		
+		//common OpenGL resource unloading
+		if (program)
+			glDeleteProgram(program);
+		
+		//release framebuffer resources
+		if (frameBuffer)
+			glDeleteFramebuffers(1, &frameBuffer);
+	}
+	
+	A_Boolean	flat;
+	A_Boolean	initialized;
+	
+	u_int16		width, height;
+	
+	GLuint		frameBuffer;
+	GLuint		outputFrameTexture;
+	GLuint		program;
+	
+	A_char      fragPath[FRAGPATH_MAX_LEN + 1];
+	
+} EffectRenderData;
+
+//typedef struct {
+//	A_Boolean	flat;
+//	A_char		fragPath[FRAGPATH_MAX_LEN + 1];
+//} FlatSeqData;
+
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
-		
-typedef struct {
-	A_char			fragPath[FRAGPATH_MAX_LEN + 1];
-} FilterSeqData;
 
 DllExport	PF_Err 
 EntryPointFunc(	

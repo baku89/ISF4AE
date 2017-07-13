@@ -25,23 +25,4 @@ namespace AESDK_SystemUtil {
 		return path;
 	}
 	
-	/*
-	std::string GetResourcesPath(PF_InData *in_data) {
-		//initialize and compile the shader objects
-		A_UTF16Char pluginFolderPath[AEFX_MAX_PATH];
-		PF_GET_PLATFORM_DATA(PF_PlatData_EXE_FILE_PATH_W, &pluginFolderPath);
-		
-		NSUInteger length = 0;
-		A_UTF16Char* tmp = pluginFolderPath;
-		while (*tmp++ != 0) {
-			++length;
-		}
-		NSString* newStr = [[NSString alloc] initWithCharacters:pluginFolderPath length : length];
-		std::string resourcePath([newStr UTF8String]);
-		resourcePath += "/Contents/Resources/";
-		
-		return resourcePath;
-	}*/
-	
-	
 };

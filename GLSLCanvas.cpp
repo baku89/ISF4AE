@@ -2,11 +2,9 @@
 
 #include "GLBase.h"
 #include "LoadShaders.h"
-
 #include "SystemUtil.h"
 
 #include <iostream>
-
 
 
 namespace {
@@ -15,34 +13,21 @@ namespace {
 	CGLContextObj		renderContext = 0;
 	NSOpenGLContext		*context = 0;
 	std::string			resourcePath;
-	
-	GLuint frameBuffer = 0;
+    
+    // effect data
 	GLuint vao = 0;
 	GLuint quad = 0;
-	GLuint outputFrameTexture = 0;
-	
-	// program
-	GLuint program = 0;
-	GLuint attribPositionLocation = 0;
-	GLuint uniformResolutionLocation = 0;
-	GLuint uniformTimeLocation = 0;
-	GLuint uniformMouseLocation = 0;
 	
 	
-	
-	
-	void InitProgram(std::string fragmentFilePath) {
+	GLuint InitProgram(std::string fragmentFilePath) {
 		
-		program = LoadShaders((resourcePath + "vertex-shader.vert").c_str(),
-							  fragmentFilePath.c_str());
+		GLuint program = LoadShaders((resourcePath + "vertex-shader.vert").c_str(),
+									 fragmentFilePath.c_str());
 		
-		attribPositionLocation		= glGetAttribLocation(program, "position");
-		uniformResolutionLocation	= glGetUniformLocation(program, "u_resolution");
-		uniformTimeLocation			= glGetUniformLocation(program, "u_time");
-		uniformMouseLocation		= glGetUniformLocation(program, "u_mouse");
+		return program;
 	}
 	
-	void CreateQuad(u_int16 w, u_int16 h) {
+	void CreateQuad() {
 		
 		// make and bind the VAO
 		glGenVertexArrays(1, &vao);
@@ -63,8 +48,8 @@ namespace {
 		glBindVertexArray(0);
 	}
 	
-	void RenderQuad() {
-		glEnableVertexAttribArray(attribPositionLocation);
+	void RenderQuad(EffectRenderData *renderData) {
+		glEnableVertexAttribArray(glGetAttribLocation(renderData->program, "position"));
 		glBindBuffer(GL_ARRAY_BUFFER, quad);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -80,20 +65,20 @@ namespace {
 	}
 	
 	
-	void RenderGL(GLfloat width, GLfloat height, GLfloat time, A_FloatPoint mouse) {
+	void RenderGL(EffectRenderData *renderData, GLfloat width, GLfloat height, GLfloat time, A_FloatPoint mouse) {
 		
 		glViewport(0, 0, width, height);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		glUseProgram(program);
+		glUseProgram(renderData->program);
 		
-		glUniform2f(uniformResolutionLocation, width, height);
-		glUniform1f(uniformTimeLocation, time);
-		glUniform2f(uniformMouseLocation, mouse.x, mouse.y);
+		glUniform2f(glGetUniformLocation(renderData->program, "u_resolution"),	width, height);
+		glUniform1f(glGetUniformLocation(renderData->program, "u_time"),		time);
+		glUniform2f(glGetUniformLocation(renderData->program, "u_mouse"),		mouse.x, mouse.y);
 
 		glBindVertexArray(vao);
-		RenderQuad();
+		RenderQuad(renderData);
 		glBindVertexArray(0);
 		
 		glUseProgram(0);
@@ -116,18 +101,42 @@ namespace {
 		return path;
 	}
 	
-	void InitResources(u_int16 width, u_int16 height) {
+	void SetupRenderData(EffectRenderData* renderData, u_int16 width, u_int16 height) {
 		
-		if (frameBuffer == 0) {
-			// create the color buffer to render to
-			glGenFramebuffers(1, &frameBuffer);
-			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+		bool sizeChanged = renderData->width != width || renderData->height != height;
+		
+		renderData->width = width;
+		renderData->height = height;
+		
+		if (sizeChanged) {
 			
-			// The texture we're going to render to
-			glGenTextures(1, &outputFrameTexture);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			
+			// release framebuffer resources
+			if (renderData->frameBuffer) {
+				glDeleteFramebuffers(1, &renderData->frameBuffer);
+				renderData->frameBuffer = 0;
+			}
+			
+			if (renderData->outputFrameTexture) {
+				glDeleteTextures(1, &renderData->outputFrameTexture);
+				renderData->outputFrameTexture = 0;
+			}
+		}
+		
+		// Create a frame-buffer object and bind it...
+		if (renderData->frameBuffer == 0) {
+			glGenFramebuffers(1, &renderData->frameBuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, renderData->frameBuffer);
+		}
+		
+		if (renderData->outputFrameTexture == 0) {
+			std::cout << "Texture Reallocated" << std::endl;
 			// "Bind" the newly created texture : all future texture functions will modify this texture
-			glBindTexture(GL_TEXTURE_2D, outputFrameTexture);
+			
+			glGenTextures(1, &renderData->outputFrameTexture);
+			glBindTexture(GL_TEXTURE_2D, renderData->outputFrameTexture);
 			
 			// Give an empty image to OpenGL ( the last "0" )
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -137,15 +146,22 @@ namespace {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		}
 		
-		if (vao == 0) {
-			CreateQuad(width, height);
+		if (renderData->program == 0) {
 			
+			std::string fragPath = strlen(renderData->fragPath) == 0
+				? resourcePath + "fragment-shader.frag"
+				: std::string(renderData->fragPath);
+			
+			std::cout << "Recompile shader programs fragPath=" << fragPath  << std::endl;
+
+			renderData->program = InitProgram(fragPath);
 		}
 		
 	}
 };
 
-static PF_Err 
+//---------------------------------------------------------------------------
+static PF_Err
 About (	
 	PF_InData		*in_data,
 	PF_OutData		*out_data,
@@ -163,6 +179,7 @@ About (
 	return PF_Err_NONE;
 }
 
+//---------------------------------------------------------------------------
 static PF_Err
 PopDialog (
    PF_InData		*in_data,
@@ -181,14 +198,17 @@ PopDialog (
 	std::string path = AESDK_SystemUtil::openFileDialog(fileTypes);
 	
 	if (!path.empty()) {
-		std::cout << "path:" << path << std::endl;
+		std::cout << "fragPath=" << path << std::endl;
 		InitProgram(path);
 		
-		FilterSeqData *info = *(FilterSeqData**)out_data->sequence_data;
-		strncpy(info->fragPath, path.c_str(), FRAGPATH_MAX_LEN);
+		EffectRenderData *renderData = *(EffectRenderData**)out_data->sequence_data;
+		STRNCPY(renderData->fragPath, path.c_str(), FRAGPATH_MAX_LEN);
+		
+		glDeleteProgram(renderData->program);
+		renderData->program = 0;
 		
 	} else {
-		std::cout << "path: Not Changed" << std::endl;
+		std::cout << "fragPath=: Not Changed" << std::endl;
 	}
 	
 	out_data->out_flags |= PF_OutFlag_SEND_DO_DIALOG;
@@ -211,6 +231,7 @@ GlobalSetup (
 										BUILD_VERSION);
 
 	out_data->out_flags =  PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_I_DO_DIALOG;
+	out_data->out_flags2 = PF_OutFlag2_NONE;
 	
 	PF_Err err = PF_Err_NONE;
 	
@@ -232,7 +253,7 @@ GlobalSetup (
 		
 		resourcePath = GetResourcesPath(in_data);
 		
-		InitProgram(resourcePath + "fragment-shader.frag");
+		CreateQuad();
 		
 		
 	} catch(PF_Err& thrown_err) {
@@ -258,15 +279,6 @@ GlobalSetdown (
 	{
 		// always restore back AE's own OGL context
 		AESDK_OpenGL::SaveRestoreOGLContext oSavedContext;
-		
-		if (outputFrameTexture)
-			glDeleteTextures(1, &outputFrameTexture);
-		
-		if (program)
-			glDeleteProgram(program);
-		
-		if (frameBuffer)
-			glDeleteFramebuffers(1, &frameBuffer);
 		
 		if (vao) {
 			glDeleteBuffers(1, &quad);
@@ -321,24 +333,37 @@ SequenceSetup (
 			   PF_ParamDef		*params[],
 			   PF_LayerDef		*output )
 {
-	FilterSeqData		*info;
-	
-	if (out_data->sequence_data){
-		PF_DISPOSE_HANDLE(out_data->sequence_data);
-	}
-	out_data->sequence_data = PF_NEW_HANDLE(sizeof(FilterSeqData));
-	if (!out_data->sequence_data) {
-		return PF_Err_INTERNAL_STRUCT_DAMAGED;
-	}
-	
-	// generate base table
-	info = *(FilterSeqData**)out_data->sequence_data;
-	strcpy(info->fragPath, "");
-	
+	PF_Err				err = PF_Err_NONE;
+	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
 	std::cout << "SsequenceSetup Called" << std::endl;
 	
-	return PF_Err_NONE;
+	// Create sequence data
+	PF_Handle			effectRenderDataH =	suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
+	
+	if (effectRenderDataH){
+		EffectRenderData	*renderData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(effectRenderDataH));
+		
+		if (renderData){
+			AEFX_CLR_STRUCT(*renderData);
+			
+			renderData->flat = FALSE;
+			STRNCPY(renderData->fragPath, "", FRAGPATH_MAX_LEN);
+			
+			out_data->sequence_data = effectRenderDataH;
+			
+			suites.HandleSuite1()->host_unlock_handle(effectRenderDataH);
+		}
+	} else {	// whoa, we couldn't allocate sequence data; bail!
+		err = PF_Err_OUT_OF_MEMORY;
+	}
+	
+	if (err) {
+		PF_SPRINTF(out_data->return_msg, "SequenceSetup failure in HistoGrid Effect");
+		out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+	}
+	
+	return err;
 }
 
 //---------------------------------------------------------------------------
@@ -349,17 +374,20 @@ SequenceSetdown (
 	 PF_ParamDef	*params[],
 	 PF_LayerDef	*output )
 {
+	PF_Err err = PF_Err_NONE;
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	
 	std::cout << "SequenceSetdown Called" << std::endl;
 	
-	if (in_data->sequence_data) {
-		PF_DISPOSE_HANDLE(in_data->sequence_data);
-		out_data->sequence_data = NULL;
+	// Flat or unflat, get rid of it
+	if (in_data->sequence_data){
+		suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
 	}
-	return PF_Err_NONE;
+	return err;
 }
 
 //---------------------------------------------------------------------------
+// EffectRenderData -> FlatSeqData
 static PF_Err
 SequenceFlatten(
 	PF_InData		*in_data,
@@ -371,32 +399,32 @@ SequenceFlatten(
 	std::cout << "SequenceFlatten Called" << std::endl;
 	
 	// Make a flat copy of whatever is in the unflat seq data handed to us.
-	
 	if (in_data->sequence_data) {
-		FilterSeqData* unflatSeqDataP = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
+		EffectRenderData* renderData = reinterpret_cast<EffectRenderData*>(DH(in_data->sequence_data));
 		
-		if (unflatSeqDataP){
-			PF_Handle flatSeqDataH = suites.HandleSuite1()->host_new_handle(sizeof(FilterSeqData));
+		if (renderData) {
+			PF_Handle flatSeqDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
 			
 			if (flatSeqDataH){
-				FilterSeqData*	flat_seq_dataP = reinterpret_cast<FilterSeqData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
+				EffectRenderData*	flatSeqData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
 				
-				if (flat_seq_dataP){
-					AEFX_CLR_STRUCT(*flat_seq_dataP);
-
-#ifdef AE_OS_WIN
-					strncpy_s(flat_seq_dataP->fragPath, unflatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
-#else
-					strncpy(flat_seq_dataP->fragPath, unflatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
-#endif
+				if (flatSeqData){
+					AEFX_CLR_STRUCT(*flatSeqData);
+					
+					flatSeqData->flat = TRUE;
+					STRNCPY(flatSeqData->fragPath, renderData->fragPath, FRAGPATH_MAX_LEN);
+					std::cout << "fragPath:" << flatSeqData->fragPath << std::endl;
 					
 					// In SequenceSetdown we toss out the unflat data
-					//delete unflat_seq_dataP->fragPath;
+					//delete renderData->fragPath;
 					suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
 					
 					out_data->sequence_data = flatSeqDataH;
 					suites.HandleSuite1()->host_unlock_handle(flatSeqDataH);
+				} else {
+					std::cout << "flatSeqDataH nooooo" << std::cout;
 				}
+				
 			} else {
 				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
 			}
@@ -409,50 +437,43 @@ SequenceFlatten(
 
 //---------------------------------------------------------------------------
 static PF_Err
-GetFlattenedSequenceData(
-	 PF_InData		*in_data,
-	 PF_OutData		*out_data)
+SequenceResetup (
+				 PF_InData		*in_data,
+				 PF_OutData		*out_data)
 {
 	PF_Err err = PF_Err_NONE;
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	
-	std::cout << "GetFlattenedSequenceData Called" << std::endl;
+	// We got here because we're either opening a project w/saved (flat) sequence data,
+	// or we've just been asked to flatten our sequence data (for a save) and now
+	// we're blowing it back up.
 	
-	// Make a flat copy of whatever is in the unflat seq data handed to us.
+	std::cout << "SequenceResetup Called" <<  std::endl;
+	
+	//std::cout << "sizeof EffectRenderData:" << sizeof(EffectRenderData) << std::endl;
+	//std::cout << "sizeof FlatSeqData:" << sizeof(FlatSeqData) << std::endl;
 	
 	if (in_data->sequence_data){
-		FilterSeqData* unflat_seq_dataP = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
+		EffectRenderData*	flatSeqDataP = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
 		
-		if (unflat_seq_dataP){
-			PF_Handle flat_seq_dataH = suites.HandleSuite1()->host_new_handle(sizeof(FilterSeqData));
+		if (flatSeqDataP){
+			PF_Handle renderDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
 			
-			if (flat_seq_dataH){
-				FilterSeqData*	flat_seq_dataP = reinterpret_cast<FilterSeqData*>(suites.HandleSuite1()->host_lock_handle(flat_seq_dataH));
+			if (renderDataH){
+				EffectRenderData* renderData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(renderDataH));
 				
-				if (flat_seq_dataP){
-					AEFX_CLR_STRUCT(*flat_seq_dataP);
+				if (renderData){
+					AEFX_CLR_STRUCT(*renderData);
 					
-#ifdef AE_OS_WIN
-					strncpy_s(flat_seq_dataP->fragPath, unflat_seq_dataP->fragPath, FRAGPATH_MAX_LEN);
-#else
-					strncpy(flat_seq_dataP->fragPath, unflat_seq_dataP->fragPath, FRAGPATH_MAX_LEN);
-#endif
+					renderData->flat = FALSE;
+					STRNCPY(renderData->fragPath, flatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
+					std::cout << "fragPath:" << renderData->fragPath << std::endl;
 					
-					// The whole point of this function is that we don't dispose of the unflat data!
-					// delete [] unflat_seq_dataP->stringP;
-					//suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
-					
-					out_data->sequence_data = flat_seq_dataH;
-					suites.HandleSuite1()->host_unlock_handle(flat_seq_dataH);
+					suites.HandleSuite1()->host_unlock_handle(renderDataH);
 				}
-			} else {
-				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
 			}
 		}
-	} else {
-		err = PF_Err_INTERNAL_STRUCT_DAMAGED;
 	}
-	
 	return err;
 }
 
@@ -467,23 +488,24 @@ Render (
 	PF_Err				err			= PF_Err_NONE;
 	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
-	FilterSeqData *seqData = reinterpret_cast<FilterSeqData*>(DH(in_data->sequence_data));
+	EffectRenderData *renderData = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
 	
-	std::cout << "Render Called: " << seqData->fragPath << std::endl;
+	std::cout << "Render Called flat=" << (renderData->flat ? "TRUE" : "FALSE") << " fragPath=" << renderData->fragPath << std::endl;
 
 	/*	Put interesting code here. */
 	try {
 		// always restore back AE's own OGL context
 		AESDK_OpenGL::SaveRestoreOGLContext oSavedContext;
-		SetPluginContext();
 		
 		u_int16 width = in_data->width, height = in_data->height;
 		
-		InitResources(width, height);
+		SetPluginContext();
+		
+		SetupRenderData(renderData, width, height);
 		
 		// MakeReadyToRender
-		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputFrameTexture, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, renderData->frameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->outputFrameTexture, 0);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 		
 		// RenderGL
@@ -492,7 +514,7 @@ Render (
 			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value),
 			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
 		};
-		RenderGL(width, height, time, mouse);
+		RenderGL(renderData, width, height, time, mouse);
 		
 		// DownlodTexture
 		size_t pixSize = sizeof(PF_Pixel8);
@@ -600,15 +622,15 @@ EntryPointFunc (
 									  params,
 									  output);
 				break;
-			
+				
 			case PF_Cmd_SEQUENCE_FLATTEN:
 				
 				err = SequenceFlatten(in_data, out_data);
 				break;
 			
-			case PF_Cmd_GET_FLATTENED_SEQUENCE_DATA:
+			case PF_Cmd_SEQUENCE_RESETUP:
 				
-				GetFlattenedSequenceData(in_data,out_data);
+				err = SequenceResetup(in_data,out_data);
 				break;
 				
 			case PF_Cmd_RENDER:
