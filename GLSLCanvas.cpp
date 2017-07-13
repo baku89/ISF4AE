@@ -28,6 +28,14 @@ namespace {
 		return program;
 	}
 	
+	void ToggleFlag(A_long &target, A_long flag, A_Boolean value) {
+		if (value) {
+			target |= flag;
+		} else {
+			target &= ~flag;
+		}
+	}
+	
 	void CreateQuad() {
 		
 		// make and bind the VAO
@@ -366,7 +374,7 @@ ParamsSetup (
 	
 	PF_ParamDef		def;
 	
-	AEFX_CLR_STRUCT(def);
+	
 	
 	// Customize the name of the options button
 	// Premiere Pro/Elements does not support this suite
@@ -379,12 +387,44 @@ ParamsSetup (
 		ERR(effect_ui_suiteP->PF_SetOptionsButtonName(in_data->effect_ref, "Load Shader.."));
 	}
 	
+	// Add parameters
+	
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_CHECKBOX(STR(StrID_Use_Layer_Time_Param_Name),	// NAME_A
+					"",										// NAME_B
+					TRUE,									// Default
+					PF_ParamFlag_SUPERVISE,					// Flags
+					FILTER_USE_LAYER_TIME_DISK_ID);			// ID
+	
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_FLOAT_SLIDERX(STR(StrID_Time_Param_Name),
+						 -100000,					// VALID_MIN
+						 100000,					// VALID_MAX
+						 0,							// SLIDER_MIN
+						 10,						// SLIDER_MAX
+						 0,							// Default
+						 4,							// Precision
+						 PF_ValueDisplayFlag_NONE,	// Display
+						 0,							// Flags
+						 FILTER_TIME_DISK_ID);		// ID
+	
+	
 	// TODO: set default mouse position to center of layer
+	AEFX_CLR_STRUCT(def);
 	PF_ADD_POINT(STR(StrID_Mouse_Param_Name),
 				 (A_long)(in_data->width / 2.0f),
 				 (A_long)(in_data->height / 2.0f),
 				 RESTRICT_BOUNDS,
 				 MOUSE_DISK_ID);
+	
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_BUTTON(STR(StrID_Show_Error_Name),	// PARAM_BANE
+				  "Show",						// BUTTON_NAME
+				  PF_PUI_NONE,					// PUI_FLAGS
+				  PF_ParamFlag_SUPERVISE,		// PARAM_FLAGS
+				  FILTER_SHOW_ERROR_DISK_ID);	// ID
+	
+	AEFX_CLR_STRUCT(def);
 	
 	out_data->num_params = FILTER_NUM_PARAMS;
 
@@ -556,9 +596,9 @@ Render(
 	
 	EffectRenderData *renderData = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
 	
-	std::cout << "Render Called flat=" << (renderData->flat ? "TRUE" : "FALSE") << " fragPath=" << renderData->fragPath << std::endl;
+	std::cout << "Render Called flat=" << (renderData->flat ? "TRUE" : "FALSE");
+	//std::cout << " fragPath=" << renderData->fragPath;
 
-	/*	Put interesting code here. */
 	try {
 		// always restore back AE's own OGL context
 		AESDK_OpenGL::SaveRestoreOGLContext oSavedContext;
@@ -573,7 +613,12 @@ Render(
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		
 		// RenderGL
-		float time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
+		GLfloat time;
+		if (params[FILTER_USE_LAYER_TIME_DISK_ID]->u.bd.value) {
+			time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
+		} else {
+			time = (GLfloat)params[FILTER_TIME_DISK_ID]->u.fs_d.value;
+		}
 		A_FloatPoint	mouse = {
 			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value),
 			height - FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
@@ -617,7 +662,84 @@ Render(
 	} catch (...) {
 		err = PF_Err_OUT_OF_MEMORY;
 	}
+	
+	std::cout << std::endl;
 
+	return err;
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
+MakeParamCopy(
+			  PF_ParamDef *actual[],	/* >> */
+			  PF_ParamDef copy[])		/* << */
+{
+	for (A_short iS = FILTER_INPUT; iS < FILTER_NUM_PARAMS; ++iS)	{
+		AEFX_CLR_STRUCT(copy[iS]);	// clean params are important!
+		copy[iS] = *actual[iS];
+	}
+	
+	return PF_Err_NONE;
+	
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
+UserChangedParam(
+				 PF_InData						*in_data,
+				 PF_OutData						*out_data,
+				 PF_ParamDef					*params[],
+				 const PF_UserChangedParamExtra	*which_hitP)
+{
+	PF_Err err = PF_Err_NONE;
+	
+	switch (which_hitP->param_index) {
+			
+		case FILTER_SHOW_ERROR_DISK_ID:
+			PF_STRCPY(out_data->return_msg,
+					  "Test");
+			
+			if (in_data->appl_id != 'PrMr') {
+				out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+			}
+			break;
+	}
+	
+	return err;
+}
+
+//---------------------------------------------------------------------------
+static PF_Err
+UpdateParameterUI(
+				  PF_InData			*in_data,
+				  PF_OutData			*out_data,
+				  PF_ParamDef			*params[],
+				  PF_LayerDef			*outputP)
+{
+	PF_Err				err			= PF_Err_NONE;
+	AEGP_SuiteHandler	suites(in_data->pica_basicP);
+	
+	std::cout << "UpdateParameterUI Called" << std::endl;
+	
+	//	Before we can change the enabled/disabled state of parameters,
+	//	we need to make a copy (remember, parts of those passed into us
+	//	are read-only).
+	PF_ParamDef		paramsCopy[FILTER_NUM_PARAMS];
+	ERR(MakeParamCopy(params, paramsCopy));
+	
+	if (!err) {
+		
+		A_Boolean useLayerTime = params[FILTER_USE_LAYER_TIME_DISK_ID]->u.bd.value;
+		
+		ToggleFlag(paramsCopy[FILTER_TIME_DISK_ID].ui_flags, PF_PUI_DISABLED, useLayerTime);
+		
+		ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+														FILTER_TIME_DISK_ID,
+														&paramsCopy[FILTER_TIME_DISK_ID])); 
+	}
+	
+	out_data->out_flags |= PF_OutFlag_REFRESH_UI | PF_OutFlag_FORCE_RERENDER;
+	
 	return err;
 }
 
@@ -709,6 +831,24 @@ EntryPointFunc (
 								params,
 								output);
 				break;
+			
+			case PF_Cmd_USER_CHANGED_PARAM:
+				
+				err = UserChangedParam(in_data,
+									   out_data,
+									   params,
+									   reinterpret_cast<const PF_UserChangedParamExtra *>(extra));
+			
+			// Handling this selector will ensure that the UI will be properly initialized,
+			// even before the user starts changing parameters to trigger PF_Cmd_USER_CHANGED_PARAM
+			case PF_Cmd_UPDATE_PARAMS_UI:
+				
+				err = UpdateParameterUI(in_data,
+										out_data,
+										params,
+										output);
+				break;
+				
 		}
 	}
 	catch(PF_Err &thrown_err){

@@ -26,5 +26,8 @@ typedef enum {
 	StrID_Name,
 	StrID_Description,
 	StrID_Mouse_Param_Name,
+	StrID_Use_Layer_Time_Param_Name,
+	StrID_Time_Param_Name,
+	StrID_Show_Error_Name,
 	StrID_NUMTYPES
 } StrIDType;
