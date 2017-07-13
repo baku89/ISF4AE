@@ -30,8 +30,8 @@ typedef struct {
 
 TableString		g_strs[StrID_NUMTYPES] = {
 	StrID_NONE,						"",
-	StrID_Name,						"ISF4AE",
-	StrID_Description,				"An empty (skeletal, if you will) effect sample,\r for your modifying pleasure.\rCopyright 2007 Adobe Systems Incorporated.",
+	StrID_Name,						"GLSLCanvas4AE",
+	StrID_Description,				"A plug-in to write GLSL with a format of glslCanvas.",
 	StrID_Mouse_Param_Name,			"Mouse Position",
 };
 

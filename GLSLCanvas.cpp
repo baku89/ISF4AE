@@ -218,12 +218,15 @@ About (
 {
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	
+	EffectRenderData *renderData = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
+	
 	suites.ANSICallbacksSuite1()->sprintf(	out_data->return_msg,
-											"%s v%d.%d\r%s",
+											"%s v%d.%d\r%s\r\rShader Location:%s",
 											STR(StrID_Name), 
 											MAJOR_VERSION, 
-											MINOR_VERSION, 
-											STR(StrID_Description));
+											MINOR_VERSION,
+											STR(StrID_Description),
+											strlen(renderData->fragPath) == 0 ? "<Not Loaded>" : renderData->fragPath);
 	return PF_Err_NONE;
 }
 
@@ -359,10 +362,22 @@ ParamsSetup (
 	PF_LayerDef		*output )
 {
 	PF_Err		err		= PF_Err_NONE;
+	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
 	PF_ParamDef		def;
 	
 	AEFX_CLR_STRUCT(def);
+	
+	// Customize the name of the options button
+	// Premiere Pro/Elements does not support this suite
+	if (in_data->appl_id != 'PrMr') {
+		AEFX_SuiteScoper<PF_EffectUISuite1> effect_ui_suiteP = AEFX_SuiteScoper<PF_EffectUISuite1>(in_data,
+																								   kPFEffectUISuite,
+																								   kPFEffectUISuiteVersion1,
+																								   out_data);
+		
+		ERR(effect_ui_suiteP->PF_SetOptionsButtonName(in_data->effect_ref, "Load Shader.."));
+	}
 	
 	// TODO: set default mouse position to center of layer
 	PF_ADD_POINT(STR(StrID_Mouse_Param_Name),
