@@ -13,8 +13,9 @@ namespace {
 	CGLContextObj		renderContext = 0;
 	NSOpenGLContext		*context = 0;
 	std::string			resourcePath;
-    
-    // effect data
+	
+	GLuint swizzleProgram = 0;
+	
 	GLuint vao = 0;
 	GLuint quad = 0;
 	
@@ -64,11 +65,21 @@ namespace {
 		AESDK_OpenGL::makeCurrentFlush(renderContext);
 	}
 	
+	void MakeReadyToRender(EffectRenderData *renderData, GLuint texture) {
+		glBindFramebuffer(GL_FRAMEBUFFER, renderData->frameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+	}
+	
+	void BindTextureToTarget(GLuint program, GLuint texture, std::string targetName) {
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUniform1i(glGetUniformLocation(program, targetName.c_str()), 0);
+	}
 	
 	void RenderGL(EffectRenderData *renderData, GLfloat width, GLfloat height, GLfloat time, A_FloatPoint mouse) {
 		
-		glViewport(0, 0, width, height);
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		glUseProgram(renderData->program);
@@ -82,6 +93,25 @@ namespace {
 		glBindVertexArray(0);
 		
 		glUseProgram(0);
+	}
+	
+	void SwizzleGL(EffectRenderData *renderData, GLfloat width, GLfloat height) {
+		
+		glClear(GL_COLOR_BUFFER_BIT);
+		glUseProgram(swizzleProgram);
+		
+		glUniform2f(glGetUniformLocation(swizzleProgram, "u_resolution"),	width, height);
+		BindTextureToTarget(swizzleProgram, renderData->beforeSwizzleTexture, std::string("videoTexture"));
+		
+		// render
+		glBindVertexArray(vao);
+		RenderQuad(renderData);
+		glBindVertexArray(0);
+		
+		glUseProgram(0);
+		
+		
+		glFlush();
 	}
 	
 	std::string GetResourcesPath(PF_InData *in_data) {
@@ -119,6 +149,11 @@ namespace {
 				renderData->frameBuffer = 0;
 			}
 			
+			if (renderData->beforeSwizzleTexture) {
+				glDeleteTextures(1, &renderData->beforeSwizzleTexture);
+				renderData->beforeSwizzleTexture = 0;
+			}
+			
 			if (renderData->outputFrameTexture) {
 				glDeleteTextures(1, &renderData->outputFrameTexture);
 				renderData->outputFrameTexture = 0;
@@ -131,9 +166,22 @@ namespace {
 			glBindFramebuffer(GL_FRAMEBUFFER, renderData->frameBuffer);
 		}
 		
+		if (renderData->beforeSwizzleTexture == 0) {
+			std::cout << "beforeSwizzleTexture Reallocated" << std::endl;
+			
+			glGenTextures(1, &renderData->beforeSwizzleTexture);
+			glBindTexture(GL_TEXTURE_2D, renderData->beforeSwizzleTexture);
+			
+			// Give an empty image to OpenGL ( the last "0" )
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			
+			// Poor filtering. Needed !
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		}
+		
 		if (renderData->outputFrameTexture == 0) {
-			std::cout << "Texture Reallocated" << std::endl;
-			// "Bind" the newly created texture : all future texture functions will modify this texture
+			std::cout << "outputFrameTexture Reallocated" << std::endl;
 			
 			glGenTextures(1, &renderData->outputFrameTexture);
 			glBindTexture(GL_TEXTURE_2D, renderData->outputFrameTexture);
@@ -236,14 +284,19 @@ GlobalSetup (
 	PF_Err err = PF_Err_NONE;
 	
 	try {
+		resourcePath = GetResourcesPath(in_data);
+		
 		
 		// always restore back AE's own OGL context
 		AESDK_OpenGL::SaveRestoreOGLContext oSavedContext;
+		
+		// setup common resources
+		context = AESDK_OpenGL::createNSContext(nullptr, renderContext);
 		SetPluginContext();
 		
-		context = AESDK_OpenGL::createNSContext(nullptr, renderContext);
-		[context makeCurrentContext];
+		CreateQuad();
 		
+		swizzleProgram = InitProgram(resourcePath + "swizzle.frag");
 		
 		std::cout << std::endl
 			<< "OpenGL Version:			" << glGetString(GL_VERSION) << std::endl
@@ -251,9 +304,7 @@ GlobalSetup (
 			<< "OpenGL Renderer:		" << glGetString(GL_RENDERER) << std::endl
 			<< "OpenGL GLSL Versions:	" << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 		
-		resourcePath = GetResourcesPath(in_data);
 		
-		CreateQuad();
 		
 		
 	} catch(PF_Err& thrown_err) {
@@ -479,7 +530,7 @@ SequenceResetup (
 
 //---------------------------------------------------------------------------
 static PF_Err
-Render (
+Render(
 	PF_InData		*in_data,
 	PF_OutData		*out_data,
 	PF_ParamDef		*params[],
@@ -503,18 +554,21 @@ Render (
 		
 		SetupRenderData(renderData, width, height);
 		
-		// MakeReadyToRender
-		glBindFramebuffer(GL_FRAMEBUFFER, renderData->frameBuffer);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData->outputFrameTexture, 0);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glViewport(0, 0, width, height);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		
 		// RenderGL
 		float time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
 		A_FloatPoint	mouse = {
 			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value),
-			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
+			height - FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
 		};
+		MakeReadyToRender(renderData, renderData->beforeSwizzleTexture);
 		RenderGL(renderData, width, height, time, mouse);
+		
+		// Swizzle
+		MakeReadyToRender(renderData, renderData->outputFrameTexture);
+		SwizzleGL(renderData, width, height);
 		
 		// DownlodTexture
 		size_t pixSize = sizeof(PF_Pixel8);

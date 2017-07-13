@@ -79,6 +79,7 @@ typedef struct EffectRenderData
 		initialized(false),
 		width(0), height(0),
 		frameBuffer(0),
+		beforeSwizzleTexture(0),
 		outputFrameTexture(0),
 		program(0)
 	{
@@ -86,6 +87,9 @@ typedef struct EffectRenderData
 	
 	virtual ~EffectRenderData() {
 		//local OpenGL resource un-loading
+		if (beforeSwizzleTexture)
+			glDeleteTextures(1, &beforeSwizzleTexture);
+		
 		if (outputFrameTexture)
 			glDeleteTextures(1, &outputFrameTexture);
 		
@@ -104,6 +108,7 @@ typedef struct EffectRenderData
 	u_int16		width, height;
 	
 	GLuint		frameBuffer;
+	GLuint		beforeSwizzleTexture;
 	GLuint		outputFrameTexture;
 	GLuint		program;
 	

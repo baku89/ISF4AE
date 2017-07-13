@@ -8,5 +8,5 @@ void main(){
 	
 	vec3 color = vec3(fract(st.x * 2.0), 0.5, 1.0);
 	
-	gl_FragColor = vec4(1.0, color);
+	gl_FragColor = vec4(color, 1.0);
 }
