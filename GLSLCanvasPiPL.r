@@ -41,7 +41,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [8] */
 		AE_Effect_Version {
-			524289	/* 1.0 */
+            0x80001	/* 1.0 */
 		},
 		/* [9] */
 		AE_Effect_Info_Flags {
@@ -57,7 +57,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [11] */
 		AE_Effect_Match_Name {
-			"ADBE ShaderGLSLCanvas"
+			"BKFX GLSLCanvas"
 		},
 		/* [12] */
 		AE_Reserved_Info {
