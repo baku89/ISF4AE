@@ -426,7 +426,7 @@ SequenceSetup (
 	PF_Err				err = PF_Err_NONE;
 	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
-	std::cout << "SsequenceSetup Called" << std::endl;
+	std::cout << "SequenceSetup Called" << std::endl;
 	
 	// Create sequence data
 	PF_Handle			effectRenderDataH =	suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
@@ -449,7 +449,7 @@ SequenceSetup (
 	}
 	
 	if (err) {
-		PF_SPRINTF(out_data->return_msg, "SequenceSetup failure in HistoGrid Effect");
+		PF_SPRINTF(out_data->return_msg, "SequenceSetup failure in GLSLCanvas");
 		out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
 	}
 	
@@ -591,8 +591,7 @@ Render(
 	
 	EffectRenderData *renderData = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
 	
-	std::cout << "Render Called flat=" << (renderData->flat ? "TRUE" : "FALSE");
-	//std::cout << " fragPath=" << renderData->fragPath;
+	std::cout << "Render Called" << std::endl;
 
 	try {
 		// always restore back AE's own OGL context
@@ -652,8 +651,6 @@ Render(
 	} catch (...) {
 		err = PF_Err_OUT_OF_MEMORY;
 	}
-	
-	std::cout << std::endl;
 
 	return err;
 }
