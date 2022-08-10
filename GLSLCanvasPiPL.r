@@ -22,8 +22,6 @@ resource 'PiPL' (16000) {
 #ifdef AE_OS_WIN
 	#ifdef AE_PROC_INTELx64
 		CodeWin64X86 {"EntryPointFunc"},
-	#else
-		CodeWin32X86 {"EntryPointFunc"},
 	#endif
 #else
 	#ifdef AE_OS_MAC
