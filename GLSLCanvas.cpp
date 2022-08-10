@@ -4,6 +4,7 @@
 #include "LoadShaders.h"
 #include "SystemUtil.h"
 #include "Config.h"
+#include "AEUtils.hpp"
 
 #include <iostream>
 
@@ -103,23 +104,6 @@ void SwizzleGL(EffectRenderData *renderData, GLfloat width, GLfloat height) {
     glUseProgram(0);
 
     glFlush();
-}
-
-std::string GetResourcesPath(PF_InData *in_data) {
-    // initialize and compile the shader objects
-    A_UTF16Char pluginFolderPath[AEFX_MAX_PATH];
-    PF_GET_PLATFORM_DATA(PF_PlatData_EXE_FILE_PATH_W, &pluginFolderPath);
-
-    NSUInteger length = 0;
-    A_UTF16Char *tmp = pluginFolderPath;
-    while (*tmp++ != 0) {
-        ++length;
-    }
-    NSString *newStr = [[NSString alloc] initWithCharacters:pluginFolderPath length:length];
-    std::string path([newStr UTF8String]);
-    path += "/Contents/Resources/";
-
-    return path;
 }
 
 void SetupRenderData(EffectRenderData *renderData, u_int16 width, u_int16 height) {
@@ -274,7 +258,7 @@ GlobalSetup(
     PF_Err err = PF_Err_NONE;
 
     try {
-        resourcePath = GetResourcesPath(in_data);
+        resourcePath = AEUtils::getResourcesPath(in_data);
 
         // always restore back AE's own OGL context
         AESDK_OpenGL::SaveRestoreOGLContext oSavedContext;
