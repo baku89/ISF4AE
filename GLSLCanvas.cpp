@@ -28,14 +28,6 @@ namespace {
 		return program;
 	}
 	
-	void ToggleFlag(A_long &target, A_long flag, A_Boolean value) {
-		if (value) {
-			target |= flag;
-		} else {
-			target &= ~flag;
-		}
-	}
-	
 	void CreateQuad() {
 		
 		// make and bind the VAO
@@ -388,14 +380,6 @@ ParamsSetup (
 	}
 	
 	// Add parameters
-	
-	AEFX_CLR_STRUCT(def);
-	PF_ADD_CHECKBOX(STR(StrID_Use_Layer_Time_Param_Name),	// NAME_A
-					"",										// NAME_B
-					TRUE,									// Default
-					PF_ParamFlag_SUPERVISE,					// Flags
-					FILTER_USE_LAYER_TIME_DISK_ID);			// ID
-	
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(STR(StrID_Time_Param_Name),
 						 -100000,					// VALID_MIN
@@ -416,13 +400,6 @@ ParamsSetup (
 				 (A_long)(in_data->height / 2.0f),
 				 RESTRICT_BOUNDS,
 				 MOUSE_DISK_ID);
-	
-	AEFX_CLR_STRUCT(def);
-	PF_ADD_BUTTON(STR(StrID_Show_Error_Name),	// PARAM_BANE
-				  "Show",						// BUTTON_NAME
-				  PF_PUI_NONE,					// PUI_FLAGS
-				  PF_ParamFlag_SUPERVISE,		// PARAM_FLAGS
-				  FILTER_SHOW_ERROR_DISK_ID);	// ID
 	
 	AEFX_CLR_STRUCT(def);
 	
@@ -613,15 +590,10 @@ Render(
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		
 		// RenderGL
-		GLfloat time;
-		if (params[FILTER_USE_LAYER_TIME_DISK_ID]->u.bd.value) {
-			time = (GLfloat)in_data->current_time / (GLfloat)in_data->time_scale;
-		} else {
-			time = (GLfloat)params[FILTER_TIME_DISK_ID]->u.fs_d.value;
-		}
+        GLfloat time = (GLfloat)params[FILTER_TIME_DISK_ID]->u.fs_d.value;
 		A_FloatPoint	mouse = {
-			FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.x_value),
-			height - FIX_2_FLOAT(params[FILTER_MOUSE]->u.td.y_value)
+			FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.x_value),
+			height - FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.y_value)
 		};
 		MakeReadyToRender(renderData, renderData->beforeSwizzleTexture);
 		RenderGL(renderData, width, height, time, mouse);
@@ -693,17 +665,8 @@ UserChangedParam(
 {
 	PF_Err err = PF_Err_NONE;
 	
-	switch (which_hitP->param_index) {
-			
-		case FILTER_SHOW_ERROR_DISK_ID:
-			PF_STRCPY(out_data->return_msg,
-					  "Test");
-			
-			if (in_data->appl_id != 'PrMr') {
-				out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
-			}
-			break;
-	}
+//	switch (which_hitP->param_index) {
+//	}
 	
 	return err;
 }
@@ -727,12 +690,7 @@ UpdateParameterUI(
 	PF_ParamDef		paramsCopy[FILTER_NUM_PARAMS];
 	ERR(MakeParamCopy(params, paramsCopy));
 	
-	if (!err) {
-		
-		A_Boolean useLayerTime = params[FILTER_USE_LAYER_TIME_DISK_ID]->u.bd.value;
-		
-		ToggleFlag(paramsCopy[FILTER_TIME_DISK_ID].ui_flags, PF_PUI_DISABLED, useLayerTime);
-		
+	if (!err) {		
 		ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
 														FILTER_TIME_DISK_ID,
 														&paramsCopy[FILTER_TIME_DISK_ID])); 

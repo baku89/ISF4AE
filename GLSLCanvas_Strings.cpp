@@ -33,9 +33,7 @@ TableString		g_strs[StrID_NUMTYPES] = {
 	StrID_Name,						"GLSLCanvas4AE",
 	StrID_Description,				"A plug-in to write GLSL with a format of glslCanvas.",
 	StrID_Mouse_Param_Name,			"Mouse Position",
-	StrID_Use_Layer_Time_Param_Name,"Use Layer Time",
-	StrID_Time_Param_Name,			"Time (seconds)",
-	StrID_Show_Error_Name,			"Show Error Messages",
+	StrID_Time_Param_Name,			"Time",
 };
 
 
