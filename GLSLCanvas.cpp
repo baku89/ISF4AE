@@ -208,7 +208,9 @@ namespace {
 	}
 };
 
-//---------------------------------------------------------------------------
+/**
+ * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple modal dialog.
+ */
 static PF_Err
 About (	
 	PF_InData		*in_data,
@@ -230,7 +232,9 @@ About (
 	return PF_Err_NONE;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Display an options dialog. this is sent when the Options button is clicked (or a menu command has been selected).
+ */
 static PF_Err
 PopDialog (
    PF_InData		*in_data,
@@ -267,7 +271,9 @@ PopDialog (
 	return err;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Set any required flags and PF_OutData fields (including out_data>my_version) to describe your plug-in’s behavior.
+ */
 static PF_Err
 GlobalSetup (	
 	PF_InData		*in_data,
@@ -319,7 +325,9 @@ GlobalSetup (
 	return err;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Free all global data (only required if you allocated some).
+ */
 static PF_Err
 GlobalSetdown (
 			   PF_InData		*in_data,
@@ -353,7 +361,9 @@ GlobalSetdown (
 	return err;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Describe your parameters and register them using PF_ADD_PARAM.
+ */
 static PF_Err
 ParamsSetup (	
 	PF_InData		*in_data,
@@ -365,8 +375,6 @@ ParamsSetup (
 	AEGP_SuiteHandler	suites(in_data->pica_basicP);
 	
 	PF_ParamDef		def;
-	
-	
 	
 	// Customize the name of the options button
 	// Premiere Pro/Elements does not support this suite
@@ -382,17 +390,16 @@ ParamsSetup (
 	// Add parameters
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX(STR(StrID_Time_Param_Name),
-						 -100000,					// VALID_MIN
-						 100000,					// VALID_MAX
+						 -1000000,					// VALID_MIN
+						 1000000,					// VALID_MAX
 						 0,							// SLIDER_MIN
 						 10,						// SLIDER_MAX
 						 0,							// Default
-						 4,							// Precision
+						 6,							// Precision
 						 PF_ValueDisplayFlag_NONE,	// Display
 						 0,							// Flags
 						 FILTER_TIME_DISK_ID);		// ID
-	
-	
+
 	// TODO: set default mouse position to center of layer
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_POINT(STR(StrID_Mouse_Param_Name),
@@ -403,12 +410,12 @@ ParamsSetup (
 	
 	AEFX_CLR_STRUCT(def);
 	
+    // Set PF_OutData->num_params to match the parameter count.
 	out_data->num_params = FILTER_NUM_PARAMS;
 
 	return err;
 }
 
-//---------------------------------------------------------------------------
 static PF_Err
 SequenceSetup (
 			   PF_InData		*in_data,
@@ -449,7 +456,9 @@ SequenceSetup (
 	return err;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Free all sequence data.
+ */
 static PF_Err
 SequenceSetdown (
 	 PF_InData		*in_data,
@@ -469,8 +478,10 @@ SequenceSetdown (
 	return err;
 }
 
-//---------------------------------------------------------------------------
-// EffectRenderData -> FlatSeqData
+/**
+ * Sent when saving and when duplicating the sequence. Flatten sequence data containing pointers or handles so it can be written to disk.
+ * Converts EffectRenderData to FlatSeqData
+ */
 static PF_Err
 SequenceFlatten(
 	PF_InData		*in_data,
@@ -514,7 +525,6 @@ SequenceFlatten(
     std::cout << "fragPath:" << flatSeqData->fragPath << std::endl;
     
     // In SequenceSetdown we toss out the unflat data
-    //delete renderData->fragPath;
     suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
     
     out_data->sequence_data = flatSeqDataH;
@@ -523,7 +533,10 @@ SequenceFlatten(
     return PF_Err_NONE;
 }
 
-//---------------------------------------------------------------------------
+/**
+ * Re-create (usually unflatten) sequence data. Sent after sequence data is read from disk,
+ * during pre-composition, or when the effect is copied.
+ */
 static PF_Err
 SequenceResetup (
 				 PF_InData		*in_data,
