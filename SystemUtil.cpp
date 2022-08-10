@@ -16,7 +16,7 @@ namespace AESDK_SystemUtil {
 		[panel setAllowedFileTypes: nsFileTypes];
 		NSInteger result = [panel runModal];
 							
-		if(result == NSModalResponseOK) {
+		if (result == NSModalResponseOK) {
 			NSString *nsPath = [panel URLs][0].absoluteString;
 			nsPath = [nsPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
 			path = std::string([nsPath UTF8String]);

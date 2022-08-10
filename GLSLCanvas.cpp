@@ -344,7 +344,7 @@ GlobalSetdown (
 			out_data->sequence_data = NULL;
 		}
 		
-	} catch(PF_Err& thrown_err) {
+	} catch (PF_Err& thrown_err) {
 		err = thrown_err;
 	} catch (...) {
 		err = PF_Err_OUT_OF_MEMORY;
@@ -424,10 +424,10 @@ SequenceSetup (
 	// Create sequence data
 	PF_Handle			effectRenderDataH =	suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
 	
-	if (effectRenderDataH){
+	if (effectRenderDataH) {
 		EffectRenderData	*renderData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(effectRenderDataH));
 		
-		if (renderData){
+		if (renderData) {
 			AEFX_CLR_STRUCT(*renderData);
 			
 			renderData->flat = FALSE;
@@ -463,7 +463,7 @@ SequenceSetdown (
 	std::cout << "SequenceSetdown Called" << std::endl;
 	
 	// Flat or unflat, get rid of it
-	if (in_data->sequence_data){
+	if (in_data->sequence_data) {
 		suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
 	}
 	return err;
@@ -503,7 +503,7 @@ SequenceFlatten(
     
     EffectRenderData*	flatSeqData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
 				
-    if (!flatSeqData){
+    if (!flatSeqData) {
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
     
@@ -541,16 +541,16 @@ SequenceResetup (
 	//std::cout << "sizeof EffectRenderData:" << sizeof(EffectRenderData) << std::endl;
 	//std::cout << "sizeof FlatSeqData:" << sizeof(FlatSeqData) << std::endl;
 	
-	if (in_data->sequence_data){
+	if (in_data->sequence_data) {
 		EffectRenderData*	flatSeqDataP = reinterpret_cast<EffectRenderData*>(*(in_data->sequence_data));
 		
-		if (flatSeqDataP){
+		if (flatSeqDataP) {
 			PF_Handle renderDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
 			
-			if (renderDataH){
+			if (renderDataH) {
 				EffectRenderData* renderData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(renderDataH));
 				
-				if (renderData){
+				if (renderData) {
 					AEFX_CLR_STRUCT(*renderData);
 					
 					renderData->flat = FALSE;
@@ -813,8 +813,7 @@ EntryPointFunc (
 				break;
 				
 		}
-	}
-	catch(PF_Err &thrown_err){
+	} catch (PF_Err &thrown_err) {
 		err = thrown_err;
 	}
 	return err;
