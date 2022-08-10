@@ -398,7 +398,7 @@ ParamsSetup (
 						 6,							// Precision
 						 PF_ValueDisplayFlag_NONE,	// Display
 						 0,							// Flags
-						 FILTER_TIME_DISK_ID);		// ID
+						 FILTER_TIME_ID);   		// ID
 
 	// TODO: set default mouse position to center of layer
 	AEFX_CLR_STRUCT(def);
@@ -608,7 +608,7 @@ Render(
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		
 		// RenderGL
-        GLfloat time = (GLfloat)params[FILTER_TIME_DISK_ID]->u.fs_d.value;
+		GLfloat time = (GLfloat)params[FILTER_TIME_ID]->u.fs_d.value;
 		A_FloatPoint	mouse = {
 			FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.x_value),
 			height - FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.y_value)
@@ -710,8 +710,8 @@ UpdateParameterUI(
 	
 	if (!err) {		
 		ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-														FILTER_TIME_DISK_ID,
-														&paramsCopy[FILTER_TIME_DISK_ID])); 
+														FILTER_TIME_ID,
+														&paramsCopy[FILTER_TIME_ID])); 
 	}
 	
 	out_data->out_flags |= PF_OutFlag_REFRESH_UI | PF_OutFlag_FORCE_RERENDER;

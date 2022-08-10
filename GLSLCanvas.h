@@ -63,7 +63,7 @@ typedef short int			int16;
 
 enum {
 	FILTER_INPUT = 0,
-	FILTER_TIME_DISK_ID,
+	FILTER_TIME_ID,
 	FILTER_MOUSE_ID,
 	FILTER_NUM_PARAMS
 };
