@@ -355,7 +355,7 @@ ParamsSetup(
                          6,                         // Precision
                          PF_ValueDisplayFlag_NONE,  // Display
                          0,                         // Flags
-                         FILTER_TIME_ID);           // ID
+                         PARAM_TIME);               // ID
 
     // TODO: set default mouse position to center of layer
     AEFX_CLR_STRUCT(def);
@@ -363,12 +363,12 @@ ParamsSetup(
                  (A_long)(in_data->width / 2.0f),
                  (A_long)(in_data->height / 2.0f),
                  RESTRICT_BOUNDS,
-                 MOUSE_DISK_ID);
+                 PARAM_MOUSE);
 
     AEFX_CLR_STRUCT(def);
 
     // Set PF_OutData->num_params to match the parameter count.
-    out_data->num_params = FILTER_NUM_PARAMS;
+    out_data->num_params = NUM_PARAMS;
 
     return err;
 }
@@ -553,10 +553,10 @@ Render(
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         // RenderGL
-        GLfloat time = (GLfloat)params[FILTER_TIME_ID]->u.fs_d.value;
+        GLfloat time = (GLfloat)params[PARAM_TIME]->u.fs_d.value;
         A_FloatPoint mouse = {
-            FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.x_value),
-            height - FIX_2_FLOAT(params[FILTER_MOUSE_ID]->u.td.y_value)};
+            FIX_2_FLOAT(params[PARAM_MOUSE]->u.td.x_value),
+            height - FIX_2_FLOAT(params[PARAM_MOUSE]->u.td.y_value)};
         MakeReadyToRender(renderData, renderData->beforeSwizzleTexture);
         RenderGL(renderData, width, height, time, mouse);
 
@@ -606,7 +606,7 @@ MakeParamCopy(
     PF_ParamDef *actual[], /* >> */
     PF_ParamDef copy[])    /* << */
 {
-    for (A_short iS = FILTER_INPUT; iS < FILTER_NUM_PARAMS; ++iS) {
+    for (A_short iS = PARAM_INPUT; iS < NUM_PARAMS; ++iS) {
         AEFX_CLR_STRUCT(copy[iS]);  // clean params are important!
         copy[iS] = *actual[iS];
     }
@@ -644,13 +644,13 @@ UpdateParameterUI(
     //	Before we can change the enabled/disabled state of parameters,
     //	we need to make a copy (remember, parts of those passed into us
     //	are read-only).
-    PF_ParamDef paramsCopy[FILTER_NUM_PARAMS];
+    PF_ParamDef paramsCopy[NUM_PARAMS];
     ERR(MakeParamCopy(params, paramsCopy));
 
     if (!err) {
         ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                        FILTER_TIME_ID,
-                                                        &paramsCopy[FILTER_TIME_ID]));
+                                                        PARAM_TIME,
+                                                        &paramsCopy[PARAM_TIME]));
     }
 
     out_data->out_flags |= PF_OutFlag_REFRESH_UI | PF_OutFlag_FORCE_RERENDER;

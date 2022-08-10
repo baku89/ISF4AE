@@ -59,16 +59,11 @@ typedef short int			int16;
 #define FRAGPATH_MAX_LEN	512
 
 enum {
-	FILTER_INPUT = 0,
-	FILTER_TIME_ID,
-	FILTER_MOUSE_ID,
-	FILTER_NUM_PARAMS
+	PARAM_INPUT = 0,
+	PARAM_TIME,
+	PARAM_MOUSE,
+	NUM_PARAMS
 };
-
-enum {
-	MOUSE_DISK_ID = 1
-};
-
 
 typedef struct EffectRenderData
 {
