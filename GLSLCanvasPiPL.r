@@ -4,6 +4,8 @@
 #ifndef AE_OS_WIN
 	#include <AE_General.r>
 #endif
+
+#include "Config.h"
 	
 resource 'PiPL' (16000) {
 	{	/* array properties: 12 elements */
@@ -13,11 +15,11 @@ resource 'PiPL' (16000) {
 		},
 		/* [2] */
 		Name {
-			"GLSLCanvas"
+			CONFIG_NAME
 		},
 		/* [3] */
 		Category {
-			"Shader"
+			CONFIG_CATEGORY
 		},
 #ifdef AE_OS_WIN
 	#ifdef AE_PROC_INTELx64
@@ -57,7 +59,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [11] */
 		AE_Effect_Match_Name {
-			"BKFX GLSLCanvas"
+			CONFIG_MATCH_NAME
 		},
 		/* [12] */
 		AE_Reserved_Info {

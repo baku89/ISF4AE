@@ -41,9 +41,6 @@ typedef short int			int16;
 #include "AEFX_SuiteHelper.h"
 #include "AEGP_SuiteHandler.h"
 
-
-#include "GLSLCanvas_Strings.h"
-
 #include <OpenGL/gl3.h>
 #include <GLUT/GLUT.h>
 
