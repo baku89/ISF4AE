@@ -476,46 +476,51 @@ SequenceFlatten(
 	PF_InData		*in_data,
 	PF_OutData		*out_data)
 {
-	PF_Err err = PF_Err_NONE;
+    std::cout << "SequenceFlatten Called" << std::endl;
+    
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	
-	std::cout << "SequenceFlatten Called" << std::endl;
 	
 	// Make a flat copy of whatever is in the unflat seq data handed to us.
-	if (in_data->sequence_data) {
-		EffectRenderData* renderData = reinterpret_cast<EffectRenderData*>(DH(in_data->sequence_data));
-		
-		if (renderData) {
-			PF_Handle flatSeqDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
-			
-			if (flatSeqDataH){
-				EffectRenderData*	flatSeqData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
+	if (!in_data->sequence_data) {
+        std::cout << "No sequence data found."  << std::endl;
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    }
+    
+    EffectRenderData* renderData = reinterpret_cast<EffectRenderData*>(DH(in_data->sequence_data));
+    
+    if (!renderData) {
+        std::cout << "Cannot reinterpret the sequence data as EffectRenderData."  << std::endl;
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
+        
+    }
+    
+    PF_Handle flatSeqDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
+    
+    if (!flatSeqDataH) {
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    }
+    
+    EffectRenderData*	flatSeqData = reinterpret_cast<EffectRenderData*>(suites.HandleSuite1()->host_lock_handle(flatSeqDataH));
 				
-				if (flatSeqData){
-					AEFX_CLR_STRUCT(*flatSeqData);
-					
-					flatSeqData->flat = TRUE;
-					STRNCPY(flatSeqData->fragPath, renderData->fragPath, FRAGPATH_MAX_LEN);
-					std::cout << "fragPath:" << flatSeqData->fragPath << std::endl;
-					
-					// In SequenceSetdown we toss out the unflat data
-					//delete renderData->fragPath;
-					suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
-					
-					out_data->sequence_data = flatSeqDataH;
-					suites.HandleSuite1()->host_unlock_handle(flatSeqDataH);
-				} else {
-					std::cout << "flatSeqDataH nooooo" << std::cout;
-				}
+    if (!flatSeqData){
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    }
+    
+    AEFX_CLR_STRUCT(*flatSeqData);
+    
+    flatSeqData->flat = TRUE;
+    STRNCPY(flatSeqData->fragPath, renderData->fragPath, FRAGPATH_MAX_LEN);
+    std::cout << "fragPath:" << flatSeqData->fragPath << std::endl;
+    
+    // In SequenceSetdown we toss out the unflat data
+    //delete renderData->fragPath;
+    suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
+    
+    out_data->sequence_data = flatSeqDataH;
+    suites.HandleSuite1()->host_unlock_handle(flatSeqDataH);
 				
-			} else {
-				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
-			}
-		}
-	} else {
-		err = PF_Err_INTERNAL_STRUCT_DAMAGED;
-	}
-	return err;
+    return PF_Err_NONE;
 }
 
 //---------------------------------------------------------------------------
