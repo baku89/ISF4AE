@@ -8,13 +8,16 @@ After Effects plug-in to run codes written at [The Book of Shaders Editor](http:
 
 ## How to Build
 
-1. Download [AE SDK CC 2017 for macOS](https://console.adobe.io/downloads/ae).
+1. Download [After Effects Plug-in SDK 2022 Mac - Oct 2021](https://adobe.io/after-effects/).
+
 2. Put the SDK folder at the same directory as cloned folder of this repository and rename it to "SDK" like below:
     ```
     (parent folder)
         ├ glslCanvas4AE
         └ SDK
     ```
+
+Move `(parent folder)/glslCanvas4AE/Mac/build/GLSLCanvas.plugin` to `/Applications/Adobe After Effects 2022/Plug-ins/GLSLCanvas.plugin`. 
 
 ## License
 

@@ -10,25 +10,6 @@
 
 namespace AESDK_OpenGL {
 	
-	class ScopedAutoreleasePool {
-		
-	public:
-		
-		ScopedAutoreleasePool() : pool_(nil)
-		{
-			pool_ = [[NSAutoreleasePool alloc] init];
-		}
-		
-		~ScopedAutoreleasePool()
-		{
-			[pool_ drain];
-			pool_ = nil;
-		}
-		
-	private:
-		NSAutoreleasePool* pool_;
-	};
-
 	void makeCurrentFlush(CGLContextObj newRC) {
 		// workaround for WATSONBUG 1541765
 		// Windows automagically inserts a flush call on the old context before actually
@@ -51,7 +32,6 @@ namespace AESDK_OpenGL {
 		
 		// Cocoa requires that a AutorelasePool be current for its Garbage Collection purposes
 		// See NSAutoreleasePool API reference
-		ScopedAutoreleasePool pool;
 		
 		NSOpenGLPixelFormatAttribute    aAttribs[64];
 		int nIndex= -1;
@@ -91,7 +71,6 @@ namespace AESDK_OpenGL {
 		oContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:pNSShare];
 		rc = reinterpret_cast<CGLContextObj> ([oContext CGLContextObj]);
 		
-		[format release];
 		return oContext;
 	}
 	

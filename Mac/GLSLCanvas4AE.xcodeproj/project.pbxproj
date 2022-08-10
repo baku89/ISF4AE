@@ -15,31 +15,13 @@
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
 		92C8B4041F0DDB19003DE970 /* fragment-shader.frag in Resources */ = {isa = PBXBuildFile; fileRef = 92C8B4021F0DDB19003DE970 /* fragment-shader.frag */; };
 		92C8B4051F0DDB19003DE970 /* vertex-shader.vert in Resources */ = {isa = PBXBuildFile; fileRef = 92C8B4031F0DDB19003DE970 /* vertex-shader.vert */; };
-		92C8B4071F0DDB29003DE970 /* fragment-shader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92C8B4021F0DDB19003DE970 /* fragment-shader.frag */; };
-		92C8B4081F0DDB29003DE970 /* vertex-shader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92C8B4031F0DDB19003DE970 /* vertex-shader.vert */; };
 		92DBB2181F1742FE0059F43C /* swizzle.frag in Resources */ = {isa = PBXBuildFile; fileRef = 92DBB2171F1742FE0059F43C /* swizzle.frag */; };
-		92DBB2191F1743040059F43C /* swizzle.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92DBB2171F1742FE0059F43C /* swizzle.frag */; };
 		D0FE575F0993C4E900139A60 /* GLSLCanvas_Strings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575A0993C4E900139A60 /* GLSLCanvas_Strings.cpp */; };
 		D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */; };
 		D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */; };
 		D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */; };
 		D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		92C8B4061F0DDB1F003DE970 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 7;
-			files = (
-				92C8B4071F0DDB29003DE970 /* fragment-shader.frag in CopyFiles */,
-				92C8B4081F0DDB29003DE970 /* vertex-shader.vert in CopyFiles */,
-				92DBB2191F1743040059F43C /* swizzle.frag in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		7EF36FB616F29701002A3CB3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -152,7 +134,6 @@
 				C4E618C9095A3CE80012CA3F /* Sources */,
 				C4E618CA095A3CE80012CA3F /* Frameworks */,
 				C4E618EA095A3E040012CA3F /* Rez */,
-				92C8B4061F0DDB1F003DE970 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -176,6 +157,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = C4E6187C095A3C800012CA3F;
@@ -270,7 +252,9 @@
 		C4E618CF095A3CE90012CA3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = ./build;
 				GCC_MODEL_TUNING = G5;
 				GENERATE_PKGINFO_FILE = YES;
 				INFOPLIST_FILE = "GLSLCanvas4AE.plugin-Info.plist";
