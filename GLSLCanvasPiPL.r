@@ -27,8 +27,6 @@ resource 'PiPL' (16000) {
 	#endif
 #else
 	#ifdef AE_OS_MAC
-		CodeMachOPowerPC {"EntryPointFunc"},
-		CodeMacIntel32 {"EntryPointFunc"},
 		CodeMacIntel64 {"EntryPointFunc"},
         CodeMacARM64 {"EntryPointFunc"},
 	#endif
