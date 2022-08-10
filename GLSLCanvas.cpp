@@ -156,7 +156,7 @@ void SetupRenderData(EffectRenderData *renderData, u_int16 width, u_int16 height
     }
 
     if (renderData->beforeSwizzleTexture == 0) {
-        std::cout << "beforeSwizzleTexture Reallocated" << std::endl;
+        FX_LOG("beforeSwizzleTexture Reallocated");
 
         glGenTextures(1, &renderData->beforeSwizzleTexture);
         glBindTexture(GL_TEXTURE_2D, renderData->beforeSwizzleTexture);
@@ -170,7 +170,7 @@ void SetupRenderData(EffectRenderData *renderData, u_int16 width, u_int16 height
     }
 
     if (renderData->outputFrameTexture == 0) {
-        std::cout << "outputFrameTexture Reallocated" << std::endl;
+        FX_LOG("outputFrameTexture Reallocated");
 
         glGenTextures(1, &renderData->outputFrameTexture);
         glBindTexture(GL_TEXTURE_2D, renderData->outputFrameTexture);
@@ -188,7 +188,7 @@ void SetupRenderData(EffectRenderData *renderData, u_int16 width, u_int16 height
                                    ? resourcePath + "fragment-shader.frag"
                                    : std::string(renderData->fragPath);
 
-        std::cout << "Recompile shader programs fragPath=" << fragPath << std::endl;
+        FX_LOG("Recompile shader programs:" << fragPath);
 
         renderData->program = InitProgram(fragPath);
     }
@@ -238,7 +238,6 @@ PopDialog(
     std::string path = AESDK_SystemUtil::openFileDialog(fileTypes);
 
     if (!path.empty()) {
-        std::cout << "fragPath=" << path << std::endl;
         InitProgram(path);
 
         EffectRenderData *renderData = *(EffectRenderData **)out_data->sequence_data;
@@ -247,8 +246,6 @@ PopDialog(
         glDeleteProgram(renderData->program);
         renderData->program = 0;
 
-    } else {
-        std::cout << "fragPath=: Not Changed" << std::endl;
     }
 
     out_data->out_flags |= PF_OutFlag_SEND_DO_DIALOG;
@@ -289,12 +286,11 @@ GlobalSetup(
         CreateQuad();
 
         swizzleProgram = InitProgram(resourcePath + "swizzle.frag");
-
-        std::cout << std::endl
-                  << "OpenGL Version:			" << glGetString(GL_VERSION) << std::endl
-                  << "OpenGL Vendor:			" << glGetString(GL_VENDOR) << std::endl
-                  << "OpenGL Renderer:		" << glGetString(GL_RENDERER) << std::endl
-                  << "OpenGL GLSL Versions:	" << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+        
+        FX_LOG("OpenGL Version:			" << glGetString(GL_VERSION) << std::endl
+               << "OpenGL Vendor:			" << glGetString(GL_VENDOR) << std::endl
+               << "OpenGL Renderer:		" << glGetString(GL_RENDERER) << std::endl
+               << "OpenGL GLSL Versions:	" << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     } catch (PF_Err &thrown_err) {
         err = thrown_err;
@@ -401,8 +397,8 @@ SequenceSetup(
     PF_LayerDef *output) {
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
-
-    std::cout << "SequenceSetup Called" << std::endl;
+    
+    FX_LOG("SequenceSetup() called");
 
     // Create sequence data
     PF_Handle effectRenderDataH = suites.HandleSuite1()->host_new_handle(sizeof(EffectRenderData));
@@ -443,8 +439,8 @@ SequenceSetdown(
     PF_LayerDef *output) {
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
-
-    std::cout << "SequenceSetdown Called" << std::endl;
+    
+    FX_LOG("SequenceSetdown() called");
 
     // Flat or unflat, get rid of it
     if (in_data->sequence_data) {
@@ -461,20 +457,20 @@ static PF_Err
 SequenceFlatten(
     PF_InData *in_data,
     PF_OutData *out_data) {
-    std::cout << "SequenceFlatten Called" << std::endl;
+    FX_LOG("SequenceFlatten() called");
 
     AEGP_SuiteHandler suites(in_data->pica_basicP);
 
     // Make a flat copy of whatever is in the unflat seq data handed to us.
     if (!in_data->sequence_data) {
-        std::cout << "No sequence data found." << std::endl;
+        FX_LOG("No sequence data found.");
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
 
     EffectRenderData *renderData = reinterpret_cast<EffectRenderData *>(DH(in_data->sequence_data));
 
     if (!renderData) {
-        std::cout << "Cannot reinterpret the sequence data as EffectRenderData." << std::endl;
+        FX_LOG("Cannot reinterpret the sequence data as EffectRenderData.");
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
 
@@ -494,7 +490,7 @@ SequenceFlatten(
 
     flatSeqData->flat = TRUE;
     STRNCPY(flatSeqData->fragPath, renderData->fragPath, FRAGPATH_MAX_LEN);
-    std::cout << "fragPath:" << flatSeqData->fragPath << std::endl;
+    FX_LOG("fragPath:" << flatSeqData->fragPath);
 
     // In SequenceSetdown we toss out the unflat data
     suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
@@ -520,10 +516,7 @@ SequenceResetup(
     // or we've just been asked to flatten our sequence data (for a save) and now
     // we're blowing it back up.
 
-    std::cout << "SequenceResetup Called" << std::endl;
-
-    // std::cout << "sizeof EffectRenderData:" << sizeof(EffectRenderData) << std::endl;
-    // std::cout << "sizeof FlatSeqData:" << sizeof(FlatSeqData) << std::endl;
+    FX_LOG("SequenceResetup() called");
 
     if (in_data->sequence_data) {
         EffectRenderData *flatSeqDataP = reinterpret_cast<EffectRenderData *>(*(in_data->sequence_data));
@@ -539,7 +532,6 @@ SequenceResetup(
 
                     renderData->flat = FALSE;
                     STRNCPY(renderData->fragPath, flatSeqDataP->fragPath, FRAGPATH_MAX_LEN);
-                    std::cout << "fragPath:" << renderData->fragPath << std::endl;
 
                     suites.HandleSuite1()->host_unlock_handle(renderDataH);
                 }
@@ -561,7 +553,7 @@ Render(
 
     EffectRenderData *renderData = reinterpret_cast<EffectRenderData *>(*(in_data->sequence_data));
 
-    std::cout << "Render Called" << std::endl;
+    FX_LOG("Render() called");
 
     try {
         // always restore back AE's own OGL context
@@ -663,7 +655,7 @@ UpdateParameterUI(
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-    std::cout << "UpdateParameterUI Called" << std::endl;
+    FX_LOG("UpdateParameterUI called");
 
     //	Before we can change the enabled/disabled state of parameters,
     //	we need to make a copy (remember, parts of those passed into us

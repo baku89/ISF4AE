@@ -23,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		233B1EF328A46337000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = ../Debug.h; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		7EF36FB616F29701002A3CB3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
@@ -85,6 +86,7 @@
 		C4E6187C095A3C800012CA3F = {
 			isa = PBXGroup;
 			children = (
+				233B1EF328A46337000652AC /* Debug.h */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
 				92C8B4011F0DDB10003DE970 /* GLSL_files */,
 				92C8B4001F0DD8E3003DE970 /* LoadShaders.h */,
@@ -279,9 +281,12 @@
 					../../SDK/Examples/Util,
 					../../SDK/Examples/Headers/SP,
 					../../SDK/Examples/Resources,
-					..,
+					/usr/local/Cellar/glfw/3.3.7/include,
 				);
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/glfw/3.3.7/lib,
+				);
 				ONLY_ACTIVE_ARCH = YES;
 				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/glslCanvas";
 				PRODUCT_BUNDLE_IDENTIFIER = com.baku89.GLSLCanvas4AE;
