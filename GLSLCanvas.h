@@ -59,12 +59,12 @@ enum {
 
 typedef struct {
     AEGP_PluginID       aegpId;
-    OGL::GlobalContext  context;
-    OGL::Fbo            fbo;
-    OGL::QuadVao        quad;
-    OGL::Shader         passthruVertShader;
-    OGL::Program        defaultProgram;
-    std::unordered_map<std::string, OGL::Program*> *programs;
+    OGL::GlobalContext  *context;
+    OGL::Fbo            *fbo;
+    OGL::QuadVao        *quad;
+    OGL::Shader         *passthruVertShader;
+    OGL::Program        *defaultProgram;
+    std::unordered_map<std::string, ProgramRef*> *programRefs;
 } GlobalData;
 
 typedef struct {

@@ -73,8 +73,8 @@ GlobalSetup(
     }
 
     // Initialize global OpenGL context
-    globalData->context = *new OGL::GlobalContext();
-    if (!globalData->context.initialized) {
+    globalData->context = new OGL::GlobalContext();
+    if (!globalData->context->initialized) {
         return PF_Err_OUT_OF_MEMORY;
     }
     
@@ -83,21 +83,21 @@ GlobalSetup(
     FX_LOG("OpenGL Renderer:      " << glGetString(GL_RENDERER));
     FX_LOG("OpenGL GLSL Versions: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    globalData->context.bind();
+    globalData->context->bind();
     
     // Setup GL objects
-    globalData->fbo = OGL::Fbo();
-    globalData->quad = OGL::QuadVao();
+    globalData->fbo = new OGL::Fbo();
+    globalData->quad = new OGL::QuadVao();
     
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
     std::string vertCode = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
     std::string fragCode = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
     
-    globalData->passthruVertShader = OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
+    globalData->passthruVertShader = new OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
     
     OGL::Shader defaultFragShader(fragCode.c_str(), GL_FRAGMENT_SHADER);
     
-    globalData->defaultProgram = OGL::Program(&globalData->passthruVertShader, &defaultFragShader);
+    globalData->defaultProgram = new OGL::Program(globalData->passthruVertShader, &defaultFragShader);
     
     auto programRefs = new std::unordered_map<std::string,  ProgramRef*>();
     
@@ -128,15 +128,15 @@ GlobalSetdown(
         auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
         auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
             
-        globalData->context.bind();
+        globalData->context->bind();
 
-        globalData->fbo.~Fbo();
-        globalData->quad.~QuadVao();
-        globalData->passthruVertShader.~Shader();
-        globalData->defaultProgram.~Program();
+        delete globalData->fbo;
+        delete globalData->quad;
+        delete globalData->passthruVertShader;
+        delete globalData->defaultProgram;
         delete globalData->programRefs;
         
-        globalData->context.~GlobalContext();
+        delete globalData->context;
         
         suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
     }
@@ -338,9 +338,9 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     
     if (arb) {
         auto &code = arb->fragCode;
-        auto &programs = *globalData->programs;
+        auto &programRefs = *globalData->programRefs;
         
-        OGL::Program *program;
+        OGL::Program *program = globalData->defaultProgram;
         
         if (strlen(code) == 0) {
             // If empty, use the defualt program
@@ -445,7 +445,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
     // OpenGL
     if (!err) {
-        globalData->context.bind();
+        globalData->context->bind();
 
         GLenum pixelType;
         switch (format) {
@@ -465,7 +465,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
 
         // Setup render context
-        globalData->fbo.allocate(width, height, GL_RGBA, pixelType);
+        globalData->fbo->allocate(width, height, GL_RGBA, pixelType);
 
         // Allocate pixels buffer
         PF_Handle pixelsBufferH =
@@ -478,7 +478,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         // Bind
         OGL::Program &program = *paramInfo->program;
         program.bind();
-        globalData->fbo.bind();
+        globalData->fbo->bind();
 
         // Set uniforms
         program.setVec2("u_resolution", width, height);
@@ -486,15 +486,15 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
         
         // Render
-        globalData->quad.render();
+        globalData->quad->render();
 
         // Read pixels
-        globalData->fbo.readToPixels(pixelsBufferP);
+        globalData->fbo->readToPixels(pixelsBufferP);
         ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
 
         // Unbind
         program.bind();
-        globalData->fbo.unbind();
+        globalData->fbo->unbind();
 
         // downloadTexture
         ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
@@ -624,7 +624,9 @@ UpdateParameterUI(
         newParams[i] = *params[i];
     }
     
-    // TODO: Display the state of shader linking instead of the dummy text as below.
+    auto *globalData = reinterpret_cast<GlobalData *>(
+        suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+    
     PF_ParamDef paramGlsl;
     AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
