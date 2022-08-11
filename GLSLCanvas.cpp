@@ -86,22 +86,22 @@ GlobalSetup(
     globalData->context.bind();
     
     // Setup GL objects
-    globalData->fbo = *new OGL::Fbo();
-    globalData->quad = *new OGL::QuadVao();
+    globalData->fbo = OGL::Fbo();
+    globalData->quad = OGL::QuadVao();
     
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
     std::string vertCode = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
     std::string fragCode = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
     
-    globalData->passthruVertShader = *new OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
+    globalData->passthruVertShader = OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
     
     OGL::Shader defaultFragShader(fragCode.c_str(), GL_FRAGMENT_SHADER);
     
-    globalData->defaultProgram = *new OGL::Program(&globalData->passthruVertShader, &defaultFragShader);
+    globalData->defaultProgram = OGL::Program(&globalData->passthruVertShader, &defaultFragShader);
     
-    auto programs = new std::unordered_map<std::string,  OGL::Program*>();
+    auto programRefs = new std::unordered_map<std::string,  ProgramRef*>();
     
-    globalData->programs = programs;
+    globalData->programRefs = programRefs;
     
     handleSuite->host_unlock_handle(globalDataH);
 
@@ -118,30 +118,28 @@ GlobalSetdown(
     PF_ParamDef *params[],
     PF_LayerDef *output) {
     
-PF_Err err = PF_Err_NONE;
+    PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
-    // Dispose globalData
-    auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
-    auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
+    if (in_data->global_data) {
+    
+        // Dispose globalData
+        // TODO: Find a way not to call destructors explicitly
+        auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
+        auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
+            
+        globalData->context.bind();
+
+        globalData->fbo.~Fbo();
+        globalData->quad.~QuadVao();
+        globalData->passthruVertShader.~Shader();
+        globalData->defaultProgram.~Program();
+        delete globalData->programRefs;
         
-    globalData->context.bind();
-
-    delete &globalData->fbo;
-    delete &globalData->quad;
-    delete &globalData->passthruVertShader;
-    delete &globalData->defaultProgram;
-    
-    for (auto& ref: *globalData->programs) {
-        delete &ref.second;
+        globalData->context.~GlobalContext();
+        
+        suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
     }
-    
-    delete &globalData->programs;
-    
-    delete &globalData->context;
-
-    suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
-
     return err;
 }
 
