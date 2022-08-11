@@ -40,6 +40,11 @@ public:
     ~Program() {
         glDeleteProgram(this->ID);
     }
+    
+    bool isSucceed() {
+        return this->ID != 0;
+    }
+
     void bind() {
         glUseProgram(this->ID);
     }

@@ -34,7 +34,11 @@ public:
     ~Shader() {
         glDeleteShader(this->ID);
     }
-    
+
+    bool isSucceed() {
+        return this->ID != 0;
+    }
+
     GLuint getID() {
         return this->ID;
     }
