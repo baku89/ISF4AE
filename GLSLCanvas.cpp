@@ -166,11 +166,19 @@ ParamsSetup(
     
     // "Edit Shader" button
     AEFX_CLR_STRUCT(def);
-    PF_ADD_BUTTON("Edit Shader",
-                  "Edit Shader",                  // BUTTON_NAME
+    PF_ADD_BUTTON("No shader loaded",
+                  "Load Shader",                  // BUTTON_NAME
                   PF_PUI_NONE,                    // PUI_FLAGS
                   PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
                   PARAM_EDIT);                    // ID
+   
+    // "Edit Shader" button
+    AEFX_CLR_STRUCT(def);
+    PF_ADD_BUTTON("",
+                  "Save Shader",                  // BUTTON_NAME
+                  PF_PUI_NONE,                    // PUI_FLAGS
+                  PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
+                  PARAM_SAVE);                    // ID
     
     AEFX_CLR_STRUCT(def);
     def.flags |= PF_ParamFlag_SUPERVISE;
@@ -498,11 +506,60 @@ UserChangedParam(PF_InData *in_data,
                  PF_ParamDef *params[],
                  const PF_UserChangedParamExtra *which_hit)
 {
+    PF_Err err = PF_Err_NONE;
+    AEGP_SuiteHandler suites(in_data->pica_basicP);
+    
     switch (which_hit->param_index) {
         case PARAM_EDIT:
-            if (in_data->appl_id != 'PrMr') {
-                PF_STRCPY(out_data->return_msg, "Edit!!!");
-                out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+        {
+            // Load a shader
+            std::vector<std::string> fileTypes;
+                
+            fileTypes.push_back("frag");
+            fileTypes.push_back("glsl");
+            fileTypes.push_back("fs");
+        
+            std::string srcPath = SystemUtil::openFileDialog(fileTypes);
+            
+            if (!srcPath.empty()) {
+                std::string fragCode = SystemUtil::readTextFile(srcPath);
+                
+                if (!fragCode.empty()) {
+                    params[PARAM_GLSL]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                    
+                    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*params[PARAM_GLSL]->u.arb_d.value);
+                    PF_STRCPY(arb->fragCode, fragCode.c_str());
+                    
+                    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                                    PARAM_GLSL,
+                                                                    params[PARAM_GLSL]));
+                } else {
+                    // On failed reading the text file, or simply it's empty
+                    suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
+                                                          "Cannot open the shader file: %s", srcPath.c_str());
+                    out_data->out_flags = PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+                }
+            }
+        }
+            break;
+        case PARAM_SAVE:
+            // Save the current shader
+            std::string dstPath = SystemUtil::saveFileDialog("glslCanvas.frag");
+            
+            if (!dstPath.empty()) {
+                PF_ParamDef param_glsl;
+                AEFX_CLR_STRUCT(param_glsl);
+                ERR(PF_CHECKOUT_PARAM(in_data,
+                                      PARAM_GLSL,
+                                      in_data->current_time,
+                                      in_data->time_step,
+                                      in_data->time_scale,
+                                      &param_glsl));
+                
+                ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
+                SystemUtil::writeTextFile(dstPath, arb->fragCode);
+                
+                ERR(PF_CHECKIN_PARAM(in_data, &param_glsl));
             }
             break;
     }
