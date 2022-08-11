@@ -50,6 +50,7 @@ typedef short int			int16;
 enum {
 	PARAM_INPUT = 0,
     PARAM_GLSL,
+    PARAM_EDIT,
 	PARAM_TIME,
 	PARAM_MOUSE,
 	NUM_PARAMS

@@ -151,12 +151,11 @@ ParamsSetup(
     PF_ParamDef def;
     
     // Add parameters
+        
+    // A bidden arbitrary param for storing fragment strings
     AEFX_CLR_STRUCT(def);
-    
     def.flags = PF_ParamFlag_CANNOT_TIME_VARY;
-    
     ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
-    
     PF_ADD_ARBITRARY2("GLSL",
                       1, 1, // width, height
                       0,
@@ -165,7 +164,16 @@ ParamsSetup(
                       PARAM_GLSL,
                       ARB_REFCON);
     
+    // "Edit Shader" button
     AEFX_CLR_STRUCT(def);
+    PF_ADD_BUTTON("Edit Shader",
+                  "Edit Shader",                  // BUTTON_NAME
+                  PF_PUI_NONE,                    // PUI_FLAGS
+                  PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
+                  PARAM_EDIT);                    // ID
+    
+    AEFX_CLR_STRUCT(def);
+    def.flags |= PF_ParamFlag_SUPERVISE;
     PF_ADD_FLOAT_SLIDERX("Time",
                          -1000000,                  // VALID_MIN
                          1000000,                   // VALID_MAX
@@ -484,6 +492,57 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
     return err;
 }
 
+static PF_Err
+UserChangedParam(PF_InData *in_data,
+                 PF_OutData *out_data,
+                 PF_ParamDef *params[],
+                 const PF_UserChangedParamExtra *which_hit)
+{
+    switch (which_hit->param_index) {
+        case PARAM_EDIT:
+            if (in_data->appl_id != 'PrMr') {
+                PF_STRCPY(out_data->return_msg, "Edit!!!");
+                out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+            }
+            break;
+    }
+    
+    return PF_Err_NONE;
+    
+}
+
+static PF_Err
+UpdateParameterUI(
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output) {
+    
+    PF_Err err = PF_Err_NONE;
+    AEGP_SuiteHandler suites(in_data->pica_basicP);
+    
+    // Create copies of all parameters
+    PF_ParamDef newParams[NUM_PARAMS];
+    for (A_short i = 0; i < NUM_PARAMS; i++) {
+        AEFX_CLR_STRUCT(newParams[i]);
+        newParams[i] = *params[i];
+    }
+    
+    // TODO: Display the state of shader linking instead of the dummy text as below.
+    A_FpLong time = params[PARAM_TIME]->u.fs_d.value;
+    
+    PF_STRCPY(newParams[PARAM_EDIT].name, time > 1 ? "Bigger than 1" : "Less than 1");
+    
+    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                    PARAM_EDIT,
+                                                    &newParams[PARAM_EDIT]));
+    
+    out_data->out_flags |= PF_OutFlag_REFRESH_UI;
+    
+    return err;
+}
+
+
 extern "C" DllExport PF_Err PluginDataEntryFunction(
     PF_PluginDataPtr inPtr, PF_PluginDataCB inPluginDataCallBackPtr,
     SPBasicSuite *inSPBasicSuitePtr, const char *inHostName,
@@ -555,6 +614,21 @@ DllExport
             case PF_Cmd_SMART_RENDER:
                 err = SmartRender(in_data, out_data,
                                   reinterpret_cast<PF_SmartRenderExtra *>(extra));
+                break;
+                
+            case PF_Cmd_USER_CHANGED_PARAM:
+                err = UserChangedParam(in_data,
+                                       out_data,
+                                       params,
+                                       reinterpret_cast<const PF_UserChangedParamExtra*>(extra));
+                break;
+            
+            case PF_Cmd_UPDATE_PARAMS_UI:
+                // To change the label for 'Edit Shader' button
+                err = UpdateParameterUI(in_data,
+                                        out_data,
+                                        params,
+                                        output);
                 break;
         }
     } catch (PF_Err &thrown_err) {
