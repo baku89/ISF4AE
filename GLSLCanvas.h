@@ -58,6 +58,7 @@ enum {
 };
 
 typedef struct {
+    AEGP_PluginID       aegpId;
     OGL::GlobalContext  context;
     OGL::Fbo            fbo;
     OGL::QuadVao        quad;
