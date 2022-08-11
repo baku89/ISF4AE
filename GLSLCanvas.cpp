@@ -635,16 +635,16 @@ UpdateParameterUI(
     if (programRefs.find(code) == programRefs.end()) {
         // Compile new shader if not exists
         globalData->context->bind();
-        OGL::Shader *frag = new OGL::Shader(code, GL_FRAGMENT_SHADER);
+        OGL::Shader frag(code, GL_FRAGMENT_SHADER);
         
-        if (!frag->isSucceed()) {
+        if (!frag.isSucceed()) {
             // On failed compiling a shader
             ProgramRef *pr = new ProgramRef();
             pr->error = PROGRAM_ERROR_SHADER;
             programRefs[code] = pr;
             
         } else {
-            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, frag);
+            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, &frag);
             
             if (!prog->isSucceed()) {
                 // On falied linking
@@ -661,8 +661,6 @@ UpdateParameterUI(
                 programRefs[code] = pr;
             }
         }
-            
-        delete frag;
     }
     
     // Set the shader compliation status
