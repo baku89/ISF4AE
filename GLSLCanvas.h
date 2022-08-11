@@ -63,7 +63,7 @@ typedef struct {
     OGL::GlobalContext  context;
     OGL::Fbo            fbo;
     OGL::QuadVao        quad;
-    OGL::Shader         shader;
+    OGL::Program        program;
 } GlobalData;
 
 struct ParamInfo {

@@ -79,11 +79,13 @@ GlobalSetup(
     globalData->quad = *new OGL::QuadVao();
     
     std::string resourcePath = AEUtils::getResourcesPath(in_data);
-    std::string vertPath = resourcePath + "shaders/passthru.vert";
-    std::string fragPath = resourcePath + "shaders/uv-gradient.frag";
-    globalData->shader = *new OGL::Shader();
+    std::string vertCode = AESDK_SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
+    std::string fragCode = AESDK_SystemUtil::readTextFile(resourcePath + "shaders/uv-gradient.frag");
     
-    globalData->shader.initialize(vertPath.c_str(), fragPath.c_str());
+    OGL::Shader vert(vertCode.c_str(), GL_VERTEX_SHADER);
+    OGL::Shader frag(fragCode.c_str(), GL_FRAGMENT_SHADER);
+    
+    globalData->program = *new OGL::Program(vert, frag);
     
     handleSuite->host_unlock_handle(globalDataH);
     
@@ -112,9 +114,10 @@ PF_Err err = PF_Err_NONE;
     auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
     auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
 
-    globalData->fbo.~Fbo();
-    globalData->quad.~QuadVao();
-    globalData->context.~GlobalContext();
+    delete &globalData->fbo;
+    delete &globalData->quad;
+    delete &globalData->program;
+    delete &globalData->context;
 
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
 
@@ -299,13 +302,13 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             handleSuite->host_lock_handle(pixelsBufferH));
         
         // Bind
-        globalData->shader.bind();
+        globalData->program.bind();
         globalData->fbo.bind();
 
         // Set uniforms
-        globalData->shader.setVec2("u_resolution", width, height);
-        globalData->shader.setFloat("u_time", paramInfo->time);
-        globalData->shader.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
+        globalData->program.setVec2("u_resolution", width, height);
+        globalData->program.setFloat("u_time", paramInfo->time);
+        globalData->program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
         
         // Render
         globalData->quad.render();
@@ -315,7 +318,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
 
         // Unbind
-        globalData->shader.unbind();
+        globalData->program.unbind();
         globalData->fbo.unbind();
 
         // downloadTexture
