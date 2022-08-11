@@ -56,8 +56,8 @@
 		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
-		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemUtil.h; path = ../SystemUtil.h; sourceTree = "<group>"; };
-		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; name = SystemUtil.cpp; path = ../SystemUtil.cpp; sourceTree = "<group>"; };
+		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtil.h; sourceTree = "<group>"; };
+		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; path = SystemUtil.cpp; sourceTree = "<group>"; };
 		C4E618CC095A3CE80012CA3F /* GLSLCanvas.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLSLCanvas.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = GLSLCanvas.cpp; path = ../GLSLCanvas.cpp; sourceTree = SOURCE_ROOT; };
 		D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = GLSLCanvasPiPL.r; path = ../GLSLCanvasPiPL.r; sourceTree = SOURCE_ROOT; };
@@ -83,6 +83,8 @@
 		233B1F1E28A476D2000652AC /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				924FC63E1F0E132C0075C62A /* SystemUtil.h */,
+				924FC63F1F0E13A50075C62A /* SystemUtil.cpp */,
 				233B1F1F28A476D2000652AC /* Debug.h */,
 				233B1F2028A476D2000652AC /* AEUtils.hpp */,
 				233B1F2128A476D2000652AC /* AEOGLInterop.hpp */,
@@ -172,8 +174,6 @@
 				233B1F1E28A476D2000652AC /* Headers */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
 				D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */,
-				924FC63E1F0E132C0075C62A /* SystemUtil.h */,
-				924FC63F1F0E13A50075C62A /* SystemUtil.cpp */,
 				7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */,
 				D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
