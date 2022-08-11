@@ -3,9 +3,10 @@
 #include "Smart_Utils.h"
 #include "AEFX_SuiteHelper.h"
 
-#include "SystemUtil.h"
 #include "Config.h"
-#include "AEUtils.hpp"
+
+#include "SystemUtil.h"
+#include "AEUtil.h"
 
 #include "AEOGLInterop.hpp"
 
@@ -50,7 +51,7 @@ GlobalSetup(
                                       STAGE_VERSION,
                                       BUILD_VERSION);
 
-    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE;
+    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI;
     out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER;
     
     // Initialize globalData
@@ -71,28 +72,30 @@ GlobalSetup(
     if (!globalData->context.initialized) {
         return PF_Err_OUT_OF_MEMORY;
     }
-
-    globalData->context.bind();
-
-    // Setup GL objects
-    globalData->fbo = *new OGL::Fbo();
-    globalData->quad = *new OGL::QuadVao();
-    
-    std::string resourcePath = AEUtils::getResourcesPath(in_data);
-    std::string vertCode = AESDK_SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
-    std::string fragCode = AESDK_SystemUtil::readTextFile(resourcePath + "shaders/uv-gradient.frag");
-    
-    OGL::Shader vert(vertCode.c_str(), GL_VERTEX_SHADER);
-    OGL::Shader frag(fragCode.c_str(), GL_FRAGMENT_SHADER);
-    
-    globalData->program = *new OGL::Program(vert, frag);
-    
-    handleSuite->host_unlock_handle(globalDataH);
     
     FX_LOG("OpenGL Version:       " << glGetString(GL_VERSION));
     FX_LOG("OpenGL Vendor:        " << glGetString(GL_VENDOR));
     FX_LOG("OpenGL Renderer:      " << glGetString(GL_RENDERER));
     FX_LOG("OpenGL GLSL Versions: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    globalData->context.bind();
+    
+    // Setup GL objects
+    globalData->fbo = *new OGL::Fbo();
+    globalData->quad = *new OGL::QuadVao();
+    
+    std::string resourcePath = AEUtil::getResourcesPath(in_data);
+    std::string vertCode = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
+    
+    globalData->passthruVertShader = *new OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
+    
+    auto programs = new std::unordered_map<std::string,  OGL::Program*>();
+    
+    FX_LOG("program count:" << programs->size());
+    
+    globalData->programs = programs;
+    
+    handleSuite->host_unlock_handle(globalDataH);
 
     return err;
 }
@@ -113,10 +116,19 @@ PF_Err err = PF_Err_NONE;
     // Dispose globalData
     auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
     auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
+        
+    globalData->context.bind();
 
     delete &globalData->fbo;
     delete &globalData->quad;
-    delete &globalData->program;
+    delete &globalData->passthruVertShader;
+    
+    for (auto& ref: *globalData->programs) {
+        delete &ref.second;
+    }
+    
+    delete &globalData->programs;
+    
     delete &globalData->context;
 
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
@@ -140,6 +152,20 @@ ParamsSetup(
     
     // Add parameters
     AEFX_CLR_STRUCT(def);
+    
+    def.flags = PF_ParamFlag_CANNOT_TIME_VARY;
+    
+    ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
+    
+    PF_ADD_ARBITRARY2("GLSL",
+                      1, 1, // width, height
+                      0,
+                      PF_PUI_NO_ECW_UI,
+                      def.u.arb_d.dephault,
+                      PARAM_GLSL,
+                      ARB_REFCON);
+    
+    AEFX_CLR_STRUCT(def);
     PF_ADD_FLOAT_SLIDERX("Time",
                          -1000000,                  // VALID_MIN
                          1000000,                   // VALID_MAX
@@ -160,6 +186,86 @@ ParamsSetup(
     // Set PF_OutData->num_params to match the parameter count.
     out_data->num_params = NUM_PARAMS;
 
+    return err;
+}
+
+static PF_Err
+HandleArbitrary(
+    PF_InData            *in_data,
+    PF_OutData            *out_data,
+    PF_ParamDef            *params[],
+    PF_LayerDef            *output,
+    PF_ArbParamsExtra    *extra)
+{
+    PF_Err     err     = PF_Err_NONE;
+    
+    switch (extra->which_function) {
+        case PF_Arbitrary_NEW_FUNC:
+            if (extra->u.new_func_params.refconPV != ARB_REFCON) {
+                err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+            } else {
+                err = CreateDefaultArb(in_data, out_data, extra->u.new_func_params.arbPH);
+            }
+            break;
+            
+        case PF_Arbitrary_DISPOSE_FUNC:
+            if (extra->u.dispose_func_params.refconPV != ARB_REFCON) {
+                err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+            } else {
+                PF_DISPOSE_HANDLE(extra->u.dispose_func_params.arbH);
+            }
+            break;
+        
+        case PF_Arbitrary_COPY_FUNC:
+            if(extra->u.copy_func_params.refconPV == ARB_REFCON) {
+                ERR(CreateDefaultArb(in_data,
+                                     out_data,
+                                     extra->u.copy_func_params.dst_arbPH));
+
+                ERR(ArbCopy(in_data,
+                            out_data,
+                            &extra->u.copy_func_params.src_arbH,
+                            extra->u.copy_func_params.dst_arbPH));
+            }
+            break;
+        
+        case PF_Arbitrary_FLAT_SIZE_FUNC:
+            *(extra->u.flat_size_func_params.flat_data_sizePLu) = sizeof(ParamArbGlsl);
+            break;
+
+        case PF_Arbitrary_FLATTEN_FUNC:
+            if(extra->u.flatten_func_params.buf_sizeLu == sizeof(ParamArbGlsl)){
+                void *src = (ParamArbGlsl*)PF_LOCK_HANDLE(extra->u.flatten_func_params.arbH);
+                void *dst = extra->u.flatten_func_params.flat_dataPV;
+                if (src) {
+                    memcpy(dst, src, sizeof(ParamArbGlsl));
+                }
+                PF_UNLOCK_HANDLE(extra->u.flatten_func_params.arbH);
+            }
+            break;
+
+        case PF_Arbitrary_UNFLATTEN_FUNC:
+            if(extra->u.unflatten_func_params.buf_sizeLu == sizeof(ParamArbGlsl)){
+                PF_Handle    handle = PF_NEW_HANDLE(sizeof(ParamArbGlsl));
+                void *dst = (ParamArbGlsl*)PF_LOCK_HANDLE(handle);
+                void *src = (void*)extra->u.unflatten_func_params.flat_dataPV;
+                if (src) {
+                    memcpy(dst, src, sizeof(ParamArbGlsl));
+                }
+                *(extra->u.unflatten_func_params.arbPH) = handle;
+                PF_UNLOCK_HANDLE(handle);
+            }
+            break;
+        
+        case PF_Arbitrary_COMPARE_FUNC:
+            ERR(ArbCompare(in_data,
+                           out_data,
+                           &extra->u.compare_func_params.a_arbH,
+                           &extra->u.compare_func_params.b_arbH,
+                           extra->u.compare_func_params.compareP));
+            break;
+    }
+    
     return err;
 }
 
@@ -192,6 +298,45 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     if (!paramInfo) {
         return PF_Err_OUT_OF_MEMORY;
     }
+    
+    // Get the GLSL code and compile it if necessary
+    auto *globalData = reinterpret_cast<GlobalData *>(
+        handleSuite->host_lock_handle(in_data->global_data));
+    
+    PF_ParamDef param_glsl;
+    AEFX_CLR_STRUCT(param_glsl);
+    ERR(PF_CHECKOUT_PARAM(in_data,
+                          PARAM_GLSL,
+                          in_data->current_time,
+                          in_data->time_step,
+                          in_data->time_scale,
+                          &param_glsl));
+    
+    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
+    
+    if (arb) {
+        auto &code = arb->fragCode;
+        auto &programs = *globalData->programs;
+        
+        OGL::Program *program;
+        
+        if (programs.find(code) == programs.end()) {
+            FX_LOG("Compile a new program for the code:" << code);
+            // Compile new shader if not exists
+            globalData->context.bind();
+            OGL::Shader *frag = new OGL::Shader(code, GL_FRAGMENT_SHADER);
+            program = new OGL::Program(&globalData->passthruVertShader, frag);
+            delete frag;
+            
+            programs[code] = program;
+        } else {
+            program = programs[code];
+            FX_LOG("Reuse a program for the code:" << code);
+        }
+        
+        paramInfo->program = program;
+    }
+    
     
     // Checkout Params
     PF_ParamDef param_time;
@@ -301,14 +446,17 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         void *pixelsBufferP = reinterpret_cast<char *>(
             handleSuite->host_lock_handle(pixelsBufferH));
         
+        // Initialize the program if necessary
+        
         // Bind
-        globalData->program.bind();
+        OGL::Program &program = *paramInfo->program;
+        program.bind();
         globalData->fbo.bind();
 
         // Set uniforms
-        globalData->program.setVec2("u_resolution", width, height);
-        globalData->program.setFloat("u_time", paramInfo->time);
-        globalData->program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
+        program.setVec2("u_resolution", width, height);
+        program.setFloat("u_time", paramInfo->time);
+        program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
         
         // Render
         globalData->quad.render();
@@ -318,7 +466,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
 
         // Unbind
-        globalData->program.unbind();
+        program.bind();
         globalData->fbo.unbind();
 
         // downloadTexture
@@ -389,6 +537,14 @@ DllExport
                                     out_data,
                                     params,
                                     output);
+                break;
+            
+            case PF_Cmd_ARBITRARY_CALLBACK:
+                err = HandleArbitrary(in_data,
+                                      out_data,
+                                      params,
+                                      output,
+                                      reinterpret_cast<PF_ArbParamsExtra*>(extra));
                 break;
 
             case PF_Cmd_SMART_PRE_RENDER:

@@ -20,6 +20,8 @@
 		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
 		2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */ = {isa = PBXBuildFile; fileRef = 2382660628A490F5001F523D /* AEFX_SuiteHelper.c */; };
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
+		2382660C28A4AE17001F523D /* GLSLCanvasArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */; };
+		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
 		D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */; };
 		D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */; };
@@ -31,7 +33,7 @@
 		233B1F1A28A46D35000652AC /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = ../../../../../../../../usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<group>"; };
 		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
-		233B1F2028A476D2000652AC /* AEUtils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEUtils.hpp; sourceTree = "<group>"; };
+		233B1F2028A476D2000652AC /* AEUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEUtil.h; sourceTree = "<group>"; };
 		233B1F2128A476D2000652AC /* AEOGLInterop.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEOGLInterop.hpp; sourceTree = "<group>"; };
 		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
 		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
@@ -54,6 +56,8 @@
 		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../SDK/Examples/Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../SDK/Examples/Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
 		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
+		2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLSLCanvasArbHandler.cpp; sourceTree = "<group>"; };
+		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtil.h; sourceTree = "<group>"; };
@@ -86,7 +90,8 @@
 				924FC63E1F0E132C0075C62A /* SystemUtil.h */,
 				924FC63F1F0E13A50075C62A /* SystemUtil.cpp */,
 				233B1F1F28A476D2000652AC /* Debug.h */,
-				233B1F2028A476D2000652AC /* AEUtils.hpp */,
+				233B1F2028A476D2000652AC /* AEUtil.h */,
+				2382660D28A4CED0001F523D /* AEUtil.cpp */,
 				233B1F2128A476D2000652AC /* AEOGLInterop.hpp */,
 				233B1F2228A476D2000652AC /* OGL */,
 				233B1F2E28A476D2000652AC /* glad */,
@@ -175,6 +180,7 @@
 				23A0241F28A3F3E900E021FB /* Config.h */,
 				D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */,
 				7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */,
+				2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */,
 				D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
 				C4E6188C095A3C800012CA3F /* Products */,
@@ -300,10 +306,12 @@
 			files = (
 				D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */,
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
+				2382660C28A4AE17001F523D /* GLSLCanvasArbHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
 				233B1F3B28A476D2000652AC /* Texture.cpp in Sources */,
 				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,
 				2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */,
+				2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */,
 				233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */,
 				233B1F3928A476D2000652AC /* Fbo.cpp in Sources */,
 				D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */,

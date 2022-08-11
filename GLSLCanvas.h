@@ -44,29 +44,33 @@ typedef short int			int16;
 
 /* Parameter defaults */
 
-#define RESTRICT_BOUNDS		0
-
-#define FRAGCODE_MAX_LEN	512
+#define ARB_REFCON          (void*)0xDEADBEEFDEADBEEF
+#define FRAGCODE_MAX_LEN	8192
 
 enum {
 	PARAM_INPUT = 0,
+    PARAM_GLSL,
 	PARAM_TIME,
 	PARAM_MOUSE,
 	NUM_PARAMS
 };
 
 typedef struct {
-    A_u_long    referredNum;
-} ShaderRef;
-
-typedef struct {
     OGL::GlobalContext  context;
     OGL::Fbo            fbo;
     OGL::QuadVao        quad;
-    OGL::Program        program;
+    OGL::Shader         passthruVertShader;
+    std::unordered_map<std::string, OGL::Program*> *programs;
 } GlobalData;
 
+typedef struct {
+    A_char fragCode[FRAGCODE_MAX_LEN];
+} ParamArbGlsl;
+
+
+
 struct ParamInfo {
+    OGL::Program *program;
     A_FpLong time;
     A_FloatPoint mouse;
 };
@@ -77,3 +81,24 @@ DllExport PF_Err EffectMain(PF_Cmd cmd, PF_InData *in_data,
                             PF_OutData *out_data, PF_ParamDef *params[],
                             PF_LayerDef *output, void *extra);
 }
+
+PF_Err
+CreateDefaultArb(
+    PF_InData            *in_data,
+    PF_OutData           *out_data,
+    PF_ArbitraryH        *dephault);
+
+PF_Err
+ArbCopy(
+    PF_InData            *in_data,
+    PF_OutData           *out_data,
+    const PF_ArbitraryH  *srcP,
+    PF_ArbitraryH        *dstP);
+
+PF_Err
+ArbCompare(
+    PF_InData                *in_data,
+    PF_OutData                *out_data,
+    const PF_ArbitraryH        *a_arbP,
+    const PF_ArbitraryH        *b_arbP,
+    PF_ArbCompareResult        *resultP);
