@@ -36,7 +36,10 @@ public:
             this->ID = 0;
         }
     }
-
+    
+    ~Program() {
+        glDeleteProgram(this->ID);
+    }
     void bind() {
         glUseProgram(this->ID);
     }
