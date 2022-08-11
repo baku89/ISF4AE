@@ -9,7 +9,9 @@
 
 namespace AESDK_SystemUtil {
 
-	std::string openFileDialog(std::vector<std::string> &fileTypes);
+std::string openFileDialog(std::vector<std::string> &fileTypes);
+
+std::string readTextFile(std::string path);
 	
 };
 
