@@ -96,8 +96,6 @@ GlobalSetup(
     
     auto programs = new std::unordered_map<std::string,  OGL::Program*>();
     
-    FX_LOG("program count:" << programs->size());
-    
     globalData->programs = programs;
     
     handleSuite->host_unlock_handle(globalDataH);
