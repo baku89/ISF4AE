@@ -36,7 +36,7 @@
 		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
 		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
 		233B1F2528A476D2000652AC /* Fbo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Fbo.cpp; sourceTree = "<group>"; };
-		233B1F2628A476D2000652AC /* Shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
+		233B1F2628A476D2000652AC /* Program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Program.h; sourceTree = "<group>"; };
 		233B1F2728A476D2000652AC /* QuadVao.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = QuadVao.cpp; sourceTree = "<group>"; };
 		233B1F2828A476D2000652AC /* GlobalContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalContext.h; sourceTree = "<group>"; };
 		233B1F2928A476D2000652AC /* Texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Texture.cpp; sourceTree = "<group>"; };
@@ -53,6 +53,7 @@
 		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../SDK/Examples/Util/Smart_Utils.cpp; sourceTree = "<group>"; };
 		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../SDK/Examples/Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../SDK/Examples/Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
+		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemUtil.h; path = ../SystemUtil.h; sourceTree = "<group>"; };
@@ -104,9 +105,10 @@
 				233B1F2728A476D2000652AC /* QuadVao.cpp */,
 				233B1F2828A476D2000652AC /* GlobalContext.h */,
 				233B1F2328A476D2000652AC /* GlobalContext.cpp */,
-				233B1F2628A476D2000652AC /* Shader.h */,
+				233B1F2628A476D2000652AC /* Program.h */,
 				233B1F2D28A476D2000652AC /* Texture.h */,
 				233B1F2928A476D2000652AC /* Texture.cpp */,
+				2382660A28A4A1D8001F523D /* Shader.h */,
 			);
 			path = OGL;
 			sourceTree = "<group>";

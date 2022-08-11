@@ -4,5 +4,6 @@
 #include "OGL/GlobalContext.h"
 #include "OGL/Texture.h"
 #include "OGL/Fbo.h"
+#include "OGL/Program.h"
 #include "OGL/Shader.h"
 #include "OGL/QuadVao.h"
