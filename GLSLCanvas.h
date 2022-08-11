@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef FILTER_H
-#define FILTER_H
-
 typedef unsigned char		u_char;
 typedef unsigned short		u_short;
 typedef unsigned short		u_int16;
@@ -22,27 +19,20 @@ typedef short int			int16;
 	#include <Windows.h>
 #endif
 
-#ifdef AE_OS_WIN
-	#define STRNCPY(dest, src, len) strncpy_s(dest, src, len)
-#else
-	#define STRNCPY(dest, src, len) strncpy(dest, src, len)
-#endif
-
 #include "entry.h"
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
 #include "AE_Macros.h"
 #include "Param_Utils.h"
-#include "AE_EffectSuites.h"
 #include "AE_EffectCBSuites.h"
 #include "String_Utils.h"
 #include "AE_GeneralPlug.h"
 #include "AEFX_ChannelDepthTpl.h"
-#include "AEFX_SuiteHelper.h"
 #include "AEGP_SuiteHandler.h"
 
-#include <OpenGL/gl3.h>
-#include <GLUT/GLUT.h>
+#include "OGL.h"
+
+#include <unordered_map>
 
 /* Versioning information */
 
@@ -56,7 +46,7 @@ typedef short int			int16;
 
 #define RESTRICT_BOUNDS		0
 
-#define FRAGPATH_MAX_LEN	512
+#define FRAGCODE_MAX_LEN	512
 
 enum {
 	PARAM_INPUT = 0,
@@ -65,71 +55,25 @@ enum {
 	NUM_PARAMS
 };
 
-typedef struct EffectRenderData
-{
-	
-	EffectRenderData() :
-		initialized(false),
-		width(0), height(0),
-		frameBuffer(0),
-		beforeSwizzleTexture(0),
-		outputFrameTexture(0),
-		program(0)
-	{
-	};
-	
-	virtual ~EffectRenderData() {
-		//local OpenGL resource un-loading
-		if (beforeSwizzleTexture)
-			glDeleteTextures(1, &beforeSwizzleTexture);
-		
-		if (outputFrameTexture)
-			glDeleteTextures(1, &outputFrameTexture);
-		
-		//common OpenGL resource unloading
-		if (program)
-			glDeleteProgram(program);
-		
-		//release framebuffer resources
-		if (frameBuffer)
-			glDeleteFramebuffers(1, &frameBuffer);
-	}
-	
-	A_Boolean	flat;
-	A_Boolean	initialized;
-	
-	u_int16		width, height;
-	
-	GLuint		frameBuffer;
-	GLuint		beforeSwizzleTexture;
-	GLuint		outputFrameTexture;
-	GLuint		program;
-	
-	A_char      fragPath[FRAGPATH_MAX_LEN + 1];
-	
-} EffectRenderData;
+typedef struct {
+    A_u_long    referredNum;
+} ShaderRef;
 
-//typedef struct {
-//	A_Boolean	flat;
-//	A_char		fragPath[FRAGPATH_MAX_LEN + 1];
-//} FlatSeqData;
+typedef struct {
+    OGL::GlobalContext  context;
+    OGL::Fbo            fbo;
+    OGL::QuadVao        quad;
+    OGL::Shader         shader;
+} GlobalData;
 
+struct ParamInfo {
+    A_FpLong time;
+    A_FloatPoint mouse;
+};
 
-#ifdef __cplusplus
-	extern "C" {
-#endif
+extern "C" {
 
-DllExport	PF_Err 
-EntryPointFunc(	
-	PF_Cmd			cmd,
-	PF_InData		*in_data,
-	PF_OutData		*out_data,
-	PF_ParamDef		*params[],
-	PF_LayerDef		*output,
-	void			*extra) ;
-
-#ifdef __cplusplus
+DllExport PF_Err EffectMain(PF_Cmd cmd, PF_InData *in_data,
+                            PF_OutData *out_data, PF_ParamDef *params[],
+                            PF_LayerDef *output, void *extra);
 }
-#endif
-
-#endif // FILTER

@@ -23,12 +23,12 @@ resource 'PiPL' (16000) {
 		},
 #ifdef AE_OS_WIN
 	#ifdef AE_PROC_INTELx64
-		CodeWin64X86 {"EntryPointFunc"},
+		CodeWin64X86 {"EffectMain"},
 	#endif
 #else
 	#ifdef AE_OS_MAC
-		CodeMacIntel64 {"EntryPointFunc"},
-        CodeMacARM64 {"EntryPointFunc"},
+		CodeMacIntel64 {"EffectMain"},
+        CodeMacARM64 {"EffectMain"},
 	#endif
 #endif
 		/* [6] */
@@ -51,11 +51,11 @@ resource 'PiPL' (16000) {
 		},
 		/* [10] */
 		AE_Effect_Global_OutFlags {
-		0x24
+            0x02000000
 
 		},
 		AE_Effect_Global_OutFlags_2 {
-		0x00000000
+            0x00001400
 		},
 		/* [11] */
 		AE_Effect_Match_Name {

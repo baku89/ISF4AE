@@ -7,15 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7EF36FB716F29701002A3CB3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7EF36FB616F29701002A3CB3 /* Cocoa.framework */; };
-		92099B621F0CFBA30080F057 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92099B611F0CFBA30080F057 /* IOKit.framework */; };
-		92099B641F0CFBAE0080F057 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92099B631F0CFBAE0080F057 /* OpenGL.framework */; };
-		92099B6D1F0CFFF80080F057 /* GLBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92099B6B1F0CFFF80080F057 /* GLBase.cpp */; };
-		92099B6F1F0D01750080F057 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92099B6E1F0D01750080F057 /* GLUT.framework */; };
+		233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 233B1F1A28A46D35000652AC /* OpenGL.framework */; };
+		233B1F1D28A46D55000652AC /* libglfw.3.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */; };
+		233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2328A476D2000652AC /* GlobalContext.cpp */; };
+		233B1F3828A476D2000652AC /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2428A476D2000652AC /* Common.cpp */; };
+		233B1F3928A476D2000652AC /* Fbo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2528A476D2000652AC /* Fbo.cpp */; };
+		233B1F3A28A476D2000652AC /* QuadVao.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2728A476D2000652AC /* QuadVao.cpp */; };
+		233B1F3B28A476D2000652AC /* Texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2928A476D2000652AC /* Texture.cpp */; };
+		233B1F3C28A476D2000652AC /* glad.c in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F3528A476D2000652AC /* glad.c */; };
+		2382660128A48EDF001F523D /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = 2382660028A48EDF001F523D /* shaders */; };
+		2382660328A49081001F523D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2382660228A49081001F523D /* Cocoa.framework */; };
+		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
+		2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */ = {isa = PBXBuildFile; fileRef = 2382660628A490F5001F523D /* AEFX_SuiteHelper.c */; };
+		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
-		92C8B4041F0DDB19003DE970 /* fragment-shader.frag in Resources */ = {isa = PBXBuildFile; fileRef = 92C8B4021F0DDB19003DE970 /* fragment-shader.frag */; };
-		92C8B4051F0DDB19003DE970 /* vertex-shader.vert in Resources */ = {isa = PBXBuildFile; fileRef = 92C8B4031F0DDB19003DE970 /* vertex-shader.vert */; };
-		92DBB2181F1742FE0059F43C /* swizzle.frag in Resources */ = {isa = PBXBuildFile; fileRef = 92DBB2171F1742FE0059F43C /* swizzle.frag */; };
 		D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */; };
 		D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */; };
 		D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */; };
@@ -23,23 +28,35 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		233B1EF328A46337000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = ../Debug.h; sourceTree = "<group>"; };
-		233B1EFB28A46828000652AC /* AEUtils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = AEUtils.hpp; path = ../AEUtils.hpp; sourceTree = "<group>"; };
+		233B1F1A28A46D35000652AC /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = ../../../../../../../../usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<group>"; };
+		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
+		233B1F2028A476D2000652AC /* AEUtils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEUtils.hpp; sourceTree = "<group>"; };
+		233B1F2128A476D2000652AC /* AEOGLInterop.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEOGLInterop.hpp; sourceTree = "<group>"; };
+		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
+		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
+		233B1F2528A476D2000652AC /* Fbo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Fbo.cpp; sourceTree = "<group>"; };
+		233B1F2628A476D2000652AC /* Shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
+		233B1F2728A476D2000652AC /* QuadVao.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = QuadVao.cpp; sourceTree = "<group>"; };
+		233B1F2828A476D2000652AC /* GlobalContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalContext.h; sourceTree = "<group>"; };
+		233B1F2928A476D2000652AC /* Texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Texture.cpp; sourceTree = "<group>"; };
+		233B1F2A28A476D2000652AC /* Fbo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fbo.h; sourceTree = "<group>"; };
+		233B1F2B28A476D2000652AC /* QuadVao.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QuadVao.h; sourceTree = "<group>"; };
+		233B1F2C28A476D2000652AC /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
+		233B1F2D28A476D2000652AC /* Texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Texture.h; sourceTree = "<group>"; };
+		233B1F3128A476D2000652AC /* khrplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = khrplatform.h; sourceTree = "<group>"; };
+		233B1F3328A476D2000652AC /* glad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glad.h; sourceTree = "<group>"; };
+		233B1F3528A476D2000652AC /* glad.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glad.c; sourceTree = "<group>"; };
+		233B1F3628A476D2000652AC /* OGL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OGL.h; sourceTree = "<group>"; };
+		2382660028A48EDF001F523D /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../shaders; sourceTree = "<group>"; };
+		2382660228A49081001F523D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../SDK/Examples/Util/Smart_Utils.cpp; sourceTree = "<group>"; };
+		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../SDK/Examples/Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
+		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../SDK/Examples/Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
-		7EF36FB616F29701002A3CB3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
-		92099B611F0CFBA30080F057 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		92099B631F0CFBAE0080F057 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		92099B651F0CFC6F0080F057 /* libglfw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglfw3.a; path = ../lib/glfw/src/libglfw3.a; sourceTree = "<group>"; };
-		92099B6B1F0CFFF80080F057 /* GLBase.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = GLBase.cpp; path = ../GLBase.cpp; sourceTree = "<group>"; };
-		92099B6C1F0CFFF80080F057 /* GLBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLBase.h; path = ../GLBase.h; sourceTree = "<group>"; };
-		92099B6E1F0D01750080F057 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemUtil.h; path = ../SystemUtil.h; sourceTree = "<group>"; };
 		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; name = SystemUtil.cpp; path = ../SystemUtil.cpp; sourceTree = "<group>"; };
-		92C8B4001F0DD8E3003DE970 /* LoadShaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoadShaders.h; path = ../LoadShaders.h; sourceTree = "<group>"; };
-		92C8B4021F0DDB19003DE970 /* fragment-shader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = "fragment-shader.frag"; path = "../GLSL_files/fragment-shader.frag"; sourceTree = "<group>"; };
-		92C8B4031F0DDB19003DE970 /* vertex-shader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = "vertex-shader.vert"; path = "../GLSL_files/vertex-shader.vert"; sourceTree = "<group>"; };
-		92DBB2171F1742FE0059F43C /* swizzle.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = swizzle.frag; path = ../GLSL_files/swizzle.frag; sourceTree = "<group>"; };
 		C4E618CC095A3CE80012CA3F /* GLSLCanvas.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLSLCanvas.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = GLSLCanvas.cpp; path = ../GLSLCanvas.cpp; sourceTree = SOURCE_ROOT; };
 		D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = GLSLCanvasPiPL.r; path = ../GLSLCanvasPiPL.r; sourceTree = SOURCE_ROOT; };
@@ -53,54 +70,111 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				92099B6F1F0D01750080F057 /* GLUT.framework in Frameworks */,
-				92099B641F0CFBAE0080F057 /* OpenGL.framework in Frameworks */,
-				92099B621F0CFBA30080F057 /* IOKit.framework in Frameworks */,
-				7EF36FB716F29701002A3CB3 /* Cocoa.framework in Frameworks */,
+				2382660328A49081001F523D /* Cocoa.framework in Frameworks */,
+				233B1F1D28A46D55000652AC /* libglfw.3.3.dylib in Frameworks */,
+				233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		233B1F1E28A476D2000652AC /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F1F28A476D2000652AC /* Debug.h */,
+				233B1F2028A476D2000652AC /* AEUtils.hpp */,
+				233B1F2128A476D2000652AC /* AEOGLInterop.hpp */,
+				233B1F2228A476D2000652AC /* OGL */,
+				233B1F2E28A476D2000652AC /* glad */,
+				233B1F3628A476D2000652AC /* OGL.h */,
+			);
+			name = Headers;
+			path = ../Headers;
+			sourceTree = "<group>";
+		};
+		233B1F2228A476D2000652AC /* OGL */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F2C28A476D2000652AC /* Common.h */,
+				233B1F2428A476D2000652AC /* Common.cpp */,
+				233B1F2A28A476D2000652AC /* Fbo.h */,
+				233B1F2528A476D2000652AC /* Fbo.cpp */,
+				233B1F2B28A476D2000652AC /* QuadVao.h */,
+				233B1F2728A476D2000652AC /* QuadVao.cpp */,
+				233B1F2828A476D2000652AC /* GlobalContext.h */,
+				233B1F2328A476D2000652AC /* GlobalContext.cpp */,
+				233B1F2628A476D2000652AC /* Shader.h */,
+				233B1F2D28A476D2000652AC /* Texture.h */,
+				233B1F2928A476D2000652AC /* Texture.cpp */,
+			);
+			path = OGL;
+			sourceTree = "<group>";
+		};
+		233B1F2E28A476D2000652AC /* glad */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F2F28A476D2000652AC /* include */,
+				233B1F3428A476D2000652AC /* src */,
+			);
+			path = glad;
+			sourceTree = "<group>";
+		};
+		233B1F2F28A476D2000652AC /* include */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F3028A476D2000652AC /* KHR */,
+				233B1F3228A476D2000652AC /* glad */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		233B1F3028A476D2000652AC /* KHR */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F3128A476D2000652AC /* khrplatform.h */,
+			);
+			path = KHR;
+			sourceTree = "<group>";
+		};
+		233B1F3228A476D2000652AC /* glad */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F3328A476D2000652AC /* glad.h */,
+			);
+			path = glad;
+			sourceTree = "<group>";
+		};
+		233B1F3428A476D2000652AC /* src */ = {
+			isa = PBXGroup;
+			children = (
+				233B1F3528A476D2000652AC /* glad.c */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		92099B601F0CFBA30080F057 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				92099B6E1F0D01750080F057 /* GLUT.framework */,
-				92099B651F0CFC6F0080F057 /* libglfw3.a */,
-				92099B631F0CFBAE0080F057 /* OpenGL.framework */,
-				92099B611F0CFBA30080F057 /* IOKit.framework */,
+				2382660228A49081001F523D /* Cocoa.framework */,
+				233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */,
+				233B1F1A28A46D35000652AC /* OpenGL.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		92C8B4011F0DDB10003DE970 /* GLSL_files */ = {
-			isa = PBXGroup;
-			children = (
-				92DBB2171F1742FE0059F43C /* swizzle.frag */,
-				92C8B4021F0DDB19003DE970 /* fragment-shader.frag */,
-				92C8B4031F0DDB19003DE970 /* vertex-shader.vert */,
-			);
-			name = GLSL_files;
 			sourceTree = "<group>";
 		};
 		C4E6187C095A3C800012CA3F = {
 			isa = PBXGroup;
 			children = (
-				233B1EFB28A46828000652AC /* AEUtils.hpp */,
-				233B1EF328A46337000652AC /* Debug.h */,
+				2382660028A48EDF001F523D /* shaders */,
+				233B1F1E28A476D2000652AC /* Headers */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
-				92C8B4011F0DDB10003DE970 /* GLSL_files */,
-				92C8B4001F0DD8E3003DE970 /* LoadShaders.h */,
 				D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */,
 				924FC63E1F0E132C0075C62A /* SystemUtil.h */,
 				924FC63F1F0E13A50075C62A /* SystemUtil.cpp */,
 				7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */,
-				92099B6B1F0CFFF80080F057 /* GLBase.cpp */,
-				92099B6C1F0CFFF80080F057 /* GLBase.h */,
 				D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
-				7EF36FB616F29701002A3CB3 /* Cocoa.framework */,
 				C4E6188C095A3C800012CA3F /* Products */,
 				92099B601F0CFBA30080F057 /* Frameworks */,
 			);
@@ -117,6 +191,9 @@
 		D0FE57630993C4FD00139A60 /* Supporting Code */ = {
 			isa = PBXGroup;
 			children = (
+				2382660828A49101001F523D /* MissingSuiteError.cpp */,
+				2382660628A490F5001F523D /* AEFX_SuiteHelper.c */,
+				2382660428A490ED001F523D /* Smart_Utils.cpp */,
 				D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */,
 				D0FE579B0993C5E500139A60 /* AEGP_SuiteHandler.h */,
 				D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */,
@@ -177,9 +254,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				92DBB2181F1742FE0059F43C /* swizzle.frag in Resources */,
-				92C8B4041F0DDB19003DE970 /* fragment-shader.frag in Resources */,
-				92C8B4051F0DDB19003DE970 /* vertex-shader.vert in Resources */,
+				2382660128A48EDF001F523D /* shaders in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,10 +297,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */,
-				92099B6D1F0CFFF80080F057 /* GLBase.cpp in Sources */,
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
+				233B1F3B28A476D2000652AC /* Texture.cpp in Sources */,
+				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,
+				2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */,
+				233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */,
+				233B1F3928A476D2000652AC /* Fbo.cpp in Sources */,
 				D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */,
+				233B1F3A28A476D2000652AC /* QuadVao.cpp in Sources */,
+				2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */,
+				233B1F3828A476D2000652AC /* Common.cpp in Sources */,
+				233B1F3C28A476D2000652AC /* glad.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,6 +318,8 @@
 		C4E61880095A3C800012CA3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -253,15 +338,17 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
-				GCC_MODEL_TUNING = "";
+				GCC_MODEL_TUNING = G5;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Cocoa.framework/Headers/Cocoa.h";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				GCC_REUSE_STRINGS = NO;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_THREADSAFE_STATICS = NO;
@@ -278,16 +365,22 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_PKGINFO_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					../../SDK/Examples/Headers,
 					../../SDK/Examples/Util,
 					../../SDK/Examples/Headers/SP,
 					../../SDK/Examples/Resources,
-					/usr/local/Cellar/glfw/3.3.7/include,
+					"/usr/local/Cellar/glfw/3.3.8/include/**",
+					/usr/local/Cellar/glm/0.9.9.8/include,
+					"\"$(SRCROOT)/../Headers\"",
+					"\"$(SRCROOT)/../Headers/glad/include\"",
 				);
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/usr/local/Cellar/glfw/3.3.7/lib,
+					/usr/local/Cellar/glfw/3.3.8/lib,
+					/usr/local/Cellar/glm/0.9.9.8/lib,
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/glslCanvas";
@@ -296,23 +389,18 @@
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				WRAPPER_EXTENSION = plugin;
+				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
 		C4E618CF095A3CE90012CA3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = ./build;
-				GCC_MODEL_TUNING = G5;
-				GENERATE_PKGINFO_FILE = YES;
 				INFOPLIST_FILE = "GLSLCanvas4AE.plugin-Info.plist";
-				INSTALL_PATH = "$(HOME)/Library/Bundles";
-				PRODUCT_BUNDLE_IDENTIFIER = com.adobe.AfterEffects.GLSLCanvas;
+				INSTALL_PATH = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.baku89.AfterEffects.GLSLCanvas;
 				PRODUCT_NAME = GLSLCanvas;
 				SDKROOT = macosx;
-				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
