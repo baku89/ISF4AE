@@ -16,12 +16,12 @@ namespace OGL {
 
 class Program {
 public:
-    Program(OGL::Shader vertex, OGL::Shader fragment): ID(0) {
+    Program(OGL::Shader *vertex, OGL::Shader *fragment): ID(0) {
         
         // shader Program
         this->ID = glCreateProgram();
-        glAttachShader(this->ID, vertex.getID());
-        glAttachShader(this->ID, fragment.getID());
+        glAttachShader(this->ID, vertex->getID());
+        glAttachShader(this->ID, fragment->getID());
         glLinkProgram(this->ID);
         
         GLint success;
