@@ -1,6 +1,5 @@
 #include "SystemUtil.h"
 
-#include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -8,7 +7,7 @@
 #include "Debug.h"
 
 
-namespace AESDK_SystemUtil {
+namespace SystemUtil {
 	
 	std::string openFileDialog(std::vector<std::string> &fileTypes) {
 		
