@@ -91,8 +91,13 @@ GlobalSetup(
     
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
     std::string vertCode = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
+    std::string fragCode = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
     
     globalData->passthruVertShader = *new OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
+    
+    OGL::Shader defaultFragShader(fragCode.c_str(), GL_FRAGMENT_SHADER);
+    
+    globalData->defaultProgram = *new OGL::Program(&globalData->passthruVertShader, &defaultFragShader);
     
     auto programs = new std::unordered_map<std::string,  OGL::Program*>();
     
@@ -125,6 +130,7 @@ PF_Err err = PF_Err_NONE;
     delete &globalData->fbo;
     delete &globalData->quad;
     delete &globalData->passthruVertShader;
+    delete &globalData->defaultProgram;
     
     for (auto& ref: *globalData->programs) {
         delete &ref.second;
@@ -157,7 +163,7 @@ ParamsSetup(
         
     // A bidden arbitrary param for storing fragment strings
     AEFX_CLR_STRUCT(def);
-    def.flags = PF_ParamFlag_CANNOT_TIME_VARY;
+    def.flags = PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE;
     ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
     PF_ADD_ARBITRARY2("GLSL",
                       1, 1, // width, height
@@ -167,9 +173,9 @@ ParamsSetup(
                       PARAM_GLSL,
                       ARB_REFCON);
     
-    // "Edit Shader" button
+    // "Edit Shader" button (also shows a shader compliation status)
     AEFX_CLR_STRUCT(def);
-    PF_ADD_BUTTON("No shader loaded",
+    PF_ADD_BUTTON("No Shader Loaded",
                   "Load Shader",                  // BUTTON_NAME
                   PF_PUI_NONE,                    // PUI_FLAGS
                   PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
@@ -184,7 +190,6 @@ ParamsSetup(
                   PARAM_SAVE);                    // ID
     
     AEFX_CLR_STRUCT(def);
-    def.flags |= PF_ParamFlag_SUPERVISE;
     PF_ADD_FLOAT_SLIDERX("Time",
                          -1000000,                  // VALID_MIN
                          1000000,                   // VALID_MAX
@@ -339,7 +344,12 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
         
         OGL::Program *program;
         
-        if (programs.find(code) == programs.end()) {
+        if (strlen(code) == 0) {
+            // If empty, use the defualt program
+            FX_LOG("Use the default program");
+            program = &globalData->defaultProgram;
+            
+        } else if (programs.find(code) == programs.end()) {
             FX_LOG("Compile a new program for the code:" << code);
             // Compile new shader if not exists
             globalData->context.bind();
@@ -617,9 +627,26 @@ UpdateParameterUI(
     }
     
     // TODO: Display the state of shader linking instead of the dummy text as below.
-    A_FpLong time = params[PARAM_TIME]->u.fs_d.value;
+    PF_ParamDef paramGlsl;
+    AEFX_CLR_STRUCT(paramGlsl);
+    ERR(PF_CHECKOUT_PARAM(in_data,
+                          PARAM_GLSL,
+                          in_data->current_time,
+                          in_data->time_step,
+                          in_data->time_scale,
+                          &paramGlsl));
     
-    PF_STRCPY(newParams[PARAM_EDIT].name, time > 1 ? "Bigger than 1" : "Less than 1");
+    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
+    
+    const A_char *shaderStatus;
+    
+    if (!arb) {
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    }
+    
+    auto &code = arb->fragCode;
+    
+    PF_STRCPY(newParams[PARAM_EDIT].name, strlen(code) > 0 ? "Shader Loaded" : "No Shader Loaded");
     
     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                     PARAM_EDIT,

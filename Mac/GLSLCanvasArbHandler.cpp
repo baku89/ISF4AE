@@ -24,11 +24,7 @@ CreateDefaultArb(
     }
     
     AEFX_CLR_STRUCT(*arb);
-    
-    std::string resourcePath = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/glslCanvas/GLSLCanvas.plugin/Contents/Resources/"; //AEUtil::getResourcesPath(in_data);
-    std::string fragCode = SystemUtil::readTextFile(resourcePath + "shaders/uv-gradient.frag");
-    
-    PF_STRCPY(arb->fragCode, fragCode.c_str());
+    PF_STRCPY(arb->fragCode, "");
     
     *dephault = arbH;
     

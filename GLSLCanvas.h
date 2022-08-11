@@ -63,6 +63,7 @@ typedef struct {
     OGL::Fbo            fbo;
     OGL::QuadVao        quad;
     OGL::Shader         passthruVertShader;
+    OGL::Program        defaultProgram;
     std::unordered_map<std::string, OGL::Program*> *programs;
 } GlobalData;
 
