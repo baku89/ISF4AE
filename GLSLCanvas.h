@@ -57,6 +57,17 @@ enum {
 	NUM_PARAMS
 };
 
+typedef enum {
+    PROGRAM_NO_ERROR = 0,
+    PROGRAM_ERROR_SHADER,
+    PROGRAM_ERROR_LINK
+} ProgramError;
+
+typedef struct {
+    ProgramError    error;
+    OGL::Program*   program;
+} ProgramRef;
+
 typedef struct {
     AEGP_PluginID       aegpId;
     OGL::GlobalContext  *context;

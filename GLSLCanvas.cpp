@@ -321,49 +321,34 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    // Get the GLSL code and compile it if necessary
+    // Get the GLSL prgoram from cache
     auto *globalData = reinterpret_cast<GlobalData *>(
         handleSuite->host_lock_handle(in_data->global_data));
     
-    PF_ParamDef param_glsl;
-    AEFX_CLR_STRUCT(param_glsl);
+    PF_ParamDef paramGlsl;
+    AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
                           PARAM_GLSL,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
-                          &param_glsl));
+                          &paramGlsl));
     
-    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
+    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
     
     if (arb) {
         auto &code = arb->fragCode;
         auto &programRefs = *globalData->programRefs;
         
-        OGL::Program *program = globalData->defaultProgram;
+        paramInfo->program = globalData->defaultProgram;
         
-        if (strlen(code) == 0) {
-            // If empty, use the defualt program
-            FX_LOG("Use the default program");
-            program = &globalData->defaultProgram;
-            
-        } else if (programs.find(code) == programs.end()) {
-            FX_LOG("Compile a new program for the code:" << code);
-            // Compile new shader if not exists
-            globalData->context.bind();
-            OGL::Shader *frag = new OGL::Shader(code, GL_FRAGMENT_SHADER);
-            program = new OGL::Program(&globalData->passthruVertShader, frag);
-            delete frag;
-            
-            programs[code] = program;
-        } else {
-            program = programs[code];
-            FX_LOG("Reuse a program for the code:" << code);
+        if (strlen(code) > 0 && programRefs.find(code) != programRefs.end()) {
+            ProgramRef *pr = programRefs[code];
+            if (pr->error == PROGRAM_NO_ERROR) {
+                paramInfo->program = pr->program;
+            }
         }
-        
-        paramInfo->program = program;
     }
-    
     
     // Checkout Params
     PF_ParamDef param_time;
@@ -638,15 +623,70 @@ UpdateParameterUI(
     
     ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
     
-    const A_char *shaderStatus;
-    
     if (!arb) {
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
     
     auto &code = arb->fragCode;
     
-    PF_STRCPY(newParams[PARAM_EDIT].name, strlen(code) > 0 ? "Shader Loaded" : "No Shader Loaded");
+    // Compile a shader at here to make sure to display the latest status
+    auto &programRefs = *globalData->programRefs;
+    
+    if (programRefs.find(code) == programRefs.end()) {
+        // Compile new shader if not exists
+        globalData->context->bind();
+        OGL::Shader *frag = new OGL::Shader(code, GL_FRAGMENT_SHADER);
+        
+        if (!frag->isSucceed()) {
+            // On failed compiling a shader
+            ProgramRef *pr = new ProgramRef();
+            pr->error = PROGRAM_ERROR_SHADER;
+            programRefs[code] = pr;
+            
+        } else {
+            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, frag);
+            
+            if (!prog->isSucceed()) {
+                // On falied linking
+                ProgramRef *pr = new ProgramRef();
+                pr->error = PROGRAM_ERROR_LINK;
+                programRefs[code] = pr;
+                
+                delete prog;
+            } else {
+                // On succeed
+                ProgramRef *pr = new ProgramRef();
+                pr->error = PROGRAM_NO_ERROR;
+                pr->program = prog;
+                programRefs[code] = pr;
+            }
+        }
+            
+        delete frag;
+    }
+    
+    // Set the shader compliation status
+    A_char *shaderStatus = "Not Loaded";
+    
+    if (strlen(code) > 0) {
+        if (programRefs.find(code) == programRefs.end()) {
+            shaderStatus = "Not Compiled";
+        } else {
+            switch (programRefs[code]->error) {
+                case PROGRAM_NO_ERROR:
+                    shaderStatus = "Compiled Successfully";
+                    break;
+                case PROGRAM_ERROR_SHADER:
+                    shaderStatus = "Shader Error";
+                    break;
+                case PROGRAM_ERROR_LINK:
+                    shaderStatus = "Link Error";
+                    break;
+            }
+        }
+    }
+    
+    PF_STRCPY(newParams[PARAM_EDIT].name, shaderStatus);
     
     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                     PARAM_EDIT,
