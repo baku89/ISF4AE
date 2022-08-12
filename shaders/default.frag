@@ -1,10 +1,8 @@
-#version 410
+#version 120
 
 uniform vec2  u_resolution;
 uniform float u_time;
 uniform vec2  u_mouse;
-
-out vec4 FragColor;
 
 void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution;
@@ -14,5 +12,5 @@ void main() {
     
     vec3 color = mix(gradient, vec3(1.0), vec3(cross));
     
-    FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }
