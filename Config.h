@@ -1,3 +1,5 @@
+#pragma once
+
 #define CONFIG_NAME "glslCanvas"
 #define CONFIG_MATCH_NAME "BAKU89 glslCanvas"
 #define CONFIG_CATEGORY "Shader"
