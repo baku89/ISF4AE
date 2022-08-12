@@ -16,7 +16,7 @@ namespace OGL {
 
 class Program {
 public:
-    Program(OGL::Shader *vertex, OGL::Shader *fragment): ID(0) {
+    Program(OGL::Shader *vertex, OGL::Shader *fragment) {
         
         // shader Program
         this->ID = glCreateProgram();
@@ -24,17 +24,7 @@ public:
         glAttachShader(this->ID, fragment->getID());
         glLinkProgram(this->ID);
         
-        GLint success;
-        glGetShaderiv(this->ID, GL_COMPILE_STATUS, &success);
-        
-        if (!success) {
-            GLchar infoLog[1024];
-            glGetShaderInfoLog(this->ID, 1024, NULL, infoLog);
-            
-            FX_LOG("Program Linling error: " << infoLog);
-            
-            this->ID = 0;
-        }
+        glGetProgramiv(this->ID, GL_LINK_STATUS, &this->success);
     }
     
     ~Program() {
@@ -42,7 +32,19 @@ public:
     }
     
     bool isSucceed() {
-        return this->ID != 0;
+        return this->success;
+    }
+    
+    std::string getInfoLog() {
+        if (this->success) {
+            return "";
+        }
+        
+        // TOOD: Avoid hard-coding 256 (= the maximum length of out_data->return_msg)
+        GLchar infoLog[256];
+        glGetProgramInfoLog(this->ID, 256, NULL, infoLog);
+        
+        return std::string(infoLog);
     }
 
     void bind() {
@@ -110,6 +112,7 @@ public:
     }
 
 private:
-    GLuint ID;
+    GLuint ID = 0;
+    GLint success = false;
 };
 }  // namespace OGL
