@@ -659,7 +659,7 @@
 					"\"$(SRCROOT)/../Headers\"",
 					"\"$(SRCROOT)/../Headers/glad/include\"",
 				);
-				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				INSTALL_PATH = "";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glm/0.9.9.8/lib,
@@ -680,7 +680,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INFOPLIST_FILE = "GLSLCanvas4AE.plugin-Info.plist";
-				INSTALL_PATH = "";
 				PRODUCT_NAME = GLSLCanvas4AE;
 				SDKROOT = macosx;
 			};
