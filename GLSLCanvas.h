@@ -65,7 +65,8 @@ typedef enum {
 
 typedef struct {
     ProgramError    error;
-    OGL::Program*   program;
+    OGL::Program    *program;
+    std::string     infoLog;
 } ProgramRef;
 
 typedef struct {

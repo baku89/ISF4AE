@@ -33,6 +33,59 @@ About(
 }
 
 /**
+ * Pops up shader errors on user clicked Option label of the effect
+ */
+static PF_Err
+PopDialog (
+   PF_InData        *in_data,
+   PF_OutData        *out_data,
+   PF_ParamDef        *params[],
+   PF_LayerDef        *output )
+{
+    PF_Err err = PF_Err_NONE;
+    
+    auto *globalData = reinterpret_cast<GlobalData*>(DH(out_data->global_data));
+    auto *glsl = reinterpret_cast<ParamArbGlsl*>(*params[PARAM_GLSL]->u.arb_d.value);
+    
+    auto &programRefs = *globalData->programRefs;
+    auto &code = glsl->fragCode;
+    
+    A_char *status;
+    std::string infoLog = "";
+    
+    if (strlen(code) == 0) {
+        status = "Not Loaded";
+    } else if (programRefs.find(code) == programRefs.end()) {
+        status = "Not Compiled";
+    } else {
+        auto pr = programRefs[code];
+        
+        switch (pr->error) {
+            case PROGRAM_NO_ERROR:
+                status = "Compiled Successfully";
+                break;
+                
+            case PROGRAM_ERROR_SHADER:
+                status = "Shader Error";
+                infoLog = pr->infoLog;
+                break;
+                
+            case PROGRAM_ERROR_LINK:
+                status = "Link Error";
+                infoLog = pr->infoLog;
+                break;
+        }
+    }
+    
+    const char *separator = infoLog.length() > 0 ? "\n---\n" : "";
+    
+    PF_SPRINTF(out_data->return_msg, "Shader Status: %s%s%s", status, separator, infoLog.c_str());
+    out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+    
+    return err;
+}
+
+/**
  * Set any required flags and PF_OutData fields (including out_data>my_version) to describe your plug-in’s behavior.
  */
 static PF_Err
@@ -51,7 +104,7 @@ GlobalSetup(
                                       STAGE_VERSION,
                                       BUILD_VERSION);
 
-    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI;
+    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG;
     out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER;
     
     // Initialize globalData
@@ -154,6 +207,17 @@ ParamsSetup(
     PF_LayerDef *output) {
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
+    
+    // Customize the name of the options button
+    // Premiere Pro/Elements does not support this suite
+    if (in_data->appl_id != 'PrMr') {
+        AEFX_SuiteScoper<PF_EffectUISuite1> effectUISuite = AEFX_SuiteScoper<PF_EffectUISuite1>(in_data,
+                                                                                                kPFEffectUISuite,
+                                                                                                kPFEffectUISuiteVersion1,
+                                                                                                out_data);
+        
+        ERR(effectUISuite->PF_SetOptionsButtonName(in_data->effect_ref, "Show Error.."));
+    }
 
     PF_ParamDef def;
     
@@ -632,7 +696,7 @@ UpdateParameterUI(
     // Compile a shader at here to make sure to display the latest status
     auto &programRefs = *globalData->programRefs;
     
-    if (programRefs.find(code) == programRefs.end()) {
+    if (strlen(code) > 0 && programRefs.find(code) == programRefs.end()) {
         // Compile new shader if not exists
         globalData->context->bind();
         OGL::Shader frag(code, GL_FRAGMENT_SHADER);
@@ -641,6 +705,7 @@ UpdateParameterUI(
             // On failed compiling a shader
             ProgramRef *pr = new ProgramRef();
             pr->error = PROGRAM_ERROR_SHADER;
+            pr->infoLog = frag.getInfoLog();
             programRefs[code] = pr;
             
         } else {
@@ -650,6 +715,7 @@ UpdateParameterUI(
                 // On falied linking
                 ProgramRef *pr = new ProgramRef();
                 pr->error = PROGRAM_ERROR_LINK;
+                pr->infoLog = prog->getInfoLog();
                 programRefs[code] = pr;
                 
                 delete prog;
@@ -728,6 +794,13 @@ DllExport
                             out_data,
                             params,
                             output);
+                break;
+            
+            case PF_Cmd_DO_DIALOG:
+                err = PopDialog(in_data,
+                                out_data,
+                                params,
+                                output);
                 break;
 
             case PF_Cmd_GLOBAL_SETUP:
