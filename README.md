@@ -1,6 +1,6 @@
 # GLSLCanvas4AE
 
-![](./Assets/screenshot.gif)
+![](./README/screenshot.gif)
 
 After Effects plug-in to run codes written in [The Book of Shaders Editor](http://editor.thebookofshaders.com/) format.
 
