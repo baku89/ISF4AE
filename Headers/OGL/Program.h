@@ -25,6 +25,11 @@ public:
         glLinkProgram(this->ID);
         
         glGetProgramiv(this->ID, GL_LINK_STATUS, &this->success);
+        
+        if (!this->success) {
+            std::string infoLog = this->getInfoLog();
+            FX_LOG("Link " << infoLog);
+        }
     }
     
     ~Program() {

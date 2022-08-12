@@ -17,6 +17,12 @@ public:
         glCompileShader(this->ID);
         
         glGetShaderiv(this->ID, GL_COMPILE_STATUS, &this->success);
+        
+        if (!this->success) {
+            std::string infoLog = this->getInfoLog();
+            std::string typeStr = type == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex";
+            FX_LOG(typeStr << " shader " << infoLog);
+        }
     }
     
     ~Shader() {
