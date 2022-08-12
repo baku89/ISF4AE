@@ -78,6 +78,7 @@ typedef struct {
     OGL::Shader         *passthruVertShader;
     OGL::Program        *defaultProgram, *swizzleProgram;
     std::unordered_map<std::string, ProgramRef*> *programRefs;
+    std::string         defaultFragCode;
 } GlobalData;
 
 typedef struct {

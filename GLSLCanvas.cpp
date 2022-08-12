@@ -190,14 +190,14 @@ GlobalSetup(
     std::string passthruVert = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
     std::string defaultFrag = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
     std::string swizzleFrag = SystemUtil::readTextFile(resourcePath + "shaders/swizzle.frag");
-    
-    globalData->passthruVertShader = new OGL::Shader(passthruVert.c_str(), GL_VERTEX_SHADER);
-    
+        
     OGL::Shader defaultFragShader(defaultFrag.c_str(), GL_FRAGMENT_SHADER);
     OGL::Shader swizzleFragShader(swizzleFrag.c_str(), GL_FRAGMENT_SHADER);
     
+    globalData->passthruVertShader = new OGL::Shader(passthruVert.c_str(), GL_VERTEX_SHADER);
     globalData->defaultProgram = new OGL::Program(globalData->passthruVertShader, &defaultFragShader);
     globalData->swizzleProgram = new OGL::Program(globalData->passthruVertShader, &swizzleFragShader);
+    globalData->defaultFragCode = defaultFrag;
     
     auto programRefs = new std::unordered_map<std::string,  ProgramRef*>();
     
@@ -709,8 +709,15 @@ UserChangedParam(PF_InData *in_data,
                                       in_data->time_scale,
                                       &param_glsl));
                 
-                ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
-                SystemUtil::writeTextFile(dstPath, arb->fragCode);
+                ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
+                
+                const char *fragCode = glsl->fragCode;
+                
+                if (strlen(fragCode) == 0) {
+                    fragCode = globalData->defaultFragCode.c_str();
+                }
+                
+                SystemUtil::writeTextFile(dstPath, fragCode);
                 
                 ERR(PF_CHECKIN_PARAM(in_data, &param_glsl));
             }
