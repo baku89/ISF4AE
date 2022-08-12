@@ -1,8 +1,6 @@
 #pragma once
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-#include <glad/glad.h>
+#include <VVGL/VVGL.hpp>
 
 namespace OGL {
 
@@ -14,7 +12,7 @@ class GlobalContext {
     void bind();
 
    private:
-    GLFWwindow *window;
+    VVGL::GLContextRef sharedContext;
 };
 
 }  // namespace OGL
