@@ -1,4 +1,4 @@
-# glslCanvas4AE
+# GLSLCanvas4AE
 
 ![](./Assets/screenshot.gif)
 
