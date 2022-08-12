@@ -31,7 +31,7 @@
 
 /* Begin PBXFileReference section */
 		233B1F1A28A46D35000652AC /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = ../../../../../../../../usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<group>"; };
+		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = /usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<absolute>"; };
 		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		233B1F2028A476D2000652AC /* AEUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEUtil.h; sourceTree = "<group>"; };
 		233B1F2128A476D2000652AC /* AEOGLInterop.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEOGLInterop.hpp; sourceTree = "<group>"; };
@@ -52,9 +52,9 @@
 		233B1F3628A476D2000652AC /* OGL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OGL.h; sourceTree = "<group>"; };
 		2382660028A48EDF001F523D /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../shaders; sourceTree = "<group>"; };
 		2382660228A49081001F523D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../SDK/Examples/Util/Smart_Utils.cpp; sourceTree = "<group>"; };
-		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../SDK/Examples/Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
-		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../SDK/Examples/Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
+		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../../Util/Smart_Utils.cpp; sourceTree = "<group>"; };
+		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../../Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
+		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
 		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
 		2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GLSLCanvasArbHandler.cpp; path = ../GLSLCanvasArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
@@ -65,9 +65,9 @@
 		C4E618CC095A3CE80012CA3F /* GLSLCanvas4AE.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLSLCanvas4AE.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = GLSLCanvas.cpp; path = ../GLSLCanvas.cpp; sourceTree = SOURCE_ROOT; };
 		D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = GLSLCanvasPiPL.r; path = ../GLSLCanvasPiPL.r; sourceTree = SOURCE_ROOT; };
-		D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AEGP_SuiteHandler.cpp; path = ../../SDK/Examples/Util/AEGP_SuiteHandler.cpp; sourceTree = SOURCE_ROOT; };
-		D0FE579B0993C5E500139A60 /* AEGP_SuiteHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AEGP_SuiteHandler.h; path = ../../SDK/Examples/Util/AEGP_SuiteHandler.h; sourceTree = SOURCE_ROOT; };
-		D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../SDK/Examples/Util/MissingSuiteError.cpp; sourceTree = SOURCE_ROOT; };
+		D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AEGP_SuiteHandler.cpp; path = ../../../Util/AEGP_SuiteHandler.cpp; sourceTree = SOURCE_ROOT; };
+		D0FE579B0993C5E500139A60 /* AEGP_SuiteHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AEGP_SuiteHandler.h; path = ../../../Util/AEGP_SuiteHandler.h; sourceTree = SOURCE_ROOT; };
+		D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -377,10 +377,10 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../SDK/Examples/Headers,
-					../../SDK/Examples/Util,
-					../../SDK/Examples/Headers/SP,
-					../../SDK/Examples/Resources,
+					../../../Headers,
+					../../../Util,
+					../../../Headers/SP,
+					../../../Resources,
 					"/usr/local/Cellar/glfw/3.3.8/include/**",
 					/usr/local/Cellar/glm/0.9.9.8/include,
 					"\"$(SRCROOT)/../Headers\"",
