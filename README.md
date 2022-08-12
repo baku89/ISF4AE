@@ -10,9 +10,17 @@ After Effects plug-in to run codes written in [The Book of Shaders Editor](http:
 
 1. Download [After Effects Plug-in SDK 2022 Mac - Oct 2021](https://adobe.io/after-effects/).
 
-2. Clone this repo and put it into `(AESDK)/Examples/Effect/(repo)`.
+2. Clone this repo including its submodule as shown below:
 
-3. The project has a dependency on GLFW and glm. Install them with `brew install glfw glm`.
+```bash
+# At the root folder of SDk
+cd Examples/Effect
+git clone https://github.com/baku89/glslCanvas4AE.git
+cd glslCanvas4AE
+git submodule update --init
+```
+
+3. Install dependencies with Homebrew: `brew install glm`
 
 4. Open the Xcode project and build it. The binary will automatically be copied under `/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/`.
 
