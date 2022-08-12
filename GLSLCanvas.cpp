@@ -13,6 +13,48 @@
 #include <iostream>
 
 /**
+ * Compile a shader and store to pool that maps code string to OGL::Program.
+ * It will be called at UpdateParameterUI and PreRender.
+ */
+void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
+    // Compile a shader at here to make sure to display the latest status
+    auto &programRefs = *globalData->programRefs;
+
+    if (strlen(code) > 0 && programRefs.find(code) == programRefs.end()) {
+        // Compile new shader if not exists
+        globalData->context->bind();
+        OGL::Shader frag(code, GL_FRAGMENT_SHADER);
+
+        if (!frag.isSucceed()) {
+            // On failed compiling a shader
+            ProgramRef *pr = new ProgramRef();
+            pr->error = PROGRAM_ERROR_SHADER;
+            pr->infoLog = frag.getInfoLog();
+            programRefs[code] = pr;
+
+        } else {
+            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, &frag);
+
+            if (!prog->isSucceed()) {
+                // On falied linking
+                ProgramRef *pr = new ProgramRef();
+                pr->error = PROGRAM_ERROR_LINK;
+                pr->infoLog = prog->getInfoLog();
+                programRefs[code] = pr;
+
+                delete prog;
+            } else {
+                // On succeed
+                ProgramRef *pr = new ProgramRef();
+                pr->error = PROGRAM_NO_ERROR;
+                pr->program = prog;
+                programRefs[code] = pr;
+            }
+        }
+    }
+}
+
+/**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple modal dialog.
  */
 static PF_Err
@@ -398,11 +440,13 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
                           in_data->time_scale,
                           &paramGlsl));
     
-    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
+    ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
     
-    if (arb) {
-        auto &code = arb->fragCode;
+    if (glsl) {
+        auto &code = glsl->fragCode;
         auto &programRefs = *globalData->programRefs;
+        
+        compileShaderIfNeeded(globalData, code);        
         
         paramInfo->program = globalData->defaultProgram;
         
@@ -685,54 +729,23 @@ UpdateParameterUI(
                           in_data->time_scale,
                           &paramGlsl));
     
-    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
+    ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
     
-    if (!arb) {
+    if (!glsl) {
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
     
-    auto &code = arb->fragCode;
+    auto &code = glsl->fragCode;
     
-    // Compile a shader at here to make sure to display the latest status
-    auto &programRefs = *globalData->programRefs;
-    
-    if (strlen(code) > 0 && programRefs.find(code) == programRefs.end()) {
-        // Compile new shader if not exists
-        globalData->context->bind();
-        OGL::Shader frag(code, GL_FRAGMENT_SHADER);
-        
-        if (!frag.isSucceed()) {
-            // On failed compiling a shader
-            ProgramRef *pr = new ProgramRef();
-            pr->error = PROGRAM_ERROR_SHADER;
-            pr->infoLog = frag.getInfoLog();
-            programRefs[code] = pr;
-            
-        } else {
-            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, &frag);
-            
-            if (!prog->isSucceed()) {
-                // On falied linking
-                ProgramRef *pr = new ProgramRef();
-                pr->error = PROGRAM_ERROR_LINK;
-                pr->infoLog = prog->getInfoLog();
-                programRefs[code] = pr;
-                
-                delete prog;
-            } else {
-                // On succeed
-                ProgramRef *pr = new ProgramRef();
-                pr->error = PROGRAM_NO_ERROR;
-                pr->program = prog;
-                programRefs[code] = pr;
-            }
-        }
-    }
+    // Compile a shader at here to make sure to display the latest compilation status
+    compileShaderIfNeeded(globalData, code);
     
     // Set the shader compliation status
     A_char *shaderStatus = "Not Loaded";
     
     if (strlen(code) > 0) {
+        auto &programRefs = *globalData->programRefs;
+        
         if (programRefs.find(code) == programRefs.end()) {
             shaderStatus = "Not Compiled";
         } else {
