@@ -181,18 +181,23 @@ GlobalSetup(
     globalData->context->bind();
     
     // Setup GL objects
-    globalData->fbo = new OGL::Fbo();
+    globalData->fboIntermediate = new OGL::Fbo();
+    globalData->fboFinal = new OGL::Fbo();
     globalData->quad = new OGL::QuadVao();
+    globalData->inputTexture = new OGL::Texture();
     
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
-    std::string vertCode = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
-    std::string fragCode = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
+    std::string passthruVert = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
+    std::string defaultFrag = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
+    std::string swizzleFrag = SystemUtil::readTextFile(resourcePath + "shaders/swizzle.frag");
     
-    globalData->passthruVertShader = new OGL::Shader(vertCode.c_str(), GL_VERTEX_SHADER);
+    globalData->passthruVertShader = new OGL::Shader(passthruVert.c_str(), GL_VERTEX_SHADER);
     
-    OGL::Shader defaultFragShader(fragCode.c_str(), GL_FRAGMENT_SHADER);
+    OGL::Shader defaultFragShader(defaultFrag.c_str(), GL_FRAGMENT_SHADER);
+    OGL::Shader swizzleFragShader(swizzleFrag.c_str(), GL_FRAGMENT_SHADER);
     
     globalData->defaultProgram = new OGL::Program(globalData->passthruVertShader, &defaultFragShader);
+    globalData->swizzleProgram = new OGL::Program(globalData->passthruVertShader, &swizzleFragShader);
     
     auto programRefs = new std::unordered_map<std::string,  ProgramRef*>();
     
@@ -225,10 +230,13 @@ GlobalSetdown(
             
         globalData->context->bind();
 
-        delete globalData->fbo;
+        delete globalData->fboIntermediate;
+        delete globalData->fboFinal;
         delete globalData->quad;
+        delete globalData->inputTexture;
         delete globalData->passthruVertShader;
         delete globalData->defaultProgram;
+        delete globalData->swizzleProgram;
         delete globalData->programRefs;
         
         delete globalData->context;
@@ -557,8 +565,10 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         GLsizei height = input_worldP->height;
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
 
-        // Setup render context
-        globalData->fbo->allocate(width, height, GL_RGBA, pixelType);
+        // Setup texture and fbos
+        globalData->fboFinal->allocate(width, height, GL_RGBA, pixelType);
+        globalData->fboIntermediate->allocate(width, height, GL_RGBA, pixelType);
+        globalData->inputTexture->allocate(width, height, GL_RGBA, pixelType);
 
         // Allocate pixels buffer
         PF_Handle pixelsBufferH =
@@ -566,32 +576,43 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         void *pixelsBufferP = reinterpret_cast<char *>(
             handleSuite->host_lock_handle(pixelsBufferH));
         
-        // Initialize the program if necessary
-        
-        // Bind
-        OGL::Program &program = *paramInfo->program;
-        program.bind();
-        globalData->fbo->bind();
+        {
+            // Pass 1: Render glslCanvas-style code to fboIntermediate
+            OGL::Program &program = *paramInfo->program;
+            program.bind();
+            globalData->fboIntermediate->bind();
 
-        // Set uniforms
-        program.setVec2("u_resolution", width, height);
-        program.setFloat("u_time", paramInfo->time);
-        program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
+            program.setVec2("u_resolution", width, height);
+            program.setFloat("u_time", paramInfo->time);
+            program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
+            
+            globalData->quad->render();
+        }
         
-        // Render
-        globalData->quad->render();
+        {
+            // Pass 2: Swizzle RGBA to ARGB and apply a mask
+            OGL::Program &program = *globalData->swizzleProgram;
+            program.bind();
+            globalData->fboFinal->bind();
+            
+            AEOGLInterop::uploadTexture(globalData->inputTexture,
+                                        input_worldP, pixelsBufferP, pixelType);
+            
+            float multiplier16bit = AEOGLInterop::getMultiplier16bit(pixelType);
+            
+            program.setFloat("multiplier16bit", multiplier16bit);
+            program.setVec2("u_resolution", width, height);
+            program.setTexture("inputTexture", globalData->inputTexture, 0);
+            program.setTexture("glslCanvasOutputTexture", globalData->fboIntermediate->getTexture(), 1);
+            
+            globalData->quad->render();
+        }
 
         // Read pixels
-        globalData->fbo->readToPixels(pixelsBufferP);
+        globalData->fboFinal->readToPixels(pixelsBufferP);
         ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
-
-        // Unbind
-        program.bind();
-        globalData->fbo->unbind();
-
-        // downloadTexture
-        ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
-
+        
+        // Release the pixel buffer
         handleSuite->host_unlock_handle(pixelsBufferH);
         handleSuite->host_dispose_handle(pixelsBufferH);
     }
