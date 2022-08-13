@@ -184,7 +184,6 @@ GlobalSetup(
     globalData->fboIntermediate = new OGL::Fbo();
     globalData->fboFinal = new OGL::Fbo();
     globalData->quad = new OGL::QuadVao();
-    globalData->inputTexture = new OGL::Texture();
     
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
     std::string passthruVert = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
@@ -233,7 +232,6 @@ GlobalSetdown(
         delete globalData->fboIntermediate;
         delete globalData->fboFinal;
         delete globalData->quad;
-        delete globalData->inputTexture;
         delete globalData->passthruVertShader;
         delete globalData->defaultProgram;
         delete globalData->swizzleProgram;
@@ -568,7 +566,6 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         // Setup texture and fbos
         globalData->fboFinal->allocate(width, height, GL_RGBA, pixelType);
         globalData->fboIntermediate->allocate(width, height, GL_RGBA, pixelType);
-        globalData->inputTexture->allocate(width, height, GL_RGBA, pixelType);
 
         // Allocate pixels buffer
         PF_Handle pixelsBufferH =
@@ -594,15 +591,24 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             OGL::Program &program = *globalData->swizzleProgram;
             program.bind();
             globalData->fboFinal->bind();
-            
-            AEOGLInterop::uploadTexture(globalData->inputTexture,
-                                        input_worldP, pixelsBufferP, pixelType);
+
+            size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
+            auto inputCPUTexture = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
+                                                                  input_worldP->data,
+                                                                  VVGL::Size(width, height),
+                                                                  NULL, NULL);
+            inputCPUTexture->flipped = true;
+            auto inputTexture = globalData->context->uploader->uploadCPUToTex(inputCPUTexture);
             
             float multiplier16bit = AEOGLInterop::getMultiplier16bit(pixelType);
             
             program.setFloat("multiplier16bit", multiplier16bit);
             program.setVec2("u_resolution", width, height);
-            program.setTexture("inputTexture", globalData->inputTexture, 0);
+            
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, inputTexture->name);
+            glUniform1i(glGetUniformLocation(program.getID(), "inputTexture"), 0);
+            
             program.setTexture("glslCanvasOutputTexture", globalData->fboIntermediate->getTexture(), 1);
             
             globalData->quad->render();
@@ -615,7 +621,11 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         // Release the pixel buffer
         handleSuite->host_unlock_handle(pixelsBufferH);
         handleSuite->host_dispose_handle(pixelsBufferH);
-    }
+        
+        // VVGL: Release any old buffer
+        VVGL::GetGlobalBufferPool()->housekeeping();
+    } // End
+    
 
     // Check in
     ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite,

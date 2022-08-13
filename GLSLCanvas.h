@@ -72,7 +72,6 @@ typedef struct {
 typedef struct {
     AEGP_PluginID       aegpId;
     OGL::GlobalContext  *context;
-    OGL::Texture        *inputTexture;
     OGL::Fbo            *fboIntermediate, *fboFinal;
     OGL::QuadVao        *quad;
     OGL::Shader         *passthruVertShader;
