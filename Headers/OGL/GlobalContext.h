@@ -10,6 +10,9 @@ class GlobalContext {
     GlobalContext();
     ~GlobalContext();
     void bind();
+    
+    VVGL::GLCPUToTexCopierRef uploader;
+    VVGL::GLTexToCPUCopierRef downloader;
 
    private:
     VVGL::GLContextRef sharedContext;

@@ -11,6 +11,9 @@ GlobalContext::GlobalContext() {
     
     CreateGlobalBufferPool(this->sharedContext);
     
+    this->downloader = CreateGLTexToCPUCopierRefUsing(this->sharedContext->newContextSharingMe());
+    this->uploader = CreateGLCPUToTexCopierRefUsing(this->sharedContext->newContextSharingMe());
+    
     this->initialized = true;
 }
 
