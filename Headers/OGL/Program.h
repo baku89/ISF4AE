@@ -40,6 +40,10 @@ public:
         return this->success;
     }
     
+    GLuint getID() {
+        return this->ID;
+    }
+    
     std::string getInfoLog() {
         if (this->success) {
             return "";
