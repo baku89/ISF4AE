@@ -161,7 +161,9 @@ GlobalSetup(
     
     GlobalData *globalData = reinterpret_cast<GlobalData *>(
         handleSuite->host_lock_handle(globalDataH));
-    
+
+    AEFX_CLR_STRUCT(*globalData);
+
     // Register with AEGP
     if (in_data->appl_id != 'PrMr') {
         ERR(suites.UtilitySuite3()->AEGP_RegisterWithAEGP(NULL, CONFIG_NAME, &globalData->aegpId));
