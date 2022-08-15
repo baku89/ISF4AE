@@ -27,6 +27,7 @@ void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
         
         auto scene = VVISF::CreateISF4AESceneRef();
         scene->setThrowExceptions(true);
+        scene->setManualTime(true);
         
         try {
             auto doc = VVISF::CreateISFDocRefWith(code);
@@ -535,29 +536,42 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
         GLsizei width = input_worldP->width;
         GLsizei height = input_worldP->height;
+        VVGL::Size size(width, height);
+        
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
         VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
                                       AEOGLInterop::getMultiplier16bit(pixelType));
-        
-        // Upload the input image to GPU
-        auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
-                                                            input_worldP->data,
-                                                            VVGL::Size(width, height),
-                                                            NULL, NULL);
-        auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
-        
-        globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
         globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
+        globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         
-        auto inputImage = globalData->ae2glScene->createAndRenderABuffer(VVGL::Size(width, height));
         
         // Render ISF
-        auto isfImage = VVGL::CreateRGBATex(VVGL::Size(width, height));
+        auto isfImage = VVGL::CreateRGBATex(size);
         {
 
             auto &scene = *paramInfo->scene;
             
-            scene.setBufferForInputNamed(inputImage, "inputImage");
+            // Set the original image as inputImage
+            if (scene.inputNamed("inputImage")) {
+                auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
+                                                                    input_worldP->data,
+                                                                    size,
+                                                                    NULL, NULL);
+                auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
+                globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+                auto inputImage = globalData->ae2glScene->createAndRenderABuffer(size);
+                
+                scene.setBufferForInputNamed(inputImage, "inputImage");
+            }
+            
+            // Assign time-related variables
+            double fps = in_data->time_scale / in_data->local_time_step;
+                        
+            scene.setRenderFrameIndex(paramInfo->time * fps);
+            scene.setRenderTimeDelta(1.0 / fps);
+            
+            // Then, render it!
+            scene.renderToBuffer(isfImage, size, (double)paramInfo->time);
         }
         
         // Download the result of ISF
@@ -567,9 +581,8 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             auto &scene = *globalData->gl2aeScene;
 
             scene.setBufferForInputNamed(isfImage, "inputImage");
-            scene.setValueForInputNamed(multiplier16bit, "multiplier16bit");
             
-            auto outputImage = scene.createAndRenderABuffer(VVGL::Size(width, height), 0.0);
+            auto outputImage = scene.createAndRenderABuffer(size, 0.0);
             auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
 
             char *glP = nullptr;  // OpenGL
