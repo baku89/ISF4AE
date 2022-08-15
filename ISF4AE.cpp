@@ -203,8 +203,8 @@ GlobalSetup(
                                       STAGE_VERSION,
                                       BUILD_VERSION);
 
-    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG;
-    out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER;
+    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG | PF_OutFlag_NON_PARAM_VARY;
+    out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS;
     
     // Initialize globalData
     auto handleSuite = suites.HandleSuite1();
@@ -793,64 +793,98 @@ UpdateParameterUI(
     PF_ParamDef *params[],
     PF_LayerDef *output) {
     
-    PF_Err err = PF_Err_NONE;
+    PF_Err err = PF_Err_NONE,
+           err2 = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
-    
-    // Create copies of all parameters
-    PF_ParamDef newParams[NumParams];
-    for (A_short i = 0; i < NumParams; i++) {
-        AEFX_CLR_STRUCT(newParams[i]);
-        newParams[i] = *params[i];
-    }
     
     auto *globalData = reinterpret_cast<GlobalData *>(
         suites.HandleSuite1()->host_lock_handle(in_data->global_data));
     
-    PF_ParamDef paramGlsl;
-    AEFX_CLR_STRUCT(paramGlsl);
-    ERR(PF_CHECKOUT_PARAM(in_data,
-                          Param_ISF,
-                          in_data->current_time,
-                          in_data->time_step,
-                          in_data->time_scale,
-                          &paramGlsl));
+    PF_ParamDef param, newParam;
     
-    auto *isf = reinterpret_cast<ParamArbIsf*>(*paramGlsl.u.arb_d.value);
-    
-    if (!isf) {
-        return PF_Err_INTERNAL_STRUCT_DAMAGED;
-    }
-    
-    auto &code = isf->code;
-    
-    // Compile a shader at here to make sure to display the latest compilation status
-    compileShaderIfNeeded(globalData, code);
-    
-    // Set the shader compliation status
-    std::string shaderStatus = "Not Loaded";
-    
-    if (strlen(code) > 0) {
-        auto &scenes = *globalData->scenes;
+    {
+        // Update the shader compilation label left to 'Edit' button
+        AEFX_CLR_STRUCT(param);
+        ERR(PF_CHECKOUT_PARAM(in_data,
+                              Param_ISF,
+                              in_data->current_time,
+                              in_data->time_step,
+                              in_data->time_scale,
+                              &param));
+        
+        
+        auto *isf = reinterpret_cast<ParamArbIsf*>(*param.u.arb_d.value);
+        
+        auto &code = isf->code;
+        
+        // Compile a shader at here to make sure to display the latest compilation status
+        compileShaderIfNeeded(globalData, code);
+        
+        // Set the shader compliation status
+        std::string shaderStatus = "Not Loaded";
+        
+        if (strlen(code) > 0) {
+            auto &scenes = *globalData->scenes;
 
-        if (scenes.find(code) == scenes.end()) {
-            shaderStatus = "Not Compiled";
-        } else {
-            shaderStatus = scenes[code]->status;
+            if (scenes.find(code) == scenes.end()) {
+                shaderStatus = "Not Compiled";
+            } else {
+                shaderStatus = scenes[code]->status;
+            }
         }
+        
+        newParam = *params[Param_Edit];
+        PF_STRCPY(newParam.name, shaderStatus.c_str());
+        
+        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                        Param_Edit,
+                                                        &newParam));
+        
+        
+        ERR2(PF_CHECKIN_PARAM(in_data, &param));
+        
     }
-    
-    PF_STRCPY(newParams[Param_Edit].name, shaderStatus.c_str());
-    
-    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                    Param_Edit,
-                                                    &newParams[Param_Edit]));
     
     // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
     A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
     ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime));
     
-    out_data->out_flags |= PF_OutFlag_REFRESH_UI;
     
+    return err;
+}
+
+static PF_Err
+QueryDynamicFlags(
+    PF_InData        *in_data,
+    PF_OutData        *out_data,
+    PF_ParamDef        *params[],
+    void            *extra)
+{
+    PF_Err     err     = PF_Err_NONE,
+            err2     = PF_Err_NONE;
+
+    PF_ParamDef def;
+
+    AEFX_CLR_STRUCT(def);
+    
+    //    The parameter array passed with PF_Cmd_QUERY_DYNAMIC_FLAGS
+    //    contains invalid values; use PF_CHECKOUT_PARAM() to obtain
+    //    valid values.
+
+     ERR(PF_CHECKOUT_PARAM(in_data,
+                           Param_UseLayerTime,
+                           in_data->current_time,
+                           in_data->time_step,
+                           in_data->time_scale,
+                           &def));
+
+    if (!err) {
+        auto useLayerTime = def.u.bd.value;
+        toggleFlag(PF_OutFlag_NON_PARAM_VARY, useLayerTime, &out_data->out_flags);
+    }
+
+    ERR2(PF_CHECKIN_PARAM(in_data, &def));
+
     return err;
 }
 
@@ -949,6 +983,10 @@ DllExport
                                         out_data,
                                         params,
                                         output);
+                break;
+
+            case PF_Cmd_QUERY_DYNAMIC_FLAGS:
+                err = QueryDynamicFlags(in_data,out_data,params,extra);
                 break;
         }
     } catch (PF_Err &thrown_err) {
