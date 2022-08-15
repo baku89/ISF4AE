@@ -31,6 +31,8 @@ typedef short int			int16;
 #include "AEGP_SuiteHandler.h"
 
 #include "OGL.h"
+#include <VVISF/VVISF.hpp>
+
 
 #include <unordered_map>
 
@@ -64,20 +66,16 @@ typedef enum {
 } ProgramError;
 
 typedef struct {
-    ProgramError    error;
-    OGL::Program    *program;
-    std::string     infoLog;
-} ProgramRef;
+    ProgramError       error;
+    VVISF::ISFSceneRef scene;
+    std::string        infoLog;
+} SceneDesc;
 
 typedef struct {
     AEGP_PluginID       aegpId;
     OGL::GlobalContext  *context;
-    OGL::Fbo            *fboIntermediate, *fboFinal;
-    OGL::QuadVao        *quad;
-    OGL::Shader         *passthruVertShader;
-    OGL::Program        *defaultProgram, *swizzleProgram;
-    std::unordered_map<std::string, ProgramRef*> *programRefs;
-    std::string         defaultFragCode;
+    VVISF::ISFSceneRef  defaultScene, gl2aeScene;
+    std::unordered_map<std::string, SceneDesc*> *scenes;
 } GlobalData;
 
 typedef struct {
@@ -87,7 +85,7 @@ typedef struct {
 
 
 struct ParamInfo {
-    OGL::Program *program;
+    VVISF::ISFScene *scene;
     A_FpLong time;
     A_FloatPoint mouse;
 };

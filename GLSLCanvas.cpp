@@ -11,6 +11,7 @@
 #include "AEOGLInterop.hpp"
 
 #include <iostream>
+#include <VVGL/VVGL.hpp>
 
 /**
  * Compile a shader and store to pool that maps code string to OGL::Program.
@@ -18,38 +19,30 @@
  */
 void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
     // Compile a shader at here to make sure to display the latest status
-    auto &programRefs = *globalData->programRefs;
+    auto &scenes = *globalData->scenes;
 
-    if (strlen(code) > 0 && programRefs.find(code) == programRefs.end()) {
+    if (strlen(code) > 0 && scenes.find(code) == scenes.end()) {
         // Compile new shader if not exists
         globalData->context->bind();
-        OGL::Shader frag(code, GL_FRAGMENT_SHADER);
+        
+        auto doc = VVISF::CreateISFDocRefWith(code);
+        auto scene = VVISF::CreateISFSceneRef();
+        scene->useDoc(doc);
+        scene->compileProgramIfNecessary();
 
-        if (!frag.isSucceed()) {
-            // On failed compiling a shader
-            ProgramRef *pr = new ProgramRef();
-            pr->error = PROGRAM_ERROR_SHADER;
-            pr->infoLog = frag.getInfoLog();
-            programRefs[code] = pr;
-
+        if (scene->programReady()) {
+            // On succeed
+            auto *desc = new SceneDesc();
+            desc->error = PROGRAM_NO_ERROR;
+            desc->scene = scene;
+            scenes[code] = desc;
         } else {
-            OGL::Program *prog = new OGL::Program(globalData->passthruVertShader, &frag);
-
-            if (!prog->isSucceed()) {
-                // On falied linking
-                ProgramRef *pr = new ProgramRef();
-                pr->error = PROGRAM_ERROR_LINK;
-                pr->infoLog = prog->getInfoLog();
-                programRefs[code] = pr;
-
-                delete prog;
-            } else {
-                // On succeed
-                ProgramRef *pr = new ProgramRef();
-                pr->error = PROGRAM_NO_ERROR;
-                pr->program = prog;
-                programRefs[code] = pr;
-            }
+            // On failed compiling a shader
+            auto *desc = new SceneDesc();
+            desc->error = PROGRAM_ERROR_SHADER;
+            // TODO: Output an error log correctly
+            desc->infoLog = "Log";            
+            scenes[code] = desc;
         }
     }
 }
@@ -78,18 +71,17 @@ About(
  * Pops up shader errors on user clicked Option label of the effect
  */
 static PF_Err
-PopDialog (
-   PF_InData        *in_data,
-   PF_OutData        *out_data,
-   PF_ParamDef        *params[],
-   PF_LayerDef        *output )
-{
+PopDialog(
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output) {
     PF_Err err = PF_Err_NONE;
-    
-    auto *globalData = reinterpret_cast<GlobalData*>(DH(out_data->global_data));
-    auto *glsl = reinterpret_cast<ParamArbGlsl*>(*params[PARAM_GLSL]->u.arb_d.value);
-    
-    auto &programRefs = *globalData->programRefs;
+
+    auto *globalData = reinterpret_cast<GlobalData *>(DH(out_data->global_data));
+    auto *glsl = reinterpret_cast<ParamArbGlsl *>(*params[PARAM_GLSL]->u.arb_d.value);
+
+    auto &scenes = *globalData->scenes;
     auto &code = glsl->fragCode;
     
     A_char *status;
@@ -97,24 +89,24 @@ PopDialog (
     
     if (strlen(code) == 0) {
         status = "Not Loaded";
-    } else if (programRefs.find(code) == programRefs.end()) {
+    } else if (scenes.find(code) == scenes.end()) {
         status = "Not Compiled";
     } else {
-        auto pr = programRefs[code];
-        
-        switch (pr->error) {
+        auto desc = scenes[code];
+
+        switch (desc->error) {
             case PROGRAM_NO_ERROR:
                 status = "Compiled Successfully";
                 break;
                 
             case PROGRAM_ERROR_SHADER:
                 status = "Shader Error";
-                infoLog = pr->infoLog;
+                infoLog = desc->infoLog;
                 break;
                 
             case PROGRAM_ERROR_LINK:
                 status = "Link Error";
-                infoLog = pr->infoLog;
+                infoLog = desc->infoLog;
                 break;
         }
     }
@@ -136,10 +128,9 @@ GlobalSetup(
     PF_OutData *out_data,
     PF_ParamDef *params[],
     PF_LayerDef *output) {
-    
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
-    
+
     out_data->my_version = PF_VERSION(MAJOR_VERSION,
                                       MINOR_VERSION,
                                       BUG_VERSION,
@@ -183,27 +174,26 @@ GlobalSetup(
     globalData->context->bind();
     
     // Setup GL objects
-    globalData->fboIntermediate = new OGL::Fbo();
-    globalData->fboFinal = new OGL::Fbo();
-    globalData->quad = new OGL::QuadVao();
-    
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
-    std::string passthruVert = SystemUtil::readTextFile(resourcePath + "shaders/passthru.vert");
-    std::string defaultFrag = SystemUtil::readTextFile(resourcePath + "shaders/default.frag");
-    std::string swizzleFrag = SystemUtil::readTextFile(resourcePath + "shaders/swizzle.frag");
-        
-    OGL::Shader defaultFragShader(defaultFrag.c_str(), GL_FRAGMENT_SHADER);
-    OGL::Shader swizzleFragShader(swizzleFrag.c_str(), GL_FRAGMENT_SHADER);
     
-    globalData->passthruVertShader = new OGL::Shader(passthruVert.c_str(), GL_VERTEX_SHADER);
-    globalData->defaultProgram = new OGL::Program(globalData->passthruVertShader, &defaultFragShader);
-    globalData->swizzleProgram = new OGL::Program(globalData->passthruVertShader, &swizzleFragShader);
-    globalData->defaultFragCode = defaultFrag;
+    auto renderPrepCallback = [](const VVGL::GLScene & n, const bool inReshaped, const bool inPgmChanged) {
+        // Prevent
+        glDisable(GL_BLEND);
+    };
     
-    auto programRefs = new std::unordered_map<std::string,  ProgramRef*>();
+    globalData->defaultScene = VVISF::CreateISFSceneRef();
+    globalData->defaultScene->useFile(resourcePath + "shaders/default.fs");
+    globalData->defaultScene->setRenderPrepCallback(renderPrepCallback);
+    globalData->defaultScene->compileProgramIfNecessary();
     
-    globalData->programRefs = programRefs;
-    
+
+    globalData->gl2aeScene = VVISF::CreateISFSceneRef();
+    globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
+    globalData->gl2aeScene->setRenderPrepCallback(renderPrepCallback);
+    globalData->gl2aeScene->compileProgramIfNecessary();
+
+    globalData->scenes = new std::unordered_map<std::string, SceneDesc*>();
+
     handleSuite->host_unlock_handle(globalDataH);
 
     return err;
@@ -230,14 +220,10 @@ GlobalSetdown(
         auto *globalData = reinterpret_cast<GlobalData *>(globalDataH);
             
         globalData->context->bind();
-
-        delete globalData->fboIntermediate;
-        delete globalData->fboFinal;
-        delete globalData->quad;
-        delete globalData->passthruVertShader;
-        delete globalData->defaultProgram;
-        delete globalData->swizzleProgram;
-        delete globalData->programRefs;
+        
+        globalData->defaultScene.reset();
+        globalData->gl2aeScene.reset();
+        delete globalData->scenes;
         
         delete globalData->context;
         
@@ -435,7 +421,7 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    // Get the GLSL prgoram from cache
+    // Get the ISF scene from cache
     auto *globalData = reinterpret_cast<GlobalData *>(
         handleSuite->host_lock_handle(in_data->global_data));
     
@@ -452,16 +438,16 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     
     if (glsl) {
         auto &code = glsl->fragCode;
-        auto &programRefs = *globalData->programRefs;
+        auto &scenes = *globalData->scenes;
+
+        compileShaderIfNeeded(globalData, code);
+
+        paramInfo->scene = globalData->defaultScene.get();
         
-        compileShaderIfNeeded(globalData, code);        
-        
-        paramInfo->program = globalData->defaultProgram;
-        
-        if (strlen(code) > 0 && programRefs.find(code) != programRefs.end()) {
-            ProgramRef *pr = programRefs[code];
-            if (pr->error == PROGRAM_NO_ERROR) {
-                paramInfo->program = pr->program;
+        if (strlen(code) > 0 && scenes.find(code) != scenes.end()) {
+            auto *desc = scenes[code];
+            if (desc->error == PROGRAM_NO_ERROR) {
+                paramInfo->scene = desc->scene.get();
             }
         }
     }
@@ -564,70 +550,57 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         GLsizei width = input_worldP->width;
         GLsizei height = input_worldP->height;
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
-
-        // Setup texture and fbos
-        globalData->fboFinal->allocate(width, height, GL_RGBA, pixelType);
-        globalData->fboIntermediate->allocate(width, height, GL_RGBA, pixelType);
-
-        // Allocate pixels buffer
-        PF_Handle pixelsBufferH =
-            handleSuite->host_new_handle(width * height * pixelBytes);
-        void *pixelsBufferP = reinterpret_cast<char *>(
-            handleSuite->host_lock_handle(pixelsBufferH));
+        VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
+                                      AEOGLInterop::getMultiplier16bit(pixelType));
         
+        // Upload the input image to GPU
+        auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
+                                                            input_worldP->data,
+                                                            VVGL::Size(width, height),
+                                                            NULL, NULL);
+        inputImageCPU->flipped = true;
+        auto inputImage = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
+        
+        
+        // Render ISF
+        auto isfImage = VVGL::CreateRGBATex(VVGL::Size(width, height));
         {
-            // Pass 1: Render glslCanvas-style code to fboIntermediate
-            OGL::Program &program = *paramInfo->program;
-            program.bind();
-            globalData->fboIntermediate->bind();
 
-            program.setVec2("u_resolution", width, height);
-            program.setFloat("u_time", paramInfo->time);
-            program.setVec2("u_mouse", paramInfo->mouse.x, paramInfo->mouse.y);
+            auto &scene = *paramInfo->scene;
             
-            globalData->quad->render();
+            scene.renderToBuffer(isfImage);
         }
         
+        // Download the result of ISF
         {
-            // Pass 2: Swizzle RGBA to ARGB and apply a mask
-            OGL::Program &program = *globalData->swizzleProgram;
-            program.bind();
-            globalData->fboFinal->bind();
+            // Upload the input image
+            
+            auto &scene = *globalData->gl2aeScene;
 
-            size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
-            auto inputCPUTexture = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
-                                                                  input_worldP->data,
-                                                                  VVGL::Size(width, height),
-                                                                  NULL, NULL);
-            inputCPUTexture->flipped = true;
-            auto inputTexture = globalData->context->uploader->uploadCPUToTex(inputCPUTexture);
+            scene.setBufferForInputNamed(inputImage, "inputImage");
+            scene.setBufferForInputNamed(isfImage, "isfImage");
+            scene.setValueForInputNamed(multiplier16bit, "multiplier16bit");
             
-            float multiplier16bit = AEOGLInterop::getMultiplier16bit(pixelType);
-            
-            program.setFloat("multiplier16bit", multiplier16bit);
-            program.setVec2("u_resolution", width, height);
-            
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, inputTexture->name);
-            glUniform1i(glGetUniformLocation(program.getID(), "inputTexture"), 0);
-            
-            program.setTexture("glslCanvasOutputTexture", globalData->fboIntermediate->getTexture(), 1);
-            
-            globalData->quad->render();
+            auto outputImage = scene.createAndRenderABuffer(VVGL::Size(width, height), 0.0);
+            auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
+
+            char *glP = nullptr;  // OpenGL
+            char *aeP = nullptr;  // AE
+
+            auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+
+            // Copy per row
+            for (size_t y = 0; y < height; y++) {
+                glP = (char *)outputImageCPU->cpuBackingPtr + (height - y - 1) * bytesPerRowGl;
+                aeP = (char *)output_worldP->data + y * output_worldP->rowbytes;
+                std::memcpy(aeP, glP, width * pixelBytes);
+            }
         }
 
-        // Read pixels
-        globalData->fboFinal->readToPixels(pixelsBufferP);
-        ERR(AEOGLInterop::downloadTexture(pixelsBufferP, output_worldP, pixelType));
-        
-        // Release the pixel buffer
-        handleSuite->host_unlock_handle(pixelsBufferH);
-        handleSuite->host_dispose_handle(pixelsBufferH);
-        
         // VVGL: Release any old buffer
         VVGL::GetGlobalBufferPool()->housekeeping();
-    } // End
-    
+        
+    }  // End OpenGL
 
     // Check in
     ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite,
@@ -723,13 +696,14 @@ UserChangedParam(PF_InData *in_data,
                 
                 ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
                 
-                const char *fragCode = glsl->fragCode;
+                std::string isfCode = std::string(glsl->fragCode);
                 
-                if (strlen(fragCode) == 0) {
-                    fragCode = globalData->defaultFragCode.c_str();
+                if (isfCode.empty()) {
+                    auto &doc = *globalData->defaultScene->doc();
+                    isfCode = *doc.jsonSourceString() + *doc.fragShaderSource();
                 }
                 
-                SystemUtil::writeTextFile(dstPath, fragCode);
+                SystemUtil::writeTextFile(dstPath, isfCode);
                 
                 ERR(PF_CHECKIN_PARAM(in_data, &param_glsl));
             }
@@ -784,12 +758,12 @@ UpdateParameterUI(
     A_char *shaderStatus = "Not Loaded";
     
     if (strlen(code) > 0) {
-        auto &programRefs = *globalData->programRefs;
-        
-        if (programRefs.find(code) == programRefs.end()) {
+        auto &scenes = *globalData->scenes;
+
+        if (scenes.find(code) == scenes.end()) {
             shaderStatus = "Not Compiled";
         } else {
-            switch (programRefs[code]->error) {
+            switch (scenes[code]->error) {
                 case PROGRAM_NO_ERROR:
                     shaderStatus = "Compiled Successfully";
                     break;
@@ -830,7 +804,8 @@ extern "C" DllExport PF_Err PluginDataEntryFunction(
 }
 
 DllExport
-    PF_Err EffectMain(
+    PF_Err
+    EffectMain(
         PF_Cmd cmd,
         PF_InData *in_data,
         PF_OutData *out_data,
