@@ -13,7 +13,7 @@
 #include <iostream>
 #include <VVGL/VVGL.hpp>
 
-void toggleFlag(A_long flag, A_Boolean value, A_long *target) {
+void setBitFlag(A_long flag, A_Boolean value, A_long *target) {
     if (value) {
         *target |= flag;
     } else {
@@ -46,7 +46,7 @@ PF_Err setParamVisibility(PF_InData *in_data,
                                                                &effectH));
     
     if (!err) {
-        toggleFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
+        setBitFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
         
         ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                         index,
@@ -880,7 +880,7 @@ QueryDynamicFlags(
 
     if (!err) {
         auto useLayerTime = def.u.bd.value;
-        toggleFlag(PF_OutFlag_NON_PARAM_VARY, useLayerTime, &out_data->out_flags);
+        setBitFlag(PF_OutFlag_NON_PARAM_VARY, useLayerTime, &out_data->out_flags);
     }
 
     ERR2(PF_CHECKIN_PARAM(in_data, &def));
