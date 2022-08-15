@@ -26,7 +26,7 @@ void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
         globalData->context->bind();
         
         auto doc = VVISF::CreateISFDocRefWith(code);
-        auto scene = VVISF::CreateISFSceneRef();
+        auto scene = VVISF::CreateISF4AESceneRef();
         scene->useDoc(doc);
         scene->compileProgramIfNecessary();
 
@@ -176,20 +176,13 @@ GlobalSetup(
     // Setup GL objects
     std::string resourcePath = AEUtil::getResourcesPath(in_data);
     
-    auto renderPrepCallback = [](const VVGL::GLScene & n, const bool inReshaped, const bool inPgmChanged) {
-        // Prevent
-        glDisable(GL_BLEND);
-    };
-    
-    globalData->defaultScene = VVISF::CreateISFSceneRef();
+    globalData->defaultScene = VVISF::CreateISF4AESceneRef();
     globalData->defaultScene->useFile(resourcePath + "shaders/default.fs");
-    globalData->defaultScene->setRenderPrepCallback(renderPrepCallback);
     globalData->defaultScene->compileProgramIfNecessary();
     
 
-    globalData->gl2aeScene = VVISF::CreateISFSceneRef();
+    globalData->gl2aeScene = VVISF::CreateISF4AESceneRef();
     globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
-    globalData->gl2aeScene->setRenderPrepCallback(renderPrepCallback);
     globalData->gl2aeScene->compileProgramIfNecessary();
 
     globalData->scenes = new std::unordered_map<std::string, SceneDesc*>();

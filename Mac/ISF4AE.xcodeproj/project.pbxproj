@@ -20,6 +20,7 @@
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
 		2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISFArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
+		23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */; };
 		23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950C928A64A9000F6FF3C /* VVISF.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; };
 		23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950C128A64A9000F6FF3C /* VVISF.framework */; };
@@ -216,6 +217,7 @@
 		2382660B28A4AE17001F523D /* ISFArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISFArbHandler.cpp; path = ../ISFArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
+		23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ISF4AEScene.hpp; path = ../ISF4AEScene.hpp; sourceTree = "<group>"; };
 		7EF36FB816F29807002A3CB3 /* ISF4AE.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ISF4AE.h; path = ../ISF4AE.h; sourceTree = "<group>"; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtil.h; sourceTree = "<group>"; };
 		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; path = SystemUtil.cpp; sourceTree = "<group>"; };
@@ -320,6 +322,7 @@
 				233B1F1E28A476D2000652AC /* Headers */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
 				D0FE575C0993C4E900139A60 /* ISF4AE.cpp */,
+				23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */,
 				7EF36FB816F29807002A3CB3 /* ISF4AE.h */,
 				2382660B28A4AE17001F523D /* ISFArbHandler.cpp */,
 				D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */,
@@ -594,6 +597,7 @@
 				233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */,
 				233B1F3928A476D2000652AC /* Fbo.cpp in Sources */,
 				D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */,
+				23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */,
 				233B1F3A28A476D2000652AC /* QuadVao.cpp in Sources */,
 				2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */,
 				233B1F3828A476D2000652AC /* Common.cpp in Sources */,
