@@ -591,7 +591,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
             // Copy per row
             for (size_t y = 0; y < height; y++) {
-                glP = (char *)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
+                glP = (char *)outputImageCPU->cpuBackingPtr + (height - y - 1) * bytesPerRowGl;
                 aeP = (char *)output_worldP->data + y * output_worldP->rowbytes;
                 std::memcpy(aeP, glP, width * pixelBytes);
             }
