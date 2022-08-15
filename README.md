@@ -1,4 +1,4 @@
-# GLSLCanvas4AE
+# ISF4AE
 
 ![](./README/screenshot.gif)
 
@@ -15,8 +15,8 @@ After Effects plug-in to run codes written in [The Book of Shaders Editor](http:
 ```bash
 # At the root folder of SDk
 cd Examples/Effect
-git clone https://github.com/baku89/glslCanvas4AE.git
-cd glslCanvas4AE
+git clone https://github.com/baku89/ISF4AE.git
+cd ISF4AE
 git submodule update --init
 ```
 

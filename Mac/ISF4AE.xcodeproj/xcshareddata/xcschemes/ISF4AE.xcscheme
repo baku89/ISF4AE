@@ -3,7 +3,7 @@
 	<BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
 		<BuildActionEntries>
 			<BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-				<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C4E618CB095A3CE80012CA3F" BuildableName="GLSLCanvas4AE.plugin" BlueprintName="GLSLCanvas4AE" ReferencedContainer="container:GLSLCanvas4AE.xcodeproj">
+				<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C4E618CB095A3CE80012CA3F" BuildableName="ISF4AE.plugin" BlueprintName="ISF4AE" ReferencedContainer="container:ISF4AE.xcodeproj">
 				</BuildableReference>
 			</BuildActionEntry>
 		</BuildActionEntries>
@@ -18,7 +18,7 @@
 	</LaunchAction>
 	<ProfileAction buildConfiguration="Debug" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
 		<MacroExpansion>
-			<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C4E618CB095A3CE80012CA3F" BuildableName="GLSLCanvas4AE.plugin" BlueprintName="GLSLCanvas4AE" ReferencedContainer="container:GLSLCanvas4AE.xcodeproj">
+			<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C4E618CB095A3CE80012CA3F" BuildableName="ISF4AE.plugin" BlueprintName="ISF4AE" ReferencedContainer="container:ISF4AE.xcodeproj">
 			</BuildableReference>
 		</MacroExpansion>
 	</ProfileAction>

@@ -18,15 +18,15 @@
 		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
 		2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */ = {isa = PBXBuildFile; fileRef = 2382660628A490F5001F523D /* AEFX_SuiteHelper.c */; };
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
-		2382660C28A4AE17001F523D /* GLSLCanvasArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */; };
+		2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISFArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
 		23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950C928A64A9000F6FF3C /* VVISF.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; };
 		23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950C128A64A9000F6FF3C /* VVISF.framework */; };
 		23FD786628AA4C0A007E529B /* VVGL.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
-		D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */; };
-		D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */; };
+		D0FE57600993C4E900139A60 /* ISF4AE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* ISF4AE.cpp */; };
+		D0FE57610993C4E900139A60 /* ISF4AEPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */; };
 		D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */; };
 		D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */; };
 /* End PBXBuildFile section */
@@ -213,15 +213,15 @@
 		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../../Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
 		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
-		2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = GLSLCanvasArbHandler.cpp; path = ../GLSLCanvasArbHandler.cpp; sourceTree = "<group>"; };
+		2382660B28A4AE17001F523D /* ISFArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISFArbHandler.cpp; path = ../ISFArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
-		7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLSLCanvas.h; path = ../GLSLCanvas.h; sourceTree = "<group>"; };
+		7EF36FB816F29807002A3CB3 /* ISF4AE.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ISF4AE.h; path = ../ISF4AE.h; sourceTree = "<group>"; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtil.h; sourceTree = "<group>"; };
 		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; path = SystemUtil.cpp; sourceTree = "<group>"; };
-		C4E618CC095A3CE80012CA3F /* GLSLCanvas4AE.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLSLCanvas4AE.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
-		D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = GLSLCanvas.cpp; path = ../GLSLCanvas.cpp; sourceTree = SOURCE_ROOT; };
-		D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = GLSLCanvasPiPL.r; path = ../GLSLCanvasPiPL.r; sourceTree = SOURCE_ROOT; };
+		C4E618CC095A3CE80012CA3F /* ISF4AE.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ISF4AE.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0FE575C0993C4E900139A60 /* ISF4AE.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ISF4AE.cpp; path = ../ISF4AE.cpp; sourceTree = SOURCE_ROOT; };
+		D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = ISF4AEPiPL.r; path = ../ISF4AEPiPL.r; sourceTree = SOURCE_ROOT; };
 		D0FE579A0993C5E500139A60 /* AEGP_SuiteHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AEGP_SuiteHandler.cpp; path = ../../../Util/AEGP_SuiteHandler.cpp; sourceTree = SOURCE_ROOT; };
 		D0FE579B0993C5E500139A60 /* AEGP_SuiteHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AEGP_SuiteHandler.h; path = ../../../Util/AEGP_SuiteHandler.h; sourceTree = SOURCE_ROOT; };
 		D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = SOURCE_ROOT; };
@@ -319,10 +319,10 @@
 				2382660028A48EDF001F523D /* shaders */,
 				233B1F1E28A476D2000652AC /* Headers */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
-				D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */,
-				7EF36FB816F29807002A3CB3 /* GLSLCanvas.h */,
-				2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */,
-				D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */,
+				D0FE575C0993C4E900139A60 /* ISF4AE.cpp */,
+				7EF36FB816F29807002A3CB3 /* ISF4AE.h */,
+				2382660B28A4AE17001F523D /* ISFArbHandler.cpp */,
+				D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
 				C4E6188C095A3C800012CA3F /* Products */,
 				92099B601F0CFBA30080F057 /* Frameworks */,
@@ -332,7 +332,7 @@
 		C4E6188C095A3C800012CA3F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C4E618CC095A3CE80012CA3F /* GLSLCanvas4AE.plugin */,
+				C4E618CC095A3CE80012CA3F /* ISF4AE.plugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -353,9 +353,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C4E618CB095A3CE80012CA3F /* GLSLCanvas4AE */ = {
+		C4E618CB095A3CE80012CA3F /* ISF4AE */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C4E618CE095A3CE90012CA3F /* Build configuration list for PBXNativeTarget "GLSLCanvas4AE" */;
+			buildConfigurationList = C4E618CE095A3CE90012CA3F /* Build configuration list for PBXNativeTarget "ISF4AE" */;
 			buildPhases = (
 				C4E618C8095A3CE80012CA3F /* Resources */,
 				C4E618C9095A3CE80012CA3F /* Sources */,
@@ -370,9 +370,9 @@
 				230950D128A64B8100F6FF3C /* PBXTargetDependency */,
 				23FD786328AA4BE8007E529B /* PBXTargetDependency */,
 			);
-			name = GLSLCanvas4AE;
+			name = ISF4AE;
 			productName = Skeleton.plugin;
-			productReference = C4E618CC095A3CE80012CA3F /* GLSLCanvas4AE.plugin */;
+			productReference = C4E618CC095A3CE80012CA3F /* ISF4AE.plugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -383,7 +383,7 @@
 			attributes = {
 				LastUpgradeCheck = 1340;
 			};
-			buildConfigurationList = C4E6187F095A3C800012CA3F /* Build configuration list for PBXProject "GLSLCanvas4AE" */;
+			buildConfigurationList = C4E6187F095A3C800012CA3F /* Build configuration list for PBXProject "ISF4AE" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -402,7 +402,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				C4E618CB095A3CE80012CA3F /* GLSLCanvas4AE */,
+				C4E618CB095A3CE80012CA3F /* ISF4AE */,
 			);
 		};
 /* End PBXProject section */
@@ -552,7 +552,7 @@
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */,
+				D0FE57610993C4E900139A60 /* ISF4AEPiPL.r in Rez */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -583,9 +583,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */,
+				D0FE57600993C4E900139A60 /* ISF4AE.cpp in Sources */,
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
-				2382660C28A4AE17001F523D /* GLSLCanvasArbHandler.cpp in Sources */,
+				2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
 				233B1F3B28A476D2000652AC /* Texture.cpp in Sources */,
 				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,
@@ -684,8 +684,8 @@
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DVVGL_SDK_MAC";
-				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/GLSLCanvas4AE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.baku89.GLSLCanvas4AE;
+				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/ISF4AE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.baku89.ISF4AE;
 				REZ_PREPROCESSOR_DEFINITIONS = __MACH__;
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -697,8 +697,8 @@
 		C4E618CF095A3CE90012CA3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				INFOPLIST_FILE = "GLSLCanvas4AE.plugin-Info.plist";
-				PRODUCT_NAME = GLSLCanvas4AE;
+				INFOPLIST_FILE = "ISF4AE.plugin-Info.plist";
+				PRODUCT_NAME = ISF4AE;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -706,7 +706,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C4E6187F095A3C800012CA3F /* Build configuration list for PBXProject "GLSLCanvas4AE" */ = {
+		C4E6187F095A3C800012CA3F /* Build configuration list for PBXProject "ISF4AE" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C4E61880095A3C800012CA3F /* Debug */,
@@ -714,7 +714,7 @@
 			defaultConfigurationIsVisible = 1;
 			defaultConfigurationName = Debug;
 		};
-		C4E618CE095A3CE90012CA3F /* Build configuration list for PBXNativeTarget "GLSLCanvas4AE" */ = {
+		C4E618CE095A3CE90012CA3F /* Build configuration list for PBXNativeTarget "ISF4AE" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C4E618CF095A3CE90012CA3F /* Debug */,

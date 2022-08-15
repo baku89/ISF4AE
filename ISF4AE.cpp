@@ -1,4 +1,4 @@
-#include "GLSLCanvas.h"
+#include "ISF4AE.h"
 
 #include "Smart_Utils.h"
 #include "AEFX_SuiteHelper.h"
