@@ -11,20 +11,20 @@ CreateDefaultArb(
 {
     AEGP_SuiteHandler    suites(in_data->pica_basicP);
     
-    PF_Handle arbH = suites.HandleSuite1()->host_new_handle(sizeof(ParamArbGlsl));
+    PF_Handle arbH = suites.HandleSuite1()->host_new_handle(sizeof(ParamArbIsf));
     
     if (!arbH) {
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(PF_LOCK_HANDLE(arbH));
+    auto *isf = reinterpret_cast<ParamArbIsf*>(PF_LOCK_HANDLE(arbH));
     
-    if (!arb) {
+    if (!isf) {
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    AEFX_CLR_STRUCT(*arb);
-    PF_STRCPY(arb->fragCode, "");
+    AEFX_CLR_STRUCT(*isf);
+    PF_STRCPY(isf->code, "");
     
     *dephault = arbH;
     
@@ -50,11 +50,11 @@ ArbCopy(
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    ParamArbGlsl *srcArb = reinterpret_cast<ParamArbGlsl*>(suites.HandleSuite1()->host_lock_handle(srcH));
-    ParamArbGlsl *dstArb = reinterpret_cast<ParamArbGlsl*>(suites.HandleSuite1()->host_lock_handle(dstH));
+    auto *srcIsf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(srcH));
+    auto *dstIsf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(dstH));
     
-    if (srcArb && dstArb) {
-        memcpy(dstArb, srcArb, sizeof(ParamArbGlsl));
+    if (srcIsf && dstIsf) {
+        memcpy(dstIsf, srcIsf, sizeof(ParamArbIsf));
         
     } else {
         err = PF_Err_OUT_OF_MEMORY;
@@ -85,14 +85,14 @@ ArbCompare(
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
     
-    ParamArbGlsl *a = (ParamArbGlsl*)PF_LOCK_HANDLE(aH),
-                 *b = (ParamArbGlsl*)PF_LOCK_HANDLE(bH);
+    auto *a = (ParamArbIsf*)PF_LOCK_HANDLE(aH),
+         *b = (ParamArbIsf*)PF_LOCK_HANDLE(bH);
     
     if (!a || !b) {
         return PF_Err_UNRECOGNIZED_PARAM_TYPE;
     }
     
-    bool isEqual = strcmp(a->fragCode, b->fragCode) == 0;
+    bool isEqual = strcmp(a->code, b->code) == 0;
     
     *resultP = isEqual ? PF_ArbCompare_EQUAL : PF_ArbCompare_NOT_EQUAL;
     

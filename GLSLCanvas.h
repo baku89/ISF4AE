@@ -47,11 +47,11 @@ typedef short int			int16;
 /* Parameter defaults */
 
 #define ARB_REFCON          (void*)0xDEADBEEFDEADBEEF
-#define FRAGCODE_MAX_LEN	8192
+#define ISFCODE_MAX_LEN	8192
 
 enum {
 	PARAM_INPUT = 0,
-    PARAM_GLSL,
+    PARAM_ISF,
     PARAM_EDIT,
     PARAM_SAVE,
 	PARAM_TIME,
@@ -79,8 +79,8 @@ typedef struct {
 } GlobalData;
 
 typedef struct {
-    A_char fragCode[FRAGCODE_MAX_LEN];
-} ParamArbGlsl;
+    A_char code[ISFCODE_MAX_LEN];
+} ParamArbIsf;
 
 
 

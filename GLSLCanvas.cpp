@@ -79,10 +79,10 @@ PopDialog(
     PF_Err err = PF_Err_NONE;
 
     auto *globalData = reinterpret_cast<GlobalData *>(DH(out_data->global_data));
-    auto *glsl = reinterpret_cast<ParamArbGlsl *>(*params[PARAM_GLSL]->u.arb_d.value);
+    auto *isf = reinterpret_cast<ParamArbIsf *>(*params[PARAM_ISF]->u.arb_d.value);
 
     auto &scenes = *globalData->scenes;
-    auto &code = glsl->fragCode;
+    auto &code = isf->code;
     
     A_char *status;
     std::string infoLog = "";
@@ -268,7 +268,7 @@ ParamsSetup(
                       0,
                       PF_PUI_NO_ECW_UI,
                       def.u.arb_d.dephault,
-                      PARAM_GLSL,
+                      PARAM_ISF,
                       ARB_REFCON);
     
     // "Edit Shader" button (also shows a shader compliation status)
@@ -352,27 +352,27 @@ HandleArbitrary(
             break;
         
         case PF_Arbitrary_FLAT_SIZE_FUNC:
-            *(extra->u.flat_size_func_params.flat_data_sizePLu) = sizeof(ParamArbGlsl);
+            *(extra->u.flat_size_func_params.flat_data_sizePLu) = sizeof(ParamArbIsf);
             break;
 
         case PF_Arbitrary_FLATTEN_FUNC:
-            if(extra->u.flatten_func_params.buf_sizeLu == sizeof(ParamArbGlsl)){
-                void *src = (ParamArbGlsl*)PF_LOCK_HANDLE(extra->u.flatten_func_params.arbH);
+            if(extra->u.flatten_func_params.buf_sizeLu == sizeof(ParamArbIsf)){
+                void *src = (ParamArbIsf*)PF_LOCK_HANDLE(extra->u.flatten_func_params.arbH);
                 void *dst = extra->u.flatten_func_params.flat_dataPV;
                 if (src) {
-                    memcpy(dst, src, sizeof(ParamArbGlsl));
+                    memcpy(dst, src, sizeof(ParamArbIsf));
                 }
                 PF_UNLOCK_HANDLE(extra->u.flatten_func_params.arbH);
             }
             break;
 
         case PF_Arbitrary_UNFLATTEN_FUNC:
-            if(extra->u.unflatten_func_params.buf_sizeLu == sizeof(ParamArbGlsl)){
-                PF_Handle    handle = PF_NEW_HANDLE(sizeof(ParamArbGlsl));
-                void *dst = (ParamArbGlsl*)PF_LOCK_HANDLE(handle);
+            if(extra->u.unflatten_func_params.buf_sizeLu == sizeof(ParamArbIsf)){
+                PF_Handle    handle = PF_NEW_HANDLE(sizeof(ParamArbIsf));
+                void *dst = (ParamArbIsf*)PF_LOCK_HANDLE(handle);
                 void *src = (void*)extra->u.unflatten_func_params.flat_dataPV;
                 if (src) {
-                    memcpy(dst, src, sizeof(ParamArbGlsl));
+                    memcpy(dst, src, sizeof(ParamArbIsf));
                 }
                 *(extra->u.unflatten_func_params.arbPH) = handle;
                 PF_UNLOCK_HANDLE(handle);
@@ -428,16 +428,16 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     PF_ParamDef paramGlsl;
     AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_GLSL,
+                          PARAM_ISF,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
                           &paramGlsl));
     
-    ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
+    auto *isf = reinterpret_cast<ParamArbIsf*>(*paramGlsl.u.arb_d.value);
     
-    if (glsl) {
-        auto &code = glsl->fragCode;
+    if (isf) {
+        auto &code = isf->code;
         auto &scenes = *globalData->scenes;
 
         compileShaderIfNeeded(globalData, code);
@@ -632,17 +632,17 @@ UserChangedParam(PF_InData *in_data,
             std::string srcPath = SystemUtil::openFileDialog(fileTypes);
             
             if (!srcPath.empty()) {
-                std::string fragCode = SystemUtil::readTextFile(srcPath);
+                std::string isfCode = SystemUtil::readTextFile(srcPath);
                 
-                if (!fragCode.empty()) {
-                    params[PARAM_GLSL]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                if (!isfCode.empty()) {
+                    params[PARAM_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
                     
-                    ParamArbGlsl *arb = reinterpret_cast<ParamArbGlsl*>(*params[PARAM_GLSL]->u.arb_d.value);
-                    PF_STRCPY(arb->fragCode, fragCode.c_str());
+                    auto *isf = reinterpret_cast<ParamArbIsf*>(*params[PARAM_ISF]->u.arb_d.value);
+                    PF_STRCPY(isf->code, isfCode.c_str());
                     
                     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                                    PARAM_GLSL,
-                                                                    params[PARAM_GLSL]));
+                                                                    PARAM_ISF,
+                                                                    params[PARAM_ISF]));
                 } else {
                     // On failed reading the text file, or simply it's empty
                     suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
@@ -669,7 +669,7 @@ UserChangedParam(PF_InData *in_data,
 
             ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
                                                                       effectH,
-                                                                      PARAM_GLSL,
+                                                                      PARAM_ISF,
                                                                       &glslStreamH));
             
             ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(globalData->aegpId,
@@ -688,15 +688,15 @@ UserChangedParam(PF_InData *in_data,
                 PF_ParamDef param_glsl;
                 AEFX_CLR_STRUCT(param_glsl);
                 ERR(PF_CHECKOUT_PARAM(in_data,
-                                      PARAM_GLSL,
+                                      PARAM_ISF,
                                       in_data->current_time,
                                       in_data->time_step,
                                       in_data->time_scale,
                                       &param_glsl));
                 
-                ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*param_glsl.u.arb_d.value);
+                auto *isf = reinterpret_cast<ParamArbIsf*>(*param_glsl.u.arb_d.value);
                 
-                std::string isfCode = std::string(glsl->fragCode);
+                std::string isfCode = std::string(isf->code);
                 
                 if (isfCode.empty()) {
                     auto &doc = *globalData->defaultScene->doc();
@@ -737,19 +737,19 @@ UpdateParameterUI(
     PF_ParamDef paramGlsl;
     AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_GLSL,
+                          PARAM_ISF,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
                           &paramGlsl));
     
-    ParamArbGlsl *glsl = reinterpret_cast<ParamArbGlsl*>(*paramGlsl.u.arb_d.value);
+    auto *isf = reinterpret_cast<ParamArbIsf*>(*paramGlsl.u.arb_d.value);
     
-    if (!glsl) {
+    if (!isf) {
         return PF_Err_INTERNAL_STRUCT_DAMAGED;
     }
     
-    auto &code = glsl->fragCode;
+    auto &code = isf->code;
     
     // Compile a shader at here to make sure to display the latest compilation status
     compileShaderIfNeeded(globalData, code);
