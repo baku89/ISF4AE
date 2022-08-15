@@ -188,6 +188,8 @@ GlobalSetup(
     globalData->defaultScene = VVISF::CreateISF4AESceneRef();
     globalData->defaultScene->useFile(resourcePath + "shaders/default.fs");
     
+    globalData->ae2glScene = VVISF::CreateISF4AESceneRef();
+    globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
 
     globalData->gl2aeScene = VVISF::CreateISF4AESceneRef();
     globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
@@ -558,15 +560,20 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                                                             input_worldP->data,
                                                             VVGL::Size(width, height),
                                                             NULL, NULL);
-        inputImageCPU->flipped = true;
-        auto inputImage = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
+        auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
         
+        globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+        globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
+        
+        auto inputImage = globalData->ae2glScene->createAndRenderABuffer(VVGL::Size(width, height));
         
         // Render ISF
         auto isfImage = VVGL::CreateRGBATex(VVGL::Size(width, height));
         {
 
             auto &scene = *paramInfo->scene;
+            
+            scene.setBufferForInputNamed(inputImage, "inputImage");
             
             scene.renderToBuffer(isfImage);
         }
@@ -577,8 +584,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             
             auto &scene = *globalData->gl2aeScene;
 
-            scene.setBufferForInputNamed(inputImage, "inputImage");
-            scene.setBufferForInputNamed(isfImage, "isfImage");
+            scene.setBufferForInputNamed(isfImage, "inputImage");
             scene.setValueForInputNamed(multiplier16bit, "multiplier16bit");
             
             auto outputImage = scene.createAndRenderABuffer(VVGL::Size(width, height), 0.0);
@@ -591,7 +597,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
             // Copy per row
             for (size_t y = 0; y < height; y++) {
-                glP = (char *)outputImageCPU->cpuBackingPtr + (height - y - 1) * bytesPerRowGl;
+                glP = (char *)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
                 aeP = (char *)output_worldP->data + y * output_worldP->rowbytes;
                 std::memcpy(aeP, glP, width * pixelBytes);
             }

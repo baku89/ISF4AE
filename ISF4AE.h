@@ -69,7 +69,7 @@ typedef struct {
 typedef struct {
     AEGP_PluginID       aegpId;
     OGL::GlobalContext  *context;
-    VVISF::ISF4AESceneRef  defaultScene, gl2aeScene;
+    VVISF::ISF4AESceneRef  defaultScene, ae2glScene, gl2aeScene;
     std::unordered_map<std::string, SceneDesc*> *scenes;
 } GlobalData;
 
