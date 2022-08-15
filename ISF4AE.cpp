@@ -530,7 +530,7 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
     
     if (useLayerTime) {
-        paramInfo->time = in_data->current_time / in_data->time_scale;
+        paramInfo->time = (double)in_data->current_time / in_data->time_scale;
     } else {
         ERR(AEOGLInterop::getFloatSliderParam(in_data,
                                               out_data,
