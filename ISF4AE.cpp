@@ -301,10 +301,6 @@ ParamsSetup(
                          0,                         // Flags
                          PARAM_TIME);               // ID
 
-    // TODO: set default mouse position to center of layer
-    AEFX_CLR_STRUCT(def);
-    PF_ADD_POINT("Mouse Position", 0, 0, false, PARAM_MOUSE);
-
     AEFX_CLR_STRUCT(def);
 
     // Set PF_OutData->num_params to match the parameter count.
@@ -464,23 +460,11 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
                           in_data->time_scale,
                           &param_time));
     
-    PF_ParamDef param_mouse;
-    AEFX_CLR_STRUCT(param_mouse);
-    ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_MOUSE,
-                          in_data->current_time,
-                          in_data->time_step,
-                          in_data->time_scale,
-                          &param_mouse));
-    
     // Assign latest param values
     ERR(AEOGLInterop::getFloatSliderParam(in_data,
                                           out_data,
                                           PARAM_TIME,
                                           &paramInfo->time));
-
-    ERR(AEOGLInterop::getPointParam(in_data, out_data, PARAM_MOUSE,
-                                    AEOGLInterop::GL_SPACE, &paramInfo->mouse));
 
     handleSuite->host_unlock_handle(paramInfoH);
 
@@ -574,8 +558,6 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             auto &scene = *paramInfo->scene;
             
             scene.setBufferForInputNamed(inputImage, "inputImage");
-            
-            scene.renderToBuffer(isfImage);
         }
         
         // Download the result of ISF

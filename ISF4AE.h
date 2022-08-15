@@ -56,7 +56,6 @@ enum {
     PARAM_EDIT,
     PARAM_SAVE,
 	PARAM_TIME,
-	PARAM_MOUSE,
 	NUM_PARAMS
 };
 
@@ -82,7 +81,6 @@ typedef struct {
 struct ParamInfo {
     VVISF::ISF4AEScene *scene;
     A_FpLong time;
-    A_FloatPoint mouse;
 };
 
 extern "C" {
