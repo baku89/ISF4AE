@@ -170,7 +170,7 @@
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 16;
+			dstSubfolderSpec = 10;
 			files = (
 				230950D528A64BE800F6FF3C /* VVGL.framework in CopyFiles */,
 			);
