@@ -25,25 +25,49 @@ void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
         // Compile new shader if not exists
         globalData->context->bind();
         
-        auto doc = VVISF::CreateISFDocRefWith(code);
         auto scene = VVISF::CreateISF4AESceneRef();
-        scene->useDoc(doc);
-        scene->compileProgramIfNecessary();
-
-        if (scene->programReady()) {
-            // On succeed
+        scene->setThrowExceptions(true);
+        
+        try {
+            auto doc = VVISF::CreateISFDocRefWith(code);
+            scene->useDoc(doc);
+            scene->compileProgramIfNecessary();
+            
+            auto errDict = scene->errDict();
+            
+            if (errDict.size() > 0) {
+                VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL,
+                                                 "Shader Problem",
+                                                 "check error dict for more info",
+                                                  errDict);
+                throw err;
+            }
+            
+        } catch (VVISF::ISFErr isfErr) {
+            
+            // On Failed, format and save the risen error.
             auto *desc = new SceneDesc();
-            desc->error = PROGRAM_NO_ERROR;
-            desc->scene = scene;
+            desc->scene.reset();
+            desc->status = isfErr.getTypeString();
+            desc->errorLog = "";
+            
+            for (auto err : isfErr.details) {
+                if (err.first == "fragSrc" || err.first == "vertSrc") continue;
+                desc->errorLog += "[" + err.first + "] " + err.second + "\n";
+            }
+            
             scenes[code] = desc;
-        } else {
-            // On failed compiling a shader
-            auto *desc = new SceneDesc();
-            desc->error = PROGRAM_ERROR_SHADER;
-            // TODO: Output an error log correctly
-            desc->infoLog = "Log";            
-            scenes[code] = desc;
+            
+            return;
         }
+
+        
+        // On succeed
+        auto *desc = new SceneDesc();
+        desc->scene = scene;
+        desc->status = "Compiled Successfully";
+        
+        scenes[code] = desc;
     }
 }
 
@@ -84,36 +108,21 @@ PopDialog(
     auto &scenes = *globalData->scenes;
     auto &code = isf->code;
     
-    A_char *status;
-    std::string infoLog = "";
+    std::string status;
+    std::string errorLog = "";
     
     if (strlen(code) == 0) {
         status = "Not Loaded";
     } else if (scenes.find(code) == scenes.end()) {
         status = "Not Compiled";
     } else {
-        auto desc = scenes[code];
-
-        switch (desc->error) {
-            case PROGRAM_NO_ERROR:
-                status = "Compiled Successfully";
-                break;
-                
-            case PROGRAM_ERROR_SHADER:
-                status = "Shader Error";
-                infoLog = desc->infoLog;
-                break;
-                
-            case PROGRAM_ERROR_LINK:
-                status = "Link Error";
-                infoLog = desc->infoLog;
-                break;
-        }
+        status = scenes[code]->status;
+        errorLog = scenes[code]->errorLog;
     }
     
-    const char *separator = infoLog.length() > 0 ? "\n---\n" : "";
+    const char *separator = errorLog.length() > 0 ? "\n---\n" : "";
     
-    PF_SPRINTF(out_data->return_msg, "Shader Status: %s%s%s", status, separator, infoLog.c_str());
+    PF_SPRINTF(out_data->return_msg, "Shader Status: %s%s%s", status.c_str(), separator, errorLog.c_str());
     out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
     
     return err;
@@ -437,7 +446,7 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
         
         if (strlen(code) > 0 && scenes.find(code) != scenes.end()) {
             auto *desc = scenes[code];
-            if (desc->error == PROGRAM_NO_ERROR) {
+            if (desc->scene) {
                 paramInfo->scene = desc->scene.get();
             }
         }
@@ -746,7 +755,7 @@ UpdateParameterUI(
     compileShaderIfNeeded(globalData, code);
     
     // Set the shader compliation status
-    A_char *shaderStatus = "Not Loaded";
+    std::string shaderStatus = "Not Loaded";
     
     if (strlen(code) > 0) {
         auto &scenes = *globalData->scenes;
@@ -754,21 +763,11 @@ UpdateParameterUI(
         if (scenes.find(code) == scenes.end()) {
             shaderStatus = "Not Compiled";
         } else {
-            switch (scenes[code]->error) {
-                case PROGRAM_NO_ERROR:
-                    shaderStatus = "Compiled Successfully";
-                    break;
-                case PROGRAM_ERROR_SHADER:
-                    shaderStatus = "Shader Error";
-                    break;
-                case PROGRAM_ERROR_LINK:
-                    shaderStatus = "Link Error";
-                    break;
-            }
+            shaderStatus = scenes[code]->status;
         }
     }
     
-    PF_STRCPY(newParams[PARAM_EDIT].name, shaderStatus);
+    PF_STRCPY(newParams[PARAM_EDIT].name, shaderStatus.c_str());
     
     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                     PARAM_EDIT,

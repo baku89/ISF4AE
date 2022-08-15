@@ -1,6 +1,8 @@
 #pragma once
 
 #include <VVISF/VVISF.hpp>
+#include <string>
+#include <map>
 
 using namespace VVGL;
 
@@ -20,7 +22,11 @@ public:
         _setUpRenderPrepCallback();
     }
     
-private:
+    std::map<std::string,std::string> errDict() {
+        return _errDict;
+    }
+    
+protected:
     
     void _setUpRenderPrepCallback() {
         this->setRenderPrepCallback([](const VVGL::GLScene & n, const bool inReshaped, const bool inPgmChanged) {

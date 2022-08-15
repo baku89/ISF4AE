@@ -60,16 +60,10 @@ enum {
 	NUM_PARAMS
 };
 
-typedef enum {
-    PROGRAM_NO_ERROR = 0,
-    PROGRAM_ERROR_SHADER,
-    PROGRAM_ERROR_LINK
-} ProgramError;
-
 typedef struct {
-    ProgramError          error;
     VVISF::ISF4AESceneRef scene;
-    std::string           infoLog;
+    std::string           status;
+    std::string           errorLog;
 } SceneDesc;
 
 typedef struct {
