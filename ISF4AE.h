@@ -51,12 +51,12 @@ typedef short int			int16;
 #define ISFCODE_MAX_LEN	8192
 
 enum {
-	PARAM_INPUT = 0,
-    PARAM_ISF,
-    PARAM_EDIT,
-    PARAM_SAVE,
-	PARAM_TIME,
-	NUM_PARAMS
+    Param_Input = 0,
+    Param_ISF,
+    Param_Edit,
+    Param_Save,
+    Param_Time,
+    NumParams
 };
 
 typedef struct {

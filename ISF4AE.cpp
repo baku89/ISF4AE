@@ -104,7 +104,7 @@ PopDialog(
     PF_Err err = PF_Err_NONE;
 
     auto *globalData = reinterpret_cast<GlobalData *>(DH(out_data->global_data));
-    auto *isf = reinterpret_cast<ParamArbIsf *>(*params[PARAM_ISF]->u.arb_d.value);
+    auto *isf = reinterpret_cast<ParamArbIsf *>(*params[Param_ISF]->u.arb_d.value);
 
     auto &scenes = *globalData->scenes;
     auto &code = isf->code;
@@ -271,7 +271,7 @@ ParamsSetup(
                       0,
                       PF_PUI_NO_ECW_UI,
                       def.u.arb_d.dephault,
-                      PARAM_ISF,
+                      Param_ISF,
                       ARB_REFCON);
     
     // "Edit Shader" button (also shows a shader compliation status)
@@ -280,7 +280,7 @@ ParamsSetup(
                   "Load Shader",                  // BUTTON_NAME
                   PF_PUI_NONE,                    // PUI_FLAGS
                   PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
-                  PARAM_EDIT);                    // ID
+                  Param_Edit);                    // ID
    
     // "Edit Shader" button
     AEFX_CLR_STRUCT(def);
@@ -288,7 +288,7 @@ ParamsSetup(
                   "Save Shader",                  // BUTTON_NAME
                   PF_PUI_NONE,                    // PUI_FLAGS
                   PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
-                  PARAM_SAVE);                    // ID
+                  Param_Save);                    // ID
     
     AEFX_CLR_STRUCT(def);
     PF_ADD_FLOAT_SLIDERX("Time",
@@ -300,12 +300,12 @@ ParamsSetup(
                          6,                         // Precision
                          PF_ValueDisplayFlag_NONE,  // Display
                          0,                         // Flags
-                         PARAM_TIME);               // ID
+                         Param_Time);               // ID
 
     AEFX_CLR_STRUCT(def);
 
     // Set PF_OutData->num_params to match the parameter count.
-    out_data->num_params = NUM_PARAMS;
+    out_data->num_params = NumParams;
 
     return err;
 }
@@ -427,7 +427,7 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     PF_ParamDef paramGlsl;
     AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_ISF,
+                          Param_ISF,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
@@ -455,7 +455,7 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     PF_ParamDef param_time;
     AEFX_CLR_STRUCT(param_time);
     ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_TIME,
+                          Param_Time,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
@@ -464,13 +464,13 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
     // Assign latest param values
     ERR(AEOGLInterop::getFloatSliderParam(in_data,
                                           out_data,
-                                          PARAM_TIME,
+                                          Param_Time,
                                           &paramInfo->time));
 
     handleSuite->host_unlock_handle(paramInfoH);
 
     // Checkout input image
-    ERR(extra->cb->checkout_layer(in_data->effect_ref, PARAM_INPUT, PARAM_INPUT,
+    ERR(extra->cb->checkout_layer(in_data->effect_ref, Param_Input, Param_Input,
                                   &req, in_data->current_time,
                                   in_data->time_step, in_data->time_scale,
                                   &in_result));
@@ -501,7 +501,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             reinterpret_cast<PF_Handle>(extra->input->pre_render_data)));
 
     // Checkout layer pixels
-    ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, PARAM_INPUT,
+    ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, Param_Input,
                                           &input_worldP)));
     ERR(extra->cb->checkout_output(in_data->effect_ref, &output_worldP));
 
@@ -606,7 +606,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
     // Check in
     ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite,
                            kPFWorldSuiteVersion2, "Couldn't release suite."));
-    ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, PARAM_INPUT));
+    ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, Param_Input));
 
     return err;
 }
@@ -621,7 +621,7 @@ UserChangedParam(PF_InData *in_data,
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
     switch (which_hit->param_index) {
-        case PARAM_EDIT:
+        case Param_Edit:
         {
             // Load a shader
             std::vector<std::string> fileTypes;
@@ -636,14 +636,14 @@ UserChangedParam(PF_InData *in_data,
                 std::string isfCode = SystemUtil::readTextFile(srcPath);
                 
                 if (!isfCode.empty()) {
-                    params[PARAM_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                    params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
                     
-                    auto *isf = reinterpret_cast<ParamArbIsf*>(*params[PARAM_ISF]->u.arb_d.value);
+                    auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
                     PF_STRCPY(isf->code, isfCode.c_str());
                     
                     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                                    PARAM_ISF,
-                                                                    params[PARAM_ISF]));
+                                                                    Param_ISF,
+                                                                    params[Param_ISF]));
                 } else {
                     // On failed reading the text file, or simply it's empty
                     suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
@@ -653,7 +653,7 @@ UserChangedParam(PF_InData *in_data,
             }
         }
             break;
-        case PARAM_SAVE:
+        case Param_Save:
             // Save the current shader
             auto *globalData = reinterpret_cast<GlobalData *>(
                 suites.HandleSuite1()->host_lock_handle(in_data->global_data));
@@ -670,7 +670,7 @@ UserChangedParam(PF_InData *in_data,
 
             ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
                                                                       effectH,
-                                                                      PARAM_ISF,
+                                                                      Param_ISF,
                                                                       &glslStreamH));
             
             ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(globalData->aegpId,
@@ -689,7 +689,7 @@ UserChangedParam(PF_InData *in_data,
                 PF_ParamDef param_glsl;
                 AEFX_CLR_STRUCT(param_glsl);
                 ERR(PF_CHECKOUT_PARAM(in_data,
-                                      PARAM_ISF,
+                                      Param_ISF,
                                       in_data->current_time,
                                       in_data->time_step,
                                       in_data->time_scale,
@@ -726,8 +726,8 @@ UpdateParameterUI(
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
     // Create copies of all parameters
-    PF_ParamDef newParams[NUM_PARAMS];
-    for (A_short i = 0; i < NUM_PARAMS; i++) {
+    PF_ParamDef newParams[NumParams];
+    for (A_short i = 0; i < NumParams; i++) {
         AEFX_CLR_STRUCT(newParams[i]);
         newParams[i] = *params[i];
     }
@@ -738,7 +738,7 @@ UpdateParameterUI(
     PF_ParamDef paramGlsl;
     AEFX_CLR_STRUCT(paramGlsl);
     ERR(PF_CHECKOUT_PARAM(in_data,
-                          PARAM_ISF,
+                          Param_ISF,
                           in_data->current_time,
                           in_data->time_step,
                           in_data->time_scale,
@@ -768,11 +768,11 @@ UpdateParameterUI(
         }
     }
     
-    PF_STRCPY(newParams[PARAM_EDIT].name, shaderStatus.c_str());
+    PF_STRCPY(newParams[Param_Edit].name, shaderStatus.c_str());
     
     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                    PARAM_EDIT,
-                                                    &newParams[PARAM_EDIT]));
+                                                    Param_Edit,
+                                                    &newParams[Param_Edit]));
     
     out_data->out_flags |= PF_OutFlag_REFRESH_UI;
     
