@@ -13,6 +13,62 @@
 #include <iostream>
 #include <VVGL/VVGL.hpp>
 
+void toggleFlag(A_long flag, A_Boolean value, A_long *target) {
+    if (value) {
+        *target |= flag;
+    } else {
+        *target &= ~flag;
+    }
+}
+
+PF_Err setParamVisibility(PF_InData *in_data,
+                          PF_ParamDef *params[],
+                          PF_ParamIndex index,
+                          A_Boolean visible) {
+    
+    PF_Err err = PF_Err_NONE;
+    AEGP_SuiteHandler suites(in_data->pica_basicP);
+    
+    A_Boolean invisible = !visible;
+    
+    // Create copies of all parameters
+    PF_ParamDef newParam;
+    AEFX_CLR_STRUCT(newParam);
+    newParam = *params[index];
+    
+    auto *globalData = reinterpret_cast<GlobalData *>(DH(in_data->global_data));
+    
+    AEGP_EffectRefH effectH = nullptr;
+    AEGP_StreamRefH streamH = nullptr;
+    
+    ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(globalData->aegpId,
+                                                               in_data->effect_ref,
+                                                               &effectH));
+    
+    if (!err) {
+        toggleFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
+        
+        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                        index,
+                                                        &newParam));
+        
+        ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
+                                                                  effectH,
+                                                                  index,
+                                                                  &streamH));
+        
+        ERR(suites.DynamicStreamSuite4()->AEGP_SetDynamicStreamFlag(streamH,
+                                                                    AEGP_DynStreamFlag_HIDDEN,
+                                                                    FALSE,
+                                                                    invisible));
+    }
+    
+    if (effectH) ERR(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
+    if (streamH) ERR(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
+    
+    return err;
+}
+
 /**
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
@@ -291,6 +347,14 @@ ParamsSetup(
                   Param_Save);                    // ID
     
     AEFX_CLR_STRUCT(def);
+    PF_ADD_CHECKBOX("Use Layer Time",               // Label
+                    "",                             // A description right to the checkbox
+                    FALSE,                          // Default
+                    PF_ParamFlag_SUPERVISE | PF_ParamFlag_CANNOT_TIME_VARY,
+                    Param_UseLayerTime);
+    
+    
+    AEFX_CLR_STRUCT(def);
     PF_ADD_FLOAT_SLIDERX("Time",
                          -1000000,                  // VALID_MIN
                          1000000,                   // VALID_MAX
@@ -462,10 +526,17 @@ static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
                           &param_time));
     
     // Assign latest param values
-    ERR(AEOGLInterop::getFloatSliderParam(in_data,
-                                          out_data,
-                                          Param_Time,
-                                          &paramInfo->time));
+    PF_Boolean useLayerTime;
+    ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+    
+    if (useLayerTime) {
+        paramInfo->time = in_data->current_time / in_data->time_scale;
+    } else {
+        ERR(AEOGLInterop::getFloatSliderParam(in_data,
+                                              out_data,
+                                              Param_Time,
+                                              &paramInfo->time));
+    }
 
     handleSuite->host_unlock_handle(paramInfoH);
 
@@ -773,6 +844,10 @@ UpdateParameterUI(
     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                     Param_Edit,
                                                     &newParams[Param_Edit]));
+    
+    // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
+    A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
+    ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime));
     
     out_data->out_flags |= PF_OutFlag_REFRESH_UI;
     

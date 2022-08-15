@@ -55,6 +55,7 @@ enum {
     Param_ISF,
     Param_Edit,
     Param_Save,
+    Param_UseLayerTime,
     Param_Time,
     NumParams
 };
