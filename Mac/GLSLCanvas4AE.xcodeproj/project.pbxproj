@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		230950D228A64BC800F6FF3C /* VVGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; };
-		230950D528A64BE800F6FF3C /* VVGL.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 233B1F1A28A46D35000652AC /* OpenGL.framework */; };
 		233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2328A476D2000652AC /* GlobalContext.cpp */; };
 		233B1F3828A476D2000652AC /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2428A476D2000652AC /* Common.cpp */; };
@@ -22,6 +20,10 @@
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
 		2382660C28A4AE17001F523D /* GLSLCanvasArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* GLSLCanvasArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
+		23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950C928A64A9000F6FF3C /* VVISF.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; };
+		23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950C128A64A9000F6FF3C /* VVISF.framework */; };
+		23FD786628AA4C0A007E529B /* VVGL.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
 		D0FE57600993C4E900139A60 /* GLSLCanvas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* GLSLCanvas.cpp */; };
 		D0FE57610993C4E900139A60 /* GLSLCanvasPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* GLSLCanvasPiPL.r */; };
@@ -163,6 +165,13 @@
 			remoteGlobalIDString = 1A10DDFA2090AD4A00771795;
 			remoteInfo = VVGL_Mac;
 		};
+		23FD786228AA4BE8007E529B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 1A365CC02090B35C00771520;
+			remoteInfo = VVISF_Mac;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -172,7 +181,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				230950D528A64BE800F6FF3C /* VVGL.framework in CopyFiles */,
+				23FD786628AA4C0A007E529B /* VVGL.framework in CopyFiles */,
+				23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,7 +232,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				230950D228A64BC800F6FF3C /* VVGL.framework in Frameworks */,
+				23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */,
+				23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */,
 				2382660328A49081001F523D /* Cocoa.framework in Frameworks */,
 				233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */,
 			);
@@ -357,6 +368,7 @@
 			);
 			dependencies = (
 				230950D128A64B8100F6FF3C /* PBXTargetDependency */,
+				23FD786328AA4BE8007E529B /* PBXTargetDependency */,
 			);
 			name = GLSLCanvas4AE;
 			productName = Skeleton.plugin;
@@ -596,6 +608,11 @@
 			name = VVGL_Mac;
 			targetProxy = 230950D028A64B8100F6FF3C /* PBXContainerItemProxy */;
 		};
+		23FD786328AA4BE8007E529B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VVISF_Mac;
+			targetProxy = 23FD786228AA4BE8007E529B /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -658,6 +675,7 @@
 					/usr/local/Cellar/glm/0.9.9.8/include,
 					"\"$(SRCROOT)/../Headers\"",
 					"\"$(SRCROOT)/../Headers/glad/include\"",
+					"\"$(SRCROOT)/../VVISF-GL/VVGL/include\"",
 				);
 				INSTALL_PATH = "";
 				LIBRARY_SEARCH_PATHS = (
