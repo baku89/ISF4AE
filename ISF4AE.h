@@ -57,8 +57,25 @@ enum {
     Param_Save,
     Param_UseLayerTime,
     Param_Time,
-    NumParams
+    Param_UserOffset
 };
+
+// A subset of ISFValType supported by this plug-in
+// TODO: Will supports all of them below later
+ enum UserParamType {
+     UserParamType_None = -1,
+    UserParamType_Bool = 0,
+//    UserParamType_Long,
+    UserParamType_Float,
+//    UserParamType_Point2D,
+//    UserParamType_Color,
+//    UserParamType_Image,
+    NumUserParamType
+};
+
+ static const uint32_t NumUserParams = 16;
+
+ static const uint32_t NumParams = Param_UserOffset + NumUserParams * NumUserParamType;
 
 typedef struct {
     VVISF::ISF4AESceneRef scene;
@@ -77,11 +94,10 @@ typedef struct {
     A_char code[ISFCODE_MAX_LEN];
 } ParamArbIsf;
 
-
-
 struct ParamInfo {
     VVISF::ISF4AEScene *scene;
     A_FpLong time;
+    PF_ParamDefUnion userParamValues[NumUserParams];
 };
 
 extern "C" {

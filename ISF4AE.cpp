@@ -13,6 +13,10 @@
 #include <iostream>
 #include <VVGL/VVGL.hpp>
 
+PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
+    return Param_UserOffset + index * NumUserParamType + type;
+}
+
 void setBitFlag(A_long flag, A_Boolean value, A_long *target) {
     if (value) {
         *target |= flag;
@@ -28,16 +32,22 @@ PF_Err setParamVisibility(PF_InData *in_data,
     
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
+    auto *globalData = reinterpret_cast<GlobalData *>(DH(in_data->global_data));
     
     A_Boolean invisible = !visible;
     
-    // Create copies of all parameters
+    // For Premiere Pro
     PF_ParamDef newParam;
     AEFX_CLR_STRUCT(newParam);
     newParam = *params[index];
     
-    auto *globalData = reinterpret_cast<GlobalData *>(DH(in_data->global_data));
+    setBitFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
     
+    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                    index,
+                                                    &newParam));
+    
+    // For After Effects
     AEGP_EffectRefH effectH = nullptr;
     AEGP_StreamRefH streamH = nullptr;
     
@@ -45,26 +55,40 @@ PF_Err setParamVisibility(PF_InData *in_data,
                                                                in_data->effect_ref,
                                                                &effectH));
     
-    if (!err) {
-        setBitFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
-        
-        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                        index,
-                                                        &newParam));
-        
-        ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
-                                                                  effectH,
-                                                                  index,
-                                                                  &streamH));
-        
-        ERR(suites.DynamicStreamSuite4()->AEGP_SetDynamicStreamFlag(streamH,
-                                                                    AEGP_DynStreamFlag_HIDDEN,
-                                                                    FALSE,
-                                                                    invisible));
-    }
+
+    ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
+                                                              effectH,
+                                                              index,
+                                                              &streamH));
+
+    ERR(suites.DynamicStreamSuite4()->AEGP_SetDynamicStreamFlag(streamH,
+                                                                AEGP_DynStreamFlag_HIDDEN,
+                                                                FALSE,
+                                                                invisible));
     
     if (effectH) ERR(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
     if (streamH) ERR(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
+    
+    return err;
+}
+
+PF_Err setParamName(PF_InData *in_data,
+                    PF_ParamDef *params[],
+                    PF_ParamIndex index,
+                    std::string &name) {
+    
+    PF_Err err = PF_Err_NONE;
+    
+    AEGP_SuiteHandler suites(in_data->pica_basicP);
+    
+    PF_ParamDef newParam;
+    newParam = *params[index];
+    
+    PF_STRCPY(newParam.name, name.c_str());
+    
+    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                    index,
+                                                    &newParam));
     
     return err;
 }
@@ -338,7 +362,7 @@ ParamsSetup(
                   PF_ParamFlag_SUPERVISE,         // PARAM_FLAGS
                   Param_Edit);                    // ID
    
-    // "Edit Shader" button
+    // "Save Shader" button
     AEFX_CLR_STRUCT(def);
     PF_ADD_BUTTON("",
                   "Save Shader",                  // BUTTON_NAME
@@ -356,17 +380,39 @@ ParamsSetup(
     
     AEFX_CLR_STRUCT(def);
     PF_ADD_FLOAT_SLIDERX("Time",
-                         -1000000,                  // VALID_MIN
-                         1000000,                   // VALID_MAX
-                         0,                         // SLIDER_MIN
-                         10,                        // SLIDER_MAX
+                         -1000000, 1000000,         // Valid range
+                         0, 10,                     // Slider range
                          0,                         // Default
-                         6,                         // Precision
+                         2,                         // Precision
                          PF_ValueDisplayFlag_NONE,  // Display
-                         0,                         // Flags
+                         PF_ParamFlag_NONE,         // Flags
                          Param_Time);               // ID
 
-    AEFX_CLR_STRUCT(def);
+
+    
+    // Add all possible user params
+    A_char name[32];
+    
+    for (int userParamIndex = 0; userParamIndex < NumUserParams; userParamIndex++) {
+        PF_SPRINTF(name, "Bool %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        PF_ADD_CHECKBOX(name,
+                        "",
+                        FALSE,
+                        PF_ParamFlag_SUPERVISE,
+                        getIndexForUserParam(userParamIndex, UserParamType_Bool));
+        
+        PF_SPRINTF(name, "Float %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        PF_ADD_FLOAT_SLIDERX(name,
+                             -1000000, 1000000,  // Valid range
+                             0, 1,               // Slider range
+                             0,                  // Default
+                             2,                  // Precision
+                             PF_ValueDisplayFlag_NONE,
+                             PF_ParamFlag_SUPERVISE,
+                             getIndexForUserParam(userParamIndex, UserParamType_Float));
+    }
 
     // Set PF_OutData->num_params to match the parameter count.
     out_data->num_params = NumParams;
@@ -484,58 +530,104 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         return PF_Err_OUT_OF_MEMORY;
     }
     
-    // Get the ISF scene from cache
     auto *globalData = reinterpret_cast<GlobalData *>(
         handleSuite->host_lock_handle(in_data->global_data));
     
-    PF_ParamDef paramGlsl;
-    AEFX_CLR_STRUCT(paramGlsl);
-    ERR(PF_CHECKOUT_PARAM(in_data,
-                          Param_ISF,
-                          in_data->current_time,
-                          in_data->time_step,
-                          in_data->time_scale,
-                          &paramGlsl));
+    PF_ParamDef paramDef;
     
-    auto *isf = reinterpret_cast<ParamArbIsf*>(*paramGlsl.u.arb_d.value);
-    
-    if (isf) {
-        auto &code = isf->code;
-        auto &scenes = *globalData->scenes;
-
-        compileShaderIfNeeded(globalData, code);
-
-        paramInfo->scene = globalData->defaultScene.get();
+    // Get the ISF scene from cache and save its pointer to ParamInfo
+    {
+        AEFX_CLR_STRUCT(paramDef);
+        ERR(PF_CHECKOUT_PARAM(in_data,
+                              Param_ISF,
+                              in_data->current_time,
+                              in_data->time_step,
+                              in_data->time_scale,
+                              &paramDef));
         
-        if (strlen(code) > 0 && scenes.find(code) != scenes.end()) {
-            auto *desc = scenes[code];
-            if (desc->scene) {
-                paramInfo->scene = desc->scene.get();
+        auto *isf = reinterpret_cast<ParamArbIsf*>(*paramDef.u.arb_d.value);
+        
+        if (isf) {
+            auto &code = isf->code;
+            auto &scenes = *globalData->scenes;
+
+            compileShaderIfNeeded(globalData, code);
+
+            paramInfo->scene = globalData->defaultScene.get();
+            
+            if (strlen(code) > 0 && scenes.find(code) != scenes.end()) {
+                auto *desc = scenes[code];
+                if (desc->scene) {
+                    paramInfo->scene = desc->scene.get();
+                }
             }
+        }
+        
+        ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
+    }
+    
+    // Get Time
+    {
+        PF_Boolean useLayerTime = false;
+        ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+        
+        if (useLayerTime) {
+            paramInfo->time = (double)in_data->current_time / in_data->time_scale;
+        } else {
+            ERR(AEOGLInterop::getFloatSliderParam(in_data,
+                                                  out_data,
+                                                  Param_Time,
+                                                  &paramInfo->time));
         }
     }
     
-    // Checkout Params
-    PF_ParamDef param_time;
-    AEFX_CLR_STRUCT(param_time);
-    ERR(PF_CHECKOUT_PARAM(in_data,
-                          Param_Time,
-                          in_data->current_time,
-                          in_data->time_step,
-                          in_data->time_scale,
-                          &param_time));
-    
-    // Assign latest param values
-    PF_Boolean useLayerTime;
-    ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
-    
-    if (useLayerTime) {
-        paramInfo->time = (double)in_data->current_time / in_data->time_scale;
-    } else {
-        ERR(AEOGLInterop::getFloatSliderParam(in_data,
-                                              out_data,
-                                              Param_Time,
-                                              &paramInfo->time));
+    // Get user-defined parameters' values
+    {
+        PF_ParamIndex userParamIndex = 0;
+        
+        for (auto input : paramInfo->scene->inputs()) {
+            if (input->name() == "inputImage") {
+                continue;
+            }
+            
+            UserParamType userParamType;
+            
+            switch (input->type()) {
+                case VVISF::ISFValType_Bool:
+                    userParamType = UserParamType_Bool;
+                    break;
+                    
+                case VVISF::ISFValType_Float:
+                    userParamType = UserParamType_Float;
+                    break;
+                    
+                default:
+                    userParamType = UserParamType_None;
+                    break;
+            }
+            
+            if (userParamType != UserParamType_None) {
+                PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
+                
+                AEFX_CLR_STRUCT(paramDef);
+                ERR(PF_CHECKOUT_PARAM(in_data,
+                                      index,
+                                      in_data->current_time,
+                                      in_data->time_step,
+                                      in_data->time_scale,
+                                      &paramDef));
+                
+                if (userParamType == UserParamType_Float) {
+                    FX_LOG("Float Param: useParamIndex=" << userParamIndex << ", paramIndex=" << index << ", value=" << paramDef.u.fs_d.value);
+                }
+                
+                paramInfo->userParamValues[userParamIndex] = paramDef.u;
+                
+                ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
+                
+                userParamIndex++;
+            }
+        }
     }
 
     handleSuite->host_unlock_handle(paramInfoH);
@@ -622,24 +714,55 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
             auto &scene = *paramInfo->scene;
             
-            // Set the original image as inputImage
-            if (scene.inputNamed("inputImage")) {
-                auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
-                                                                    input_worldP->data,
-                                                                    size,
-                                                                    NULL, NULL);
-                auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
-                globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-                auto inputImage = globalData->ae2glScene->createAndRenderABuffer(size);
-                
-                scene.setBufferForInputNamed(inputImage, "inputImage");
-            }
-            
             // Assign time-related variables
             double fps = in_data->time_scale / in_data->local_time_step;
                         
             scene.setRenderFrameIndex(paramInfo->time * fps);
             scene.setRenderTimeDelta(1.0 / fps);
+            
+            // Assign user-defined parameters
+            PF_ParamIndex userParamIndex = 0;
+            
+            for (auto input : scene.inputs()) {
+                               
+                if (input->name() == "inputImage") {
+                    // Upload the original image to GPU and bind it
+                    auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
+                                                                        input_worldP->data,
+                                                                        size,
+                                                                        NULL, NULL);
+                    auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
+                    globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+                    auto inputImage = globalData->ae2glScene->createAndRenderABuffer(size);
+                    
+                    input->setCurrentImageBuffer(inputImage);
+                    
+                } else {
+                    // Non-buffer uniforms
+                    VVISF::ISFValType type = input->type();
+                    auto &paramVal = paramInfo->userParamValues[userParamIndex];
+                    
+                    VVISF::ISFVal *val = nullptr;
+                    
+                    switch (type) {
+                        case VVISF::ISFValType_Bool:
+                            val = new VVISF::ISFVal(type, paramVal.bd.value);
+                            break;
+                        case VVISF::ISFValType_Float:
+                            val = new VVISF::ISFVal(type, paramVal.fs_d.value);
+                            break;
+                        default:
+                            FX_LOG("Invalid ISFValType.");
+                            break;
+                    }
+                    
+                    if (val != nullptr) {
+                        scene.setValueForInputNamed(*val, input->name());
+                        userParamIndex++;
+                    }
+                }
+                
+            }
             
             // Then, render it!
             scene.renderToBuffer(isfImage, size, (double)paramInfo->time);
@@ -793,34 +916,24 @@ UpdateParamsUI(
     PF_ParamDef *params[],
     PF_LayerDef *output) {
     
-    PF_Err err = PF_Err_NONE,
-           err2 = PF_Err_NONE;
+    PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
     auto *globalData = reinterpret_cast<GlobalData *>(
         suites.HandleSuite1()->host_lock_handle(in_data->global_data));
     
-    PF_ParamDef param, newParam;
+    VVISF::ISF4AESceneRef scene = globalData->defaultScene;
     
     {
         // Update the shader compilation label left to 'Edit' button
-        AEFX_CLR_STRUCT(param);
-        ERR(PF_CHECKOUT_PARAM(in_data,
-                              Param_ISF,
-                              in_data->current_time,
-                              in_data->time_step,
-                              in_data->time_scale,
-                              &param));
-        
-        
-        auto *isf = reinterpret_cast<ParamArbIsf*>(*param.u.arb_d.value);
+        auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
         
         auto &code = isf->code;
         
         // Compile a shader at here to make sure to display the latest compilation status
         compileShaderIfNeeded(globalData, code);
         
-        // Set the shader compliation status
+        // Get the string representing current shader status
         std::string shaderStatus = "Not Loaded";
         
         if (strlen(code) > 0) {
@@ -829,25 +942,80 @@ UpdateParamsUI(
             if (scenes.find(code) == scenes.end()) {
                 shaderStatus = "Not Compiled";
             } else {
-                shaderStatus = scenes[code]->status;
+                auto desc = scenes[code];
+                shaderStatus = desc->status;
+                
+                if (desc->scene) {
+                    // Store the available scene
+                    scene = desc->scene;
+                }
             }
         }
         
-        newParam = *params[Param_Edit];
-        PF_STRCPY(newParam.name, shaderStatus.c_str());
-        
-        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                        Param_Edit,
-                                                        &newParam));
-        
-        
-        ERR2(PF_CHECKIN_PARAM(in_data, &param));
-        
+        // Set it as a label for 'Edit Shader'
+        setParamName(in_data, params, Param_Edit, shaderStatus);
     }
     
     // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
     A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
     ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime));
+    
+    // Change the visiblity of user params
+    PF_ParamIndex userParamIndex = 0;
+    auto inputs = scene->inputs();
+    
+    for (auto& input : inputs) {
+        if (userParamIndex >= inputs.size()) {
+            break;
+        }
+        
+        if (input->name() != "inputImage") {
+            UserParamType userParamType;
+            
+            switch (input->type()) {
+                case VVISF::ISFValType_Bool:
+                    userParamType = UserParamType_Bool;
+                    break;
+                    
+                case VVISF::ISFValType_Float:
+                    userParamType = UserParamType_Float;
+                    break;
+                    
+                default:
+                    userParamType = UserParamType_None;
+                    break;
+                    
+            }
+            
+            for (PF_ParamIndex type = 0; type < NumUserParamType; type++) {
+                
+                PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
+                bool visible = type == userParamType;
+                
+                ERR(setParamVisibility(in_data, params, index, visible));
+                
+                if (visible) {
+                    // Set label
+                    auto label = input->label();
+                    if (label.empty()) label = input->name();
+                    
+                    ERR(setParamName(in_data, params, index, label));
+                }
+            }
+            
+            userParamIndex++;
+        }
+    }
+         
+    // Hide all out-of-range parameters
+    for (; userParamIndex < NumUserParams; userParamIndex++) {
+        for (PF_ParamIndex userParamType = 0; userParamType < NumUserParamType; userParamType++) {
+            PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
+            ERR(setParamVisibility(in_data, params, index, false));
+        }
+    }
+         
+    
     
     
     return err;
