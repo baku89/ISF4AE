@@ -454,9 +454,9 @@ HandleArbitrary(
     return err;
 }
 
-static PF_Err PreRender(PF_InData *in_data, PF_OutData *out_data,
-                        PF_PreRenderExtra *extra) {
-    PF_Err err = PF_Err_NONE;
+static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
+                            PF_PreRenderExtra *extra) {
+    PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
 
 
     PF_RenderRequest req = extra->input->output_request;
@@ -787,7 +787,7 @@ UserChangedParam(PF_InData *in_data,
 }
 
 static PF_Err
-UpdateParameterUI(
+UpdateParamsUI(
     PF_InData *in_data,
     PF_OutData *out_data,
     PF_ParamDef *params[],
@@ -961,8 +961,8 @@ DllExport
                 break;
 
             case PF_Cmd_SMART_PRE_RENDER:
-                err = PreRender(in_data, out_data,
-                                reinterpret_cast<PF_PreRenderExtra *>(extra));
+                err = SmartPreRender(in_data, out_data,
+                                     reinterpret_cast<PF_PreRenderExtra *>(extra));
                 break;
             
             case PF_Cmd_SMART_RENDER:
@@ -979,7 +979,7 @@ DllExport
             
             case PF_Cmd_UPDATE_PARAMS_UI:
                 // To change the label for 'Edit Shader' button
-                err = UpdateParameterUI(in_data,
+                err = UpdateParamsUI(in_data,
                                         out_data,
                                         params,
                                         output);
