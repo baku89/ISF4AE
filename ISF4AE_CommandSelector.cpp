@@ -579,7 +579,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         
         // Render ISF
-        auto isfImage = VVGL::CreateRGBATex(outSize);
+        auto isfImage = createRGBATexWithFormat(outSize, format);
         {
 
             auto &scene = *paramInfo->scene;
@@ -597,10 +597,26 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                                
                 if (input->name() == "inputImage") {
                     // Upload the original image to GPU and bind it
-                    auto inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
-                                                                        input_worldP->data,
-                                                                        cropSize,
-                                                                        NULL, NULL);
+                    VVGL::GLBufferRef inputImageAECPU;
+                    
+                    switch (format) {
+                        case PF_PixelFormat_ARGB32:
+                            inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
+                                                                             input_worldP->data,
+                                                                             cropSize,
+                                                                             NULL, NULL);
+                            break;
+                            
+                        case PF_PixelFormat_ARGB128:
+                            inputImageAECPU = VVGL::CreateRGBAFloatCPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
+                                                                                  input_worldP->data,
+                                                                                  cropSize,
+                                                                                  NULL, NULL);
+                            break;
+                            
+                    }
+                    
+
                     
                     auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
                     
@@ -614,7 +630,10 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                                                                    
                     globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
                     globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-                    auto inputImage = globalData->ae2glScene->createAndRenderABuffer(outSize);
+                    
+                    VVGL::GLBufferRef inputImage = createRGBATexWithFormat(outSize, format);
+                    
+                    globalData->ae2glScene->renderToBuffer(inputImage);
                     
                     scene.setBufferForInputNamed(inputImage, input->name());
                     
@@ -683,8 +702,9 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
             scene.setBufferForInputNamed(isfImage, "inputImage");
             
-            auto outputImage = scene.createAndRenderABuffer(outSize, 0.0);
-            auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
+            auto outputImage = createRGBATexWithFormat(outSize, format);
+            scene.VVGL::GLScene::renderToBuffer(outputImage);
+            auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);            
 
             char *glP = nullptr;  // OpenGL
             char *aeP = nullptr;  // AE
