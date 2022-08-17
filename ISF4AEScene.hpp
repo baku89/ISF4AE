@@ -3,6 +3,7 @@
 #include <VVISF/VVISF.hpp>
 #include <string>
 #include <map>
+#include <regex>
 
 using namespace VVGL;
 
@@ -24,6 +25,15 @@ public:
     
     std::map<std::string,std::string> errDict() {
         return _errDict;
+    }
+    
+    bool isTimeDependant() {
+        std::string &fs = *doc()->fragShaderSource();
+        
+        // TODO: Regex below is quite makeshift and should be refactored.
+        std::regex re("TIME|TIMEDELTA|FRAMEINDEX|DATE");
+        
+        return std::regex_search(fs, re);
     }
     
 protected:

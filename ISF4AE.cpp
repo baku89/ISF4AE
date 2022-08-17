@@ -1032,9 +1032,13 @@ UpdateParamsUI(
     // Set the shader status as a label for 'Edit Shader'
     setParamName(in_data, params, Param_Edit, desc->status);
     
+    // Show the time parameters if the current shader is time dependant
+    bool isTimeDependant = desc->scene->isTimeDependant();
+    ERR(setParamVisibility(in_data, params, Param_UseLayerTime, isTimeDependant));;
+    
     // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
     A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
-    ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime));
+    ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime && isTimeDependant));
     
     // Change the visiblity of user params
     PF_ParamIndex userParamIndex = 0;
