@@ -242,7 +242,7 @@ ParamsSetup(
                          -1000000, 1000000,         // Valid range
                          0, 10,                     // Slider range
                          0,                         // Default
-                         2,                         // Precision
+                         1,                         // Precision
                          PF_ValueDisplayFlag_NONE,  // Display
                          PF_ParamFlag_COLLAPSE_TWIRLY, // Flags
                          Param_Time);               // ID
@@ -276,7 +276,7 @@ ParamsSetup(
                              -1000000, 1000000,  // Valid range
                              0, 1,               // Slider range
                              0,                  // Default
-                             2,                  // Precision
+                             1,                  // Precision
                              PF_ValueDisplayFlag_NONE,
                              PF_ParamFlag_COLLAPSE_TWIRLY,
                              getIndexForUserParam(userParamIndex, UserParamType_Float));
