@@ -13,6 +13,10 @@
 #include <iostream>
 #include <VVGL/VVGL.hpp>
 
+void FX_LOG_RECT(const std::string &label, const PF_Rect &rect) {
+    FX_LOG(label << "=(" << rect.left << ", " << rect.top << ", " << rect.right << ", " << rect.bottom << ")");
+}
+
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
     return Param_UserOffset + index * NumUserParamType + type;
 }
@@ -640,8 +644,10 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
     
     // Compute the rect to render
     if (!err) {
-        UnionLRect(&in_result.result_rect, &extra->output->result_rect);
-        UnionLRect(&in_result.max_result_rect, &extra->output->max_result_rect);
+        FX_LOG("==========");
+        FX_LOG("in_data width=" << in_data->width << " height=" << in_data->height);
+        FX_LOG_RECT("inResult.result_rect", inResult.result_rect);
+        FX_LOG_RECT("inResult.max_result_rect", inResult.max_result_rect);
     }
     
     return err;
@@ -697,9 +703,11 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                 break;
         }
 
-        GLsizei width = input_worldP->width;
-        GLsizei height = input_worldP->height;
-        VVGL::Size size(width, height);
+        FX_LOG("downsample=(" << in_data->downsample_x.num << "/" << in_data->downsample_x.den  << ", "  << in_data->downsample_y.num << "/" << in_data->downsample_y.den << ")");
+        FX_LOG("input origin (" << input_worldP->origin_x << ", " << input_worldP->origin_y << ")");
+        FX_LOG("input_worldP size=(" << input_worldP->width << ", " << input_worldP->height << ")");
+        FX_LOG("output_worldP size=(" << output_worldP->width << ", " << output_worldP->height << ")");
+        FX_LOG("==========");
         
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
         VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
