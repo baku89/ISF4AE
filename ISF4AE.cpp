@@ -392,7 +392,7 @@ ParamsSetup(
                          0,                         // Default
                          2,                         // Precision
                          PF_ValueDisplayFlag_NONE,  // Display
-                         PF_ParamFlag_NONE,         // Flags
+                         PF_ParamFlag_COLLAPSE_TWIRLY, // Flags
                          Param_Time);               // ID
 
 
@@ -406,12 +406,12 @@ ParamsSetup(
         PF_ADD_CHECKBOX(name,
                         "",
                         FALSE,
-                        PF_ParamFlag_SUPERVISE,
+                        PF_ParamFlag_COLLAPSE_TWIRLY,
                         getIndexForUserParam(userParamIndex, UserParamType_Bool));
         
         PF_SPRINTF(name, "Long %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
-        def.flags = PF_ParamFlag_SUPERVISE;
+        def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
         PF_ADD_POPUP("",
                      4,
                      0,
@@ -426,7 +426,7 @@ ParamsSetup(
                              0,                  // Default
                              2,                  // Precision
                              PF_ValueDisplayFlag_NONE,
-                             PF_ParamFlag_SUPERVISE,
+                             PF_ParamFlag_COLLAPSE_TWIRLY,
                              getIndexForUserParam(userParamIndex, UserParamType_Float));
     }
 
