@@ -509,9 +509,6 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
     PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
 
 
-    PF_RenderRequest req = extra->input->output_request;
-    PF_CheckoutResult in_result;
-
     // Create paramInfo
     AEFX_SuiteScoper<PF_HandleSuite1> handleSuite
         = AEFX_SuiteScoper<PF_HandleSuite1>(in_data,
@@ -636,14 +633,32 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
 
     handleSuite->host_unlock_handle(paramInfoH);
 
-    // Checkout input image
-    ERR(extra->cb->checkout_layer(in_data->effect_ref, Param_Input, Param_Input,
-                                  &req, in_data->current_time,
-                                  in_data->time_step, in_data->time_scale,
-                                  &in_result));
+    // Checkout the input image
+    PF_CheckoutResult inResult;
+    ERR(extra->cb->checkout_layer(in_data->effect_ref,
+                                  Param_Input,
+                                  Param_Input,
+                                  &extra->input->output_request,
+                                  in_data->current_time,
+                                  in_data->time_step,
+                                  in_data->time_scale,
+                                  &inResult));
     
     // Compute the rect to render
     if (!err) {
+        // Set the output region to an entire layer multiplied by downsample, regardless of input's mask.
+        PF_Rect outputRect = {
+            0,
+            0,
+            (A_long)std::ceil((double)in_data->width * in_data->downsample_x.num / in_data->downsample_x.den),
+            (A_long)std::ceil((double)in_data->height * in_data->downsample_y.num / in_data->downsample_y.den)
+        };
+        
+        UnionLRect(&outputRect, &extra->output->result_rect);
+        UnionLRect(&outputRect, &extra->output->max_result_rect);
+        
+        extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
+
         FX_LOG("==========");
         FX_LOG("in_data width=" << in_data->width << " height=" << in_data->height);
         FX_LOG_RECT("inResult.result_rect", inResult.result_rect);
@@ -702,7 +717,10 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                 pixelType = GL_FLOAT;
                 break;
         }
-
+        
+        VVGL::Size cropSize(input_worldP->width, input_worldP->height);
+        VVGL::Size outSize(output_worldP->width, output_worldP->height);
+        
         FX_LOG("downsample=(" << in_data->downsample_x.num << "/" << in_data->downsample_x.den  << ", "  << in_data->downsample_y.num << "/" << in_data->downsample_y.den << ")");
         FX_LOG("input origin (" << input_worldP->origin_x << ", " << input_worldP->origin_y << ")");
         FX_LOG("input_worldP size=(" << input_worldP->width << ", " << input_worldP->height << ")");
@@ -715,9 +733,8 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         
-        
         // Render ISF
-        auto isfImage = VVGL::CreateRGBATex(size);
+        auto isfImage = VVGL::CreateRGBATex(outSize);
         {
 
             auto &scene = *paramInfo->scene;
@@ -735,15 +752,26 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                                
                 if (input->name() == "inputImage") {
                     // Upload the original image to GPU and bind it
-                    auto inputImageCPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, height),
+                    auto inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
                                                                         input_worldP->data,
-                                                                        size,
+                                                                        cropSize,
                                                                         NULL, NULL);
-                    auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageCPU);
-                    globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-                    auto inputImage = globalData->ae2glScene->createAndRenderABuffer(size);
                     
-                    input->setCurrentImageBuffer(inputImage);
+                    auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
+                    
+                    // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
+                    glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+                    glBindTexture(GL_TEXTURE_2D, 0);
+                    
+                    auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, input_worldP->origin_x, input_worldP->origin_y);
+                                                                   
+                    globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+                    globalData->ae2glScene->setValueForInputNamed(origin, "origin");
+                    auto inputImage = globalData->ae2glScene->createAndRenderABuffer(outSize);
+                    
+                    scene.setBufferForInputNamed(inputImage, input->name());
                     
                 } else {
                     // Non-buffer uniforms
@@ -773,7 +801,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             }
             
             // Then, render it!
-            scene.renderToBuffer(isfImage, size, (double)paramInfo->time);
+            scene.renderToBuffer(isfImage, outSize, (double)paramInfo->time);
         }
         
         // Download the result of ISF
@@ -784,7 +812,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
             scene.setBufferForInputNamed(isfImage, "inputImage");
             
-            auto outputImage = scene.createAndRenderABuffer(size, 0.0);
+            auto outputImage = scene.createAndRenderABuffer(outSize, 0.0);
             auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
 
             char *glP = nullptr;  // OpenGL
@@ -793,10 +821,10 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
 
             // Copy per row
-            for (size_t y = 0; y < height; y++) {
+            for (size_t y = 0; y < outSize.height; y++) {
                 glP = (char *)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
                 aeP = (char *)output_worldP->data + y * output_worldP->rowbytes;
-                std::memcpy(aeP, glP, width * pixelBytes);
+                std::memcpy(aeP, glP, outSize.width * pixelBytes);
             }
         }
 
@@ -1065,29 +1093,35 @@ QueryDynamicFlags(
 }
 
 
-extern "C" DllExport PF_Err PluginDataEntryFunction(
-    PF_PluginDataPtr inPtr, PF_PluginDataCB inPluginDataCallBackPtr,
-    SPBasicSuite *inSPBasicSuitePtr, const char *inHostName,
-    const char *inHostVersion) {
+extern "C" DllExport
+PF_Err PluginDataEntryFunction(
+    PF_PluginDataPtr inPtr,
+    PF_PluginDataCB inPluginDataCallBackPtr,
+    SPBasicSuite *inSPBasicSuitePtr,
+    const char *inHostName,
+    const char *inHostVersion)
+{
     PF_Err result = PF_Err_INVALID_CALLBACK;
 
-    result =
-        PF_REGISTER_EFFECT(inPtr, inPluginDataCallBackPtr, CONFIG_NAME,
-                           CONFIG_MATCH_NAME, CONFIG_CATEGORY,
-                           AE_RESERVED_INFO);  // Reserved Info
+    result = PF_REGISTER_EFFECT(inPtr,
+                                inPluginDataCallBackPtr,
+                                CONFIG_NAME,
+                                CONFIG_MATCH_NAME,
+                                CONFIG_CATEGORY,
+                                AE_RESERVED_INFO);  // Reserved Info
     
     return result;
 }
 
-DllExport
-    PF_Err
-    EffectMain(
-        PF_Cmd cmd,
-        PF_InData *in_data,
-        PF_OutData *out_data,
-        PF_ParamDef *params[],
-        PF_LayerDef *output,
-        void *extra) {
+PF_Err
+EffectMain(
+    PF_Cmd cmd,
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output,
+    void *extra)
+{
         
     PF_Err err = PF_Err_NONE;
 

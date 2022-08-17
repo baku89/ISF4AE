@@ -10,13 +10,17 @@
         {
             "NAME": "multiplier16bit",
             "TYPE": "float"
+        },
+        {
+            "NAME": "origin",
+            "TYPE": "point2D"
         }
     ]
     
 }*/
 
 void main() {
-    vec2 flippedUV = vec2(isf_FragNormCoord.x, 1.0 - isf_FragNormCoord.y);
-    vec4 aeColor = IMG_NORM_PIXEL(inputImage, flippedUV);
+    vec2 coord = vec2(gl_FragCoord.x, RENDERSIZE.y - gl_FragCoord.y) - origin;
+    vec4 aeColor = IMG_PIXEL(inputImage, coord);
     gl_FragColor = aeColor.gbar * multiplier16bit;
 }
