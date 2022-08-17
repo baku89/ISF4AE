@@ -9,165 +9,11 @@
 #include "AEUtil.h"
 
 #include "AEOGLInterop.hpp"
-#include "MiscUtil.hpp"
+#include "MiscUtil.h"
 #include "Debug.h"
 
 #include <iostream>
 #include <VVGL/VVGL.hpp>
-
-PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
-    return Param_UserOffset + index * NumUserParamType + type;
-}
-
-UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
-    switch (type) {
-        case VVISF::ISFValType_Bool:
-            return UserParamType_Bool;
-            
-        case VVISF::ISFValType_Long:
-            return UserParamType_Long;
-            
-        case VVISF::ISFValType_Float:
-            return UserParamType_Float;
-            
-        case VVISF::ISFValType_Point2D:
-            return UserParamType_Point2D;
-            
-        case VVISF::ISFValType_Color:
-            return UserParamType_Color;
-            
-        default:
-            return UserParamType_None;
-    }
-}
-
-PF_Err setParamVisibility(PF_InData *in_data,
-                          PF_ParamDef *params[],
-                          PF_ParamIndex index,
-                          A_Boolean visible) {
-    
-    PF_Err err = PF_Err_NONE;
-    AEGP_SuiteHandler suites(in_data->pica_basicP);
-    auto *globalData = reinterpret_cast<GlobalData *>(DH(in_data->global_data));
-    
-    A_Boolean invisible = !visible;
-    
-    // For Premiere Pro
-    PF_ParamDef newParam;
-    AEFX_CLR_STRUCT(newParam);
-    newParam = *params[index];
-    
-    setBitFlag(PF_PUI_INVISIBLE, invisible, &newParam.ui_flags);
-    
-    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                    index,
-                                                    &newParam));
-    
-    // For After Effects
-    AEGP_EffectRefH effectH = nullptr;
-    AEGP_StreamRefH streamH = nullptr;
-    
-    ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(globalData->aegpId,
-                                                               in_data->effect_ref,
-                                                               &effectH));
-    
-
-    ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId,
-                                                              effectH,
-                                                              index,
-                                                              &streamH));
-
-    ERR(suites.DynamicStreamSuite4()->AEGP_SetDynamicStreamFlag(streamH,
-                                                                AEGP_DynStreamFlag_HIDDEN,
-                                                                FALSE,
-                                                                invisible));
-    
-    if (effectH) ERR(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
-    if (streamH) ERR(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
-    
-    return err;
-}
-
-PF_Err setParamName(PF_InData *in_data,
-                    PF_ParamDef *params[],
-                    PF_ParamIndex index,
-                    std::string &name) {
-    
-    PF_Err err = PF_Err_NONE;
-    
-    AEGP_SuiteHandler suites(in_data->pica_basicP);
-    
-    PF_ParamDef newParam;
-    newParam = *params[index];
-    
-    PF_STRCPY(newParam.name, name.c_str());
-    
-    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                    index,
-                                                    &newParam));
-    
-    return err;
-}
-
-/**
- * Compile a shader and store to pool that maps code string to OGL::Program.
- * It will be called at UpdateParameterUI and PreRender.
- */
-SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code) {
-    // Compile a shader at here to make sure to display the latest status
-    auto &scenes = *globalData->scenes;
-    
-    if (scenes.find(code) != scenes.end()) {
-        // Use cache
-        return scenes[code];
-    }
-
-    // Compile new shader if not exists
-    globalData->context->bind();
-    
-    auto scene = VVISF::CreateISF4AESceneRef();
-    scene->setThrowExceptions(true);
-    scene->setManualTime(true);
-    
-    try {
-        auto doc = VVISF::CreateISFDocRefWith(code);
-        scene->useDoc(doc);
-        scene->compileProgramIfNecessary();
-        
-        auto errDict = scene->errDict();
-        
-        if (errDict.size() > 0) {
-            VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL,
-                                             "Shader Problem",
-                                             "check error dict for more info",
-                                              errDict);
-            throw err;
-        }
-        
-        auto *desc = new SceneDesc();
-        desc->scene = scene;
-        desc->status = "Compiled Successfully";
-        
-        scenes[code] = desc;
-        
-    } catch (VVISF::ISFErr isfErr) {
-        
-        // On Failed, format and save the risen error.
-        auto *desc = new SceneDesc();
-        desc->scene = globalData->defaultScene;
-        desc->status = isfErr.getTypeString();
-        desc->errorLog = "";
-        
-        for (auto err : isfErr.details) {
-            if (err.first == "fragSrc" || err.first == "vertSrc") continue;
-            desc->errorLog += "[" + err.first + "] " + err.second + "\n";
-        }
-        
-        scenes[code] = desc;
-    }
-    
-    return scenes[code];
-}
 
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple modal dialog.
@@ -1030,15 +876,15 @@ UpdateParamsUI(
     auto *desc = getCompiledSceneDesc(globalData, isf->code);
     
     // Set the shader status as a label for 'Edit Shader'
-    setParamName(in_data, params, Param_Edit, desc->status);
+    AEUtil::setParamName(in_data, params, Param_Edit, desc->status);
     
     // Show the time parameters if the current shader is time dependant
     bool isTimeDependant = desc->scene->isTimeDependant();
-    ERR(setParamVisibility(in_data, params, Param_UseLayerTime, isTimeDependant));;
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_UseLayerTime, isTimeDependant));
     
     // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
     A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
-    ERR(setParamVisibility(in_data, params, Param_Time, !useLayerTime && isTimeDependant));
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_Time, !useLayerTime && isTimeDependant));
     
     // Change the visiblity of user params
     PF_ParamIndex userParamIndex = 0;
@@ -1105,14 +951,14 @@ UpdateParamsUI(
             PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
             bool visible = type == userParamType;
             
-            ERR(setParamVisibility(in_data, params, index, visible));
+            ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, visible));
             
             if (visible) {
                 // Set label
                 auto label = input->label();
                 if (label.empty()) label = input->name();
                 
-                ERR(setParamName(in_data, params, index, label));
+                ERR(AEUtil::setParamName(in_data, params, index, label));
             }
         }
             
@@ -1123,7 +969,7 @@ UpdateParamsUI(
     for (; userParamIndex < NumUserParams; userParamIndex++) {
         for (PF_ParamIndex userParamType = 0; userParamType < NumUserParamType; userParamType++) {
             PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
-            ERR(setParamVisibility(in_data, params, index, false));
+            ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, false));
         }
     }
          

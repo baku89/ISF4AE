@@ -100,13 +100,12 @@ struct ParamInfo {
     PF_ParamDef userParams[NumUserParams];
 };
 
-extern "C" {
+// Implemented in ISF4AE_UtilFunc.cpp
+PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type);
+UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type);
+SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code);
 
-DllExport PF_Err EffectMain(PF_Cmd cmd, PF_InData *in_data,
-                            PF_OutData *out_data, PF_ParamDef *params[],
-                            PF_LayerDef *output, void *extra);
-}
-
+// Implemented in ISF4AE_ArbHandler.cpp
 PF_Err
 CreateDefaultArb(
     PF_InData            *in_data,
@@ -127,3 +126,11 @@ ArbCompare(
     const PF_ArbitraryH        *a_arbP,
     const PF_ArbitraryH        *b_arbP,
     PF_ArbCompareResult        *resultP);
+
+
+extern "C" {
+
+DllExport PF_Err EffectMain(PF_Cmd cmd, PF_InData *in_data,
+                            PF_OutData *out_data, PF_ParamDef *params[],
+                            PF_LayerDef *output, void *extra);
+}
