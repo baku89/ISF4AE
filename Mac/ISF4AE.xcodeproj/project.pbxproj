@@ -656,16 +656,12 @@
 					../../../Util,
 					../../../Headers/SP,
 					../../../Resources,
-					/usr/local/Cellar/glm/0.9.9.8/include,
 					"\"$(SRCROOT)/../Headers\"",
 					"\"$(SRCROOT)/../Headers/glad/include\"",
 					"\"$(SRCROOT)/../VVISF-GL/VVGL/include\"",
 				);
 				INSTALL_PATH = "";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/Cellar/glm/0.9.9.8/lib,
-				);
+				LIBRARY_SEARCH_PATHS = "";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DVVGL_SDK_MAC";
 				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/ISF4AE";
