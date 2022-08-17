@@ -868,11 +868,7 @@ UserChangedParam(PF_InData *in_data,
         case Param_Edit:
         {
             // Load a shader
-            std::vector<std::string> fileTypes;
-                
-            fileTypes.push_back("frag");
-            fileTypes.push_back("glsl");
-            fileTypes.push_back("fs");
+            std::vector<std::string> fileTypes = {"fs", "txt", "frag", "glsl"};
         
             std::string srcPath = SystemUtil::openFileDialog(fileTypes);
             

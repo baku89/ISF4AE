@@ -13,7 +13,13 @@ std::string openFileDialog(std::vector<std::string> &fileTypes) {
     
     std::string path;
     
-    NSArray *nsFileTypes = @[@"frag", @"glsl", @"fs", @"txt"];
+    id nsFileTypes = [NSMutableArray new];
+    
+    for (auto &fileType : fileTypes) {
+        id nsStr = [NSString stringWithUTF8String: fileType.c_str()];
+        [nsFileTypes addObject: nsStr];
+    }
+    
     NSOpenPanel * panel = [NSOpenPanel openPanel];
     [panel setAllowsMultipleSelection: NO];
     [panel setCanChooseDirectories: NO];
