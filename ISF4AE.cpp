@@ -602,10 +602,6 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
                                       in_data->time_scale,
                                       &paramDef));
                 
-                if (userParamType == UserParamType_Float) {
-                    FX_LOG("Float Param: useParamIndex=" << userParamIndex << ", paramIndex=" << index << ", value=" << paramDef.u.fs_d.value);
-                }
-                
                 paramInfo->userParamValues[userParamIndex] = paramDef.u;
                 
                 ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
