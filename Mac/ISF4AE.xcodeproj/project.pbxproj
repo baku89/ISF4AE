@@ -15,7 +15,7 @@
 		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
 		2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */ = {isa = PBXBuildFile; fileRef = 2382660628A490F5001F523D /* AEFX_SuiteHelper.c */; };
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
-		2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISFArbHandler.cpp */; };
+		2382660C28A4AE17001F523D /* ISF4AEArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISF4AEArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
 		23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */; };
 		23CA9DA728AD0CA5001845E3 /* MiscUtil.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 23CA9DA628AD0CA5001845E3 /* MiscUtil.hpp */; };
@@ -204,7 +204,7 @@
 		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../../Util/Smart_Utils.cpp; sourceTree = "<group>"; };
 		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../../Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
-		2382660B28A4AE17001F523D /* ISFArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISFArbHandler.cpp; path = ../ISFArbHandler.cpp; sourceTree = "<group>"; };
+		2382660B28A4AE17001F523D /* ISF4AEArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISF4AEArbHandler.cpp; path = ../ISF4AEArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ISF4AEScene.hpp; path = ../ISF4AEScene.hpp; sourceTree = "<group>"; };
@@ -307,7 +307,7 @@
 				23A0241F28A3F3E900E021FB /* Config.h */,
 				7EF36FB816F29807002A3CB3 /* ISF4AE.h */,
 				D0FE575C0993C4E900139A60 /* ISF4AE.cpp */,
-				2382660B28A4AE17001F523D /* ISFArbHandler.cpp */,
+				2382660B28A4AE17001F523D /* ISF4AEArbHandler.cpp */,
 				23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */,
 				D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
@@ -572,7 +572,7 @@
 			files = (
 				D0FE57600993C4E900139A60 /* ISF4AE.cpp in Sources */,
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
-				2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */,
+				2382660C28A4AE17001F523D /* ISF4AEArbHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
 				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,
 				2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */,
