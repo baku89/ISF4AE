@@ -31,3 +31,11 @@ int findIndex(std::vector<T> vals, T target) {
         return std::distance(vals.begin(), itr);
     }
 }
+
+void setBitFlag(A_long flag, A_Boolean value, A_long *target) {
+    if (value) {
+        *target |= flag;
+    } else {
+        *target &= ~flag;
+    }
+}

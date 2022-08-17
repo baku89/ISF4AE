@@ -39,14 +39,6 @@ UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
     }
 }
 
-void setBitFlag(A_long flag, A_Boolean value, A_long *target) {
-    if (value) {
-        *target |= flag;
-    } else {
-        *target &= ~flag;
-    }
-}
-
 PF_Err setParamVisibility(PF_InData *in_data,
                           PF_ParamDef *params[],
                           PF_ParamIndex index,
