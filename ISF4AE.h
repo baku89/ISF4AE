@@ -67,8 +67,8 @@ enum {
     UserParamType_Bool = 0,
     UserParamType_Long,
     UserParamType_Float,
-//    UserParamType_Point2D,
-//    UserParamType_Color,
+    UserParamType_Point2D,
+    UserParamType_Color,
 //    UserParamType_Image,
     NumUserParamType
 };
@@ -97,7 +97,7 @@ typedef struct {
 struct ParamInfo {
     VVISF::ISF4AEScene *scene;
     A_FpLong time;
-    PF_ParamDefUnion userParamValues[NumUserParams];
+    PF_ParamDef userParams[NumUserParams];
 };
 
 extern "C" {

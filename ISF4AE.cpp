@@ -30,6 +30,12 @@ UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
         case VVISF::ISFValType_Float:
             return UserParamType_Float;
             
+        case VVISF::ISFValType_Point2D:
+            return UserParamType_Point2D;
+            
+        case VVISF::ISFValType_Color:
+            return UserParamType_Color;
+            
         default:
             return UserParamType_None;
     }
@@ -428,6 +434,21 @@ ParamsSetup(
                              PF_ValueDisplayFlag_NONE,
                              PF_ParamFlag_COLLAPSE_TWIRLY,
                              getIndexForUserParam(userParamIndex, UserParamType_Float));
+        
+        PF_SPRINTF(name, "Point2D %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
+        PF_ADD_POINT(name,
+                     0, 0,
+                     0,
+                     getIndexForUserParam(userParamIndex, UserParamType_Float));
+        
+        PF_SPRINTF(name, "Color %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
+        PF_ADD_COLOR(name,
+                     1, 1, 1,
+                     getIndexForUserParam(userParamIndex, UserParamType_Float));
     }
 
     // Set PF_OutData->num_params to match the parameter count.
@@ -606,7 +627,7 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
                                       in_data->time_scale,
                                       &paramDef));
                 
-                paramInfo->userParamValues[userParamIndex] = paramDef.u;
+                paramInfo->userParams[userParamIndex] = paramDef;
                 
                 ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
                 
@@ -657,6 +678,11 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
     PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
 
     AEGP_SuiteHandler suites(in_data->pica_basicP);
+        
+    PF_PointParamSuite1 *pointSuite;
+    ERR(AEFX_AcquireSuite(in_data, out_data, kPFPointParamSuite,
+                          kPFPointParamSuiteVersion1, "Couldn't load suite.",
+                          (void **)&pointSuite));
 
     PF_EffectWorld *input_worldP = nullptr, *output_worldP = nullptr;
     PF_WorldSuite2 *wsP = nullptr;
@@ -760,23 +786,43 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                 } else {
                     // Non-buffer uniforms
                     VVISF::ISFValType type = input->type();
-                    auto &paramVal = paramInfo->userParamValues[userParamIndex];
+                    auto &param = paramInfo->userParams[userParamIndex];
                     
                     VVISF::ISFVal *val = nullptr;
                     
                     switch (type) {
                         case VVISF::ISFValType_Bool:
-                            val = new VVISF::ISFVal(type, paramVal.bd.value);
+                            val = new VVISF::ISFVal(type, param.u.bd.value);
                             break;
                         case VVISF::ISFValType_Long: {
-                            auto index = paramVal.pd.value - 1; // Begins with 1
+                            auto index = param.u.pd.value - 1; // Begins with 1
                             auto values = input->valArray();
                             val = new VVISF::ISFVal(type, values[index]);
                             break;
                         }
                         case VVISF::ISFValType_Float:
-                            val = new VVISF::ISFVal(type, paramVal.fs_d.value);
+                            val = new VVISF::ISFVal(type, param.u.fs_d.value);
                             break;
+                            
+                        case VVISF::ISFValType_Point2D: {
+                            
+                            A_FloatPoint point;
+                            ERR(pointSuite->PF_GetFloatingPointValueFromPointDef(in_data->effect_ref,
+                                                                                 &param,
+                                                                                 &point));
+                            val = new VVISF::ISFVal(type, point.x, outSize.height - point.y);
+                            
+                            break;
+                        }
+                        case VVISF::ISFValType_Color: {
+                            PF_PixelFloat color;
+                            ERR(suites.ColorParamSuite1()->PF_GetFloatingPointColorFromColorDef(in_data->effect_ref,
+                                                                                                &param,
+                                                                                                &color));
+                            val = new VVISF::ISFVal(type, color.red, color.green, color.blue, color.alpha);
+                            break;
+                        }
+                            
                         default:
                             FX_LOG("Invalid ISFValType.");
                             break;
