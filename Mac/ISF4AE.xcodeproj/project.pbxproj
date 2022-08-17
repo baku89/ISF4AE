@@ -10,9 +10,6 @@
 		233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 233B1F1A28A46D35000652AC /* OpenGL.framework */; };
 		233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2328A476D2000652AC /* GlobalContext.cpp */; };
 		233B1F3828A476D2000652AC /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2428A476D2000652AC /* Common.cpp */; };
-		233B1F3928A476D2000652AC /* Fbo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2528A476D2000652AC /* Fbo.cpp */; };
-		233B1F3A28A476D2000652AC /* QuadVao.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2728A476D2000652AC /* QuadVao.cpp */; };
-		233B1F3B28A476D2000652AC /* Texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2928A476D2000652AC /* Texture.cpp */; };
 		2382660128A48EDF001F523D /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = 2382660028A48EDF001F523D /* shaders */; };
 		2382660328A49081001F523D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2382660228A49081001F523D /* Cocoa.framework */; };
 		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
@@ -199,22 +196,14 @@
 		233B1F2128A476D2000652AC /* AEOGLInterop.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEOGLInterop.hpp; sourceTree = "<group>"; };
 		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
 		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
-		233B1F2528A476D2000652AC /* Fbo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Fbo.cpp; sourceTree = "<group>"; };
-		233B1F2628A476D2000652AC /* Program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Program.h; sourceTree = "<group>"; };
-		233B1F2728A476D2000652AC /* QuadVao.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = QuadVao.cpp; sourceTree = "<group>"; };
 		233B1F2828A476D2000652AC /* GlobalContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalContext.h; sourceTree = "<group>"; };
-		233B1F2928A476D2000652AC /* Texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Texture.cpp; sourceTree = "<group>"; };
-		233B1F2A28A476D2000652AC /* Fbo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fbo.h; sourceTree = "<group>"; };
-		233B1F2B28A476D2000652AC /* QuadVao.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QuadVao.h; sourceTree = "<group>"; };
 		233B1F2C28A476D2000652AC /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
-		233B1F2D28A476D2000652AC /* Texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Texture.h; sourceTree = "<group>"; };
 		233B1F3628A476D2000652AC /* OGL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OGL.h; sourceTree = "<group>"; };
 		2382660028A48EDF001F523D /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../shaders; sourceTree = "<group>"; };
 		2382660228A49081001F523D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		2382660428A490ED001F523D /* Smart_Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Smart_Utils.cpp; path = ../../../Util/Smart_Utils.cpp; sourceTree = "<group>"; };
 		2382660628A490F5001F523D /* AEFX_SuiteHelper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = AEFX_SuiteHelper.c; path = ../../../Util/AEFX_SuiteHelper.c; sourceTree = "<group>"; };
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
-		2382660A28A4A1D8001F523D /* Shader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shader.h; sourceTree = "<group>"; };
 		2382660B28A4AE17001F523D /* ISFArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISFArbHandler.cpp; path = ../ISFArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
@@ -292,16 +281,8 @@
 			children = (
 				233B1F2C28A476D2000652AC /* Common.h */,
 				233B1F2428A476D2000652AC /* Common.cpp */,
-				233B1F2A28A476D2000652AC /* Fbo.h */,
-				233B1F2528A476D2000652AC /* Fbo.cpp */,
-				233B1F2B28A476D2000652AC /* QuadVao.h */,
-				233B1F2728A476D2000652AC /* QuadVao.cpp */,
 				233B1F2828A476D2000652AC /* GlobalContext.h */,
 				233B1F2328A476D2000652AC /* GlobalContext.cpp */,
-				233B1F2628A476D2000652AC /* Program.h */,
-				233B1F2D28A476D2000652AC /* Texture.h */,
-				233B1F2928A476D2000652AC /* Texture.cpp */,
-				2382660A28A4A1D8001F523D /* Shader.h */,
 			);
 			path = OGL;
 			sourceTree = "<group>";
@@ -593,16 +574,13 @@
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
 				2382660C28A4AE17001F523D /* ISFArbHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
-				233B1F3B28A476D2000652AC /* Texture.cpp in Sources */,
 				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,
 				2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */,
 				23CA9DA728AD0CA5001845E3 /* MiscUtil.hpp in Sources */,
 				2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */,
 				233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */,
-				233B1F3928A476D2000652AC /* Fbo.cpp in Sources */,
 				D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */,
 				23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */,
-				233B1F3A28A476D2000652AC /* QuadVao.cpp in Sources */,
 				2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */,
 				233B1F3828A476D2000652AC /* Common.cpp in Sources */,
 			);

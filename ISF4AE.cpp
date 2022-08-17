@@ -10,6 +10,7 @@
 
 #include "AEOGLInterop.hpp"
 #include "MiscUtil.hpp"
+#include "Debug.h"
 
 #include <iostream>
 #include <VVGL/VVGL.hpp>

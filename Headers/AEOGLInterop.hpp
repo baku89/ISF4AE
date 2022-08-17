@@ -39,56 +39,6 @@ size_t getPixelBytes(GLenum pixelType) {
     }
 }
 
-void uploadTexture(OGL::Texture *tex,
-                   PF_LayerDef *layerDef,
-                   void *pixelsBufferP,
-                   GLenum pixelType) {
-    GLsizei width = layerDef->width;
-    GLsizei height = layerDef->height;
-
-    size_t pixelBytes = getPixelBytes(pixelType);
-
-    // Copy to buffer per row
-    char *glP = nullptr;  // OpenGL
-    char *aeP = nullptr;  // AE
-
-    for (size_t y = 0; y < height; y++) {
-        glP = (char *)pixelsBufferP + (height - y - 1) * width * pixelBytes;
-        aeP = (char *)layerDef->data + y * layerDef->rowbytes;
-        std::memcpy(glP, aeP, width * pixelBytes);
-    }
-
-    // Uplaod to texture
-    tex->bind();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, pixelType,
-                    pixelsBufferP);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-    tex->unbind();
-}
-
-PF_Err downloadTexture(const void *pixelsBufferP,
-                       PF_LayerDef *layerDef,
-                       GLenum pixelType) {
-    PF_Err err = PF_Err_NONE;
-
-    size_t pixelBytes = getPixelBytes(pixelType);
-
-    size_t width = layerDef->width;
-    size_t height = layerDef->height;
-
-    char *glP = nullptr;  // OpenGL
-    char *aeP = nullptr;  // AE
-
-    // Copy per row
-    for (size_t y = 0; y < height; y++) {
-        glP = (char *)pixelsBufferP + (height - y - 1) * width * pixelBytes;
-        aeP = (char *)layerDef->data + y * layerDef->rowbytes;
-        std::memcpy(aeP, glP, width * pixelBytes);
-    }
-    return err;
-}
-
 enum { GL_SPACE = 1,
        AE_SPACE };
 
