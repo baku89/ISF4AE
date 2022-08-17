@@ -111,59 +111,60 @@ PF_Err setParamName(PF_InData *in_data,
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
-void compileShaderIfNeeded(GlobalData *globalData, A_char *code) {
+SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code) {
     // Compile a shader at here to make sure to display the latest status
     auto &scenes = *globalData->scenes;
+    
+    if (scenes.find(code) != scenes.end()) {
+        // Use cache
+        return scenes[code];
+    }
 
-    if (strlen(code) > 0 && scenes.find(code) == scenes.end()) {
-        // Compile new shader if not exists
-        globalData->context->bind();
+    // Compile new shader if not exists
+    globalData->context->bind();
+    
+    auto scene = VVISF::CreateISF4AESceneRef();
+    scene->setThrowExceptions(true);
+    scene->setManualTime(true);
+    
+    try {
+        auto doc = VVISF::CreateISFDocRefWith(code);
+        scene->useDoc(doc);
+        scene->compileProgramIfNecessary();
         
-        auto scene = VVISF::CreateISF4AESceneRef();
-        scene->setThrowExceptions(true);
-        scene->setManualTime(true);
+        auto errDict = scene->errDict();
         
-        try {
-            auto doc = VVISF::CreateISFDocRefWith(code);
-            scene->useDoc(doc);
-            scene->compileProgramIfNecessary();
-            
-            auto errDict = scene->errDict();
-            
-            if (errDict.size() > 0) {
-                VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL,
-                                                 "Shader Problem",
-                                                 "check error dict for more info",
-                                                  errDict);
-                throw err;
-            }
-            
-        } catch (VVISF::ISFErr isfErr) {
-            
-            // On Failed, format and save the risen error.
-            auto *desc = new SceneDesc();
-            desc->scene.reset();
-            desc->status = isfErr.getTypeString();
-            desc->errorLog = "";
-            
-            for (auto err : isfErr.details) {
-                if (err.first == "fragSrc" || err.first == "vertSrc") continue;
-                desc->errorLog += "[" + err.first + "] " + err.second + "\n";
-            }
-            
-            scenes[code] = desc;
-            
-            return;
+        if (errDict.size() > 0) {
+            VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL,
+                                             "Shader Problem",
+                                             "check error dict for more info",
+                                              errDict);
+            throw err;
         }
-
         
-        // On succeed
         auto *desc = new SceneDesc();
         desc->scene = scene;
         desc->status = "Compiled Successfully";
         
         scenes[code] = desc;
+        
+    } catch (VVISF::ISFErr isfErr) {
+        
+        // On Failed, format and save the risen error.
+        auto *desc = new SceneDesc();
+        desc->scene = globalData->defaultScene;
+        desc->status = isfErr.getTypeString();
+        desc->errorLog = "";
+        
+        for (auto err : isfErr.details) {
+            if (err.first == "fragSrc" || err.first == "vertSrc") continue;
+            desc->errorLog += "[" + err.first + "] " + err.second + "\n";
+        }
+        
+        scenes[code] = desc;
     }
+    
+    return scenes[code];
 }
 
 /**
@@ -200,20 +201,10 @@ PopDialog(
     auto *globalData = reinterpret_cast<GlobalData *>(DH(out_data->global_data));
     auto *isf = reinterpret_cast<ParamArbIsf *>(*params[Param_ISF]->u.arb_d.value);
 
-    auto &scenes = *globalData->scenes;
-    auto &code = isf->code;
+    auto *sceneDesc = getCompiledSceneDesc(globalData, isf->code);
     
-    std::string status;
-    std::string errorLog = "";
-    
-    if (strlen(code) == 0) {
-        status = "Not Loaded";
-    } else if (scenes.find(code) == scenes.end()) {
-        status = "Not Compiled";
-    } else {
-        status = scenes[code]->status;
-        errorLog = scenes[code]->errorLog;
-    }
+    std::string status = sceneDesc->status;
+    std::string errorLog = sceneDesc->errorLog;
     
     const char *separator = errorLog.length() > 0 ? "\n---\n" : "";
     
@@ -290,6 +281,12 @@ GlobalSetup(
     globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
 
     globalData->scenes = new std::unordered_map<std::string, SceneDesc*>();
+    
+    auto defaultSceneDesc = new SceneDesc();
+    defaultSceneDesc->status = "Not Loaded";
+    defaultSceneDesc->scene = globalData->defaultScene;
+    
+    (*globalData->scenes)[""] = defaultSceneDesc;
 
     handleSuite->host_unlock_handle(globalDataH);
 
@@ -568,19 +565,9 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         auto *isf = reinterpret_cast<ParamArbIsf*>(*paramDef.u.arb_d.value);
         
         if (isf) {
-            auto &code = isf->code;
-            auto &scenes = *globalData->scenes;
+            auto desc = getCompiledSceneDesc(globalData, isf->code);
 
-            compileShaderIfNeeded(globalData, code);
-
-            paramInfo->scene = globalData->defaultScene.get();
-            
-            if (strlen(code) > 0 && scenes.find(code) != scenes.end()) {
-                auto *desc = scenes[code];
-                if (desc->scene) {
-                    paramInfo->scene = desc->scene.get();
-                }
-            }
+            paramInfo->scene = desc->scene.get();
         }
         
         ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
@@ -864,6 +851,9 @@ UserChangedParam(PF_InData *in_data,
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
+    auto *globalData = reinterpret_cast<GlobalData *>(
+        suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+    
     switch (which_hit->param_index) {
         case Param_Edit:
         {
@@ -884,6 +874,10 @@ UserChangedParam(PF_InData *in_data,
                     ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
                                                                     Param_ISF,
                                                                     params[Param_ISF]));
+                    
+                    // Setup
+                    getCompiledSceneDesc(globalData, isf->code);
+                    
                 } else {
                     // On failed reading the text file, or simply it's empty
                     suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
@@ -895,8 +889,6 @@ UserChangedParam(PF_InData *in_data,
             break;
         case Param_Save:
             // Save the current shader
-            auto *globalData = reinterpret_cast<GlobalData *>(
-                suites.HandleSuite1()->host_lock_handle(in_data->global_data));
             
             // Set name of an effect instance as default file name
             // https://ae-plugins.docsforadobe.dev/aegps/aegp-suites.html#streamrefs-and-effectrefs
@@ -970,39 +962,11 @@ UpdateParamsUI(
     auto *globalData = reinterpret_cast<GlobalData *>(
         suites.HandleSuite1()->host_lock_handle(in_data->global_data));
     
-    VVISF::ISF4AESceneRef scene = globalData->defaultScene;
+    auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+    auto *desc = getCompiledSceneDesc(globalData, isf->code);
     
-    {
-        // Update the shader compilation label left to 'Edit' button
-        auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-        
-        auto &code = isf->code;
-        
-        // Compile a shader at here to make sure to display the latest compilation status
-        compileShaderIfNeeded(globalData, code);
-        
-        // Get the string representing current shader status
-        std::string shaderStatus = "Not Loaded";
-        
-        if (strlen(code) > 0) {
-            auto &scenes = *globalData->scenes;
-
-            if (scenes.find(code) == scenes.end()) {
-                shaderStatus = "Not Compiled";
-            } else {
-                auto desc = scenes[code];
-                shaderStatus = desc->status;
-                
-                if (desc->scene) {
-                    // Store the available scene
-                    scene = desc->scene;
-                }
-            }
-        }
-        
-        // Set it as a label for 'Edit Shader'
-        setParamName(in_data, params, Param_Edit, shaderStatus);
-    }
+    // Set the shader status as a label for 'Edit Shader'
+    setParamName(in_data, params, Param_Edit, desc->status);
     
     // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
     A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
@@ -1012,7 +976,7 @@ UpdateParamsUI(
     PF_ParamIndex userParamIndex = 0;
     UserParamType userParamType;
     
-    auto inputs = scene->inputs();
+    auto inputs = desc->scene->inputs();
     
     for (auto& input : inputs) {
         if (userParamIndex >= inputs.size()) {
