@@ -9,6 +9,7 @@
 #include "AEUtil.h"
 
 #include "AEOGLInterop.hpp"
+#include "MiscUtil.hpp"
 
 #include <iostream>
 #include <VVGL/VVGL.hpp>
@@ -1020,7 +1021,6 @@ UpdateParamsUI(
     
     // Change the visiblity of user params
     PF_ParamIndex userParamIndex = 0;
-    PF_ParamDef paramDef;
     UserParamType userParamType;
     
     auto inputs = scene->inputs();
@@ -1038,55 +1038,56 @@ UpdateParamsUI(
         
         auto index = getIndexForUserParam(userParamIndex, userParamType);
         
-        paramDef = *params[index];
+        // Update the value and other UI options
+        auto &param = *params[index];
         
         switch (userParamType) {
+            case UserParamType_Bool: {
+                
+                param.u.bd.dephault = input->defaultVal().getBoolVal();
+                
+                break;
+            }
+                
             case UserParamType_Long: {
                 
                 auto labels = input->labelArray();
                 auto values = input->valArray();
                 
-                paramDef.u.pd.num_choices = labels.size();
+                param.u.pd.num_choices = labels.size();
                 
-                // Join labels using "|" as a delimiter
-                std::ostringstream os;
-                std::copy(labels.begin(), labels.end(),
-                          std::ostream_iterator<std::string>(os, "|"));
+                auto joinedLabels = joinWith(labels, "|");
                 
-                const A_char *names = os.str().c_str();
-                                                
-                paramDef.u.pd.u.namesptr = names;
+                A_char *names = new A_char[joinedLabels.length() + 1];\
+                PF_STRCPY(names, joinedLabels.c_str());
                 
-                auto dephault = input->defaultVal().getLongVal();
-                A_long dephaultIndex = 1;
-                std::vector<int>::iterator itr = std::find(values.begin(), values.end(), dephault);
-                if (itr != values.end()) {
-                    dephaultIndex = std::distance(values.begin(), itr);
-                }
+                param.u.pd.u.namesptr = names;
                 
-                paramDef.u.pd.value = dephault;
-                paramDef.u.pd.dephault = dephault;
+                auto dephaultVal = input->defaultVal().getLongVal();
+                
+                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+                
+                param.u.pd.value = dephaultIndex;
+                param.u.pd.dephault = dephaultIndex;
                 
                 break;
             }
                 
             case UserParamType_Float: {
+                
                 auto dephault = input->defaultVal().getDoubleVal();
-                paramDef.u.fs_d.slider_min = input->minVal().getDoubleVal();
-                paramDef.u.fs_d.slider_max = input->maxVal().getDoubleVal();
-                paramDef.u.fs_d.value = dephault;
-                paramDef.u.fs_d.dephault = dephault;
+                param.u.fs_d.slider_min = input->minVal().getDoubleVal();
+                param.u.fs_d.slider_max = input->maxVal().getDoubleVal();
+                param.u.fs_d.value = dephault;
+                param.u.fs_d.dephault = dephault;
+                
                 break;
             }
         }
         
-        paramDef.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+        param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
         
-        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                        index,
-                                                        &paramDef));
-        
-        
+        // Set the label and visibility
         for (PF_ParamIndex type = 0; type < NumUserParamType; type++) {
             
             PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
