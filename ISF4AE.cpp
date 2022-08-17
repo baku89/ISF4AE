@@ -15,10 +15,6 @@
 #include <iostream>
 #include <VVGL/VVGL.hpp>
 
-void FX_LOG_RECT(const std::string &label, const PF_Rect &rect) {
-    FX_LOG(label << "=(" << rect.left << ", " << rect.top << ", " << rect.right << ", " << rect.bottom << ")");
-}
-
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
     return Param_UserOffset + index * NumUserParamType + type;
 }
