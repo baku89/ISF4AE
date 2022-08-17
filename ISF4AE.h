@@ -65,7 +65,7 @@ enum {
  enum UserParamType {
      UserParamType_None = -1,
     UserParamType_Bool = 0,
-//    UserParamType_Long,
+    UserParamType_Long,
     UserParamType_Float,
 //    UserParamType_Point2D,
 //    UserParamType_Color,

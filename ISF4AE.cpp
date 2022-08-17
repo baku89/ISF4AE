@@ -21,6 +21,22 @@ PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
     return Param_UserOffset + index * NumUserParamType + type;
 }
 
+UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
+    switch (type) {
+        case VVISF::ISFValType_Bool:
+            return UserParamType_Bool;
+            
+        case VVISF::ISFValType_Long:
+            return UserParamType_Long;
+            
+        case VVISF::ISFValType_Float:
+            return UserParamType_Float;
+            
+        default:
+            return UserParamType_None;
+    }
+}
+
 void setBitFlag(A_long flag, A_Boolean value, A_long *target) {
     if (value) {
         *target |= flag;
@@ -406,6 +422,15 @@ ParamsSetup(
                         PF_ParamFlag_SUPERVISE,
                         getIndexForUserParam(userParamIndex, UserParamType_Bool));
         
+        PF_SPRINTF(name, "Long %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        def.flags = PF_ParamFlag_SUPERVISE;
+        PF_ADD_POPUP("",
+                     4,
+                     0,
+                     "Choice 1|Choice 2|Choice 3|Choice 4",
+                     getIndexForUserParam(userParamIndex, UserParamType_Long));
+        
         PF_SPRINTF(name, "Float %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
         PF_ADD_FLOAT_SLIDERX(name,
@@ -591,21 +616,7 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
                 continue;
             }
             
-            UserParamType userParamType;
-            
-            switch (input->type()) {
-                case VVISF::ISFValType_Bool:
-                    userParamType = UserParamType_Bool;
-                    break;
-                    
-                case VVISF::ISFValType_Float:
-                    userParamType = UserParamType_Float;
-                    break;
-                    
-                default:
-                    userParamType = UserParamType_None;
-                    break;
-            }
+            UserParamType userParamType = getUserParamTypeForISFValType(input->type());
             
             if (userParamType != UserParamType_None) {
                 PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
@@ -784,6 +795,12 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                         case VVISF::ISFValType_Bool:
                             val = new VVISF::ISFVal(type, paramVal.bd.value);
                             break;
+                        case VVISF::ISFValType_Long: {
+                            auto index = paramVal.pd.value - 1; // Begins with 1
+                            auto values = input->valArray();
+                            val = new VVISF::ISFVal(type, values[index]);
+                            break;
+                        }
                         case VVISF::ISFValType_Float:
                             val = new VVISF::ISFVal(type, paramVal.fs_d.value);
                             break;
@@ -847,6 +864,9 @@ UserChangedParam(PF_InData *in_data,
                  PF_ParamDef *params[],
                  const PF_UserChangedParamExtra *which_hit)
 {
+    
+    FX_LOG("UserChangedParam()");
+    
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
@@ -952,6 +972,8 @@ UpdateParamsUI(
     PF_ParamDef *params[],
     PF_LayerDef *output) {
     
+    FX_LOG("UpdateParamUI()");
+    
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
@@ -998,6 +1020,9 @@ UpdateParamsUI(
     
     // Change the visiblity of user params
     PF_ParamIndex userParamIndex = 0;
+    PF_ParamDef paramDef;
+    UserParamType userParamType;
+    
     auto inputs = scene->inputs();
     
     for (auto& input : inputs) {
@@ -1005,42 +1030,80 @@ UpdateParamsUI(
             break;
         }
         
-        if (input->name() != "inputImage") {
-            UserParamType userParamType;
-            
-            switch (input->type()) {
-                case VVISF::ISFValType_Bool:
-                    userParamType = UserParamType_Bool;
-                    break;
-                    
-                case VVISF::ISFValType_Float:
-                    userParamType = UserParamType_Float;
-                    break;
-                    
-                default:
-                    userParamType = UserParamType_None;
-                    break;
-                    
-            }
-            
-            for (PF_ParamIndex type = 0; type < NumUserParamType; type++) {
-                
-                PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
-                bool visible = type == userParamType;
-                
-                ERR(setParamVisibility(in_data, params, index, visible));
-                
-                if (visible) {
-                    // Set label
-                    auto label = input->label();
-                    if (label.empty()) label = input->name();
-                    
-                    ERR(setParamName(in_data, params, index, label));
-                }
-            }
-            
-            userParamIndex++;
+        if (input->name() == "inputImage") {
+            continue;
         }
+        
+        userParamType = getUserParamTypeForISFValType(input->type());
+        
+        auto index = getIndexForUserParam(userParamIndex, userParamType);
+        
+        paramDef = *params[index];
+        
+        switch (userParamType) {
+            case UserParamType_Long: {
+                
+                auto labels = input->labelArray();
+                auto values = input->valArray();
+                
+                paramDef.u.pd.num_choices = labels.size();
+                
+                // Join labels using "|" as a delimiter
+                std::ostringstream os;
+                std::copy(labels.begin(), labels.end(),
+                          std::ostream_iterator<std::string>(os, "|"));
+                
+                const A_char *names = os.str().c_str();
+                                                
+                paramDef.u.pd.u.namesptr = names;
+                
+                auto dephault = input->defaultVal().getLongVal();
+                A_long dephaultIndex = 1;
+                std::vector<int>::iterator itr = std::find(values.begin(), values.end(), dephault);
+                if (itr != values.end()) {
+                    dephaultIndex = std::distance(values.begin(), itr);
+                }
+                
+                paramDef.u.pd.value = dephault;
+                paramDef.u.pd.dephault = dephault;
+                
+                break;
+            }
+                
+            case UserParamType_Float: {
+                auto dephault = input->defaultVal().getDoubleVal();
+                paramDef.u.fs_d.slider_min = input->minVal().getDoubleVal();
+                paramDef.u.fs_d.slider_max = input->maxVal().getDoubleVal();
+                paramDef.u.fs_d.value = dephault;
+                paramDef.u.fs_d.dephault = dephault;
+                break;
+            }
+        }
+        
+        paramDef.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+        
+        ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
+                                                        index,
+                                                        &paramDef));
+        
+        
+        for (PF_ParamIndex type = 0; type < NumUserParamType; type++) {
+            
+            PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
+            bool visible = type == userParamType;
+            
+            ERR(setParamVisibility(in_data, params, index, visible));
+            
+            if (visible) {
+                // Set label
+                auto label = input->label();
+                if (label.empty()) label = input->name();
+                
+                ERR(setParamName(in_data, params, index, label));
+            }
+        }
+            
+        userParamIndex++;
     }
          
     // Hide all out-of-range parameters
