@@ -30,6 +30,7 @@ std::string openFileDialog(std::vector<std::string> &fileTypes) {
                         
     if (result == NSModalResponseOK) {
         NSString *nsPath = [panel URLs][0].absoluteString;
+        nsPath = [nsPath stringByRemovingPercentEncoding];
         nsPath = [nsPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
         path = std::string([nsPath UTF8String]);
     }
