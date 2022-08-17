@@ -871,8 +871,49 @@ UserChangedParam(PF_InData *in_data,
                                                                     Param_ISF,
                                                                     params[Param_ISF]));
                     
-                    // Setup
-                    getCompiledSceneDesc(globalData, isf->code);
+                    // Set default values
+                    auto *desc = getCompiledSceneDesc(globalData, isf->code);
+                    
+                    int userParamIndex = 0;
+                    
+                    for (auto &input : desc->scene->inputs()) {
+                        if (input->name() == "inputImage") {
+                            continue;
+                        }
+                        
+                        auto userParamType = getUserParamTypeForISFValType(input->type());
+                        auto index = getIndexForUserParam(userParamIndex, userParamType);
+                        auto &param = *params[index];
+                        
+                        param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                        
+                        switch (userParamType) {
+                            case UserParamType_Bool:
+                                param.u.bd.dephault = input->defaultVal().getBoolVal();
+                                break;
+                            
+                            case UserParamType_Long: {
+                                
+                                auto values = input->valArray();
+                                auto dephaultVal = input->defaultVal().getLongVal();
+                                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+                                
+                                param.u.pd.value = dephaultIndex;
+                                break;
+                            }
+                                
+                            case UserParamType_Float:
+                                
+                                param.u.fs_d.value = input->defaultVal().getDoubleVal();
+                                break;
+                                
+                            default:
+                                break;
+                        }
+                        
+                        userParamIndex++;
+                    }
+                    
                     
                 } else {
                     // On failed reading the text file, or simply it's empty
@@ -991,12 +1032,6 @@ UpdateParamsUI(
         auto &param = *params[index];
         
         switch (userParamType) {
-            case UserParamType_Bool: {
-                
-                param.u.bd.dephault = input->defaultVal().getBoolVal();
-                
-                break;
-            }
                 
             case UserParamType_Long: {
                 
@@ -1013,10 +1048,8 @@ UpdateParamsUI(
                 param.u.pd.u.namesptr = names;
                 
                 auto dephaultVal = input->defaultVal().getLongVal();
-                
                 A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
                 
-                param.u.pd.value = dephaultIndex;
                 param.u.pd.dephault = dephaultIndex;
                 
                 break;
@@ -1027,7 +1060,6 @@ UpdateParamsUI(
                 auto dephault = input->defaultVal().getDoubleVal();
                 param.u.fs_d.slider_min = input->minVal().getDoubleVal();
                 param.u.fs_d.slider_max = input->maxVal().getDoubleVal();
-                param.u.fs_d.value = dephault;
                 param.u.fs_d.dephault = dephault;
                 
                 break;
