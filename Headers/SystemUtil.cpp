@@ -53,6 +53,7 @@ std::string saveFileDialog(const std::string &filename) {
     
     if (result == NSModalResponseOK) {
         NSString *nsPath = [panel URL].absoluteString;
+        nsPath = [nsPath stringByRemovingPercentEncoding];
         nsPath = [nsPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
         path = std::string([nsPath UTF8String]);
     }
