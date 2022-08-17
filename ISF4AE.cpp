@@ -398,18 +398,15 @@ ParamsSetup(
 
     
     // Add all possible user params
-    A_char name[32];
-    
     for (int userParamIndex = 0; userParamIndex < NumUserParams; userParamIndex++) {
-        PF_SPRINTF(name, "Bool %d", userParamIndex);
+        
         AEFX_CLR_STRUCT(def);
-        PF_ADD_CHECKBOX(name,
+        PF_ADD_CHECKBOX("",
                         "",
                         FALSE,
                         PF_ParamFlag_COLLAPSE_TWIRLY,
                         getIndexForUserParam(userParamIndex, UserParamType_Bool));
         
-        PF_SPRINTF(name, "Long %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
         def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
         PF_ADD_POPUP("",
@@ -418,9 +415,8 @@ ParamsSetup(
                      "Choice 1|Choice 2|Choice 3|Choice 4",
                      getIndexForUserParam(userParamIndex, UserParamType_Long));
         
-        PF_SPRINTF(name, "Float %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
-        PF_ADD_FLOAT_SLIDERX(name,
+        PF_ADD_FLOAT_SLIDERX("",
                              -1000000, 1000000,  // Valid range
                              0, 1,               // Slider range
                              0,                  // Default
