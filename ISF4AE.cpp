@@ -663,11 +663,6 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         UnionLRect(&outputRect, &extra->output->max_result_rect);
         
         extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
-
-        FX_LOG("==========");
-        FX_LOG("in_data width=" << in_data->width << " height=" << in_data->height);
-        FX_LOG_RECT("inResult.result_rect", inResult.result_rect);
-        FX_LOG_RECT("inResult.max_result_rect", inResult.max_result_rect);
     }
     
     return err;
@@ -730,12 +725,6 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         
         VVGL::Size cropSize(input_worldP->width, input_worldP->height);
         VVGL::Size outSize(output_worldP->width, output_worldP->height);
-        
-        FX_LOG("downsample=(" << in_data->downsample_x.num << "/" << in_data->downsample_x.den  << ", "  << in_data->downsample_y.num << "/" << in_data->downsample_y.den << ")");
-        FX_LOG("input origin (" << input_worldP->origin_x << ", " << input_worldP->origin_y << ")");
-        FX_LOG("input_worldP size=(" << input_worldP->width << ", " << input_worldP->height << ")");
-        FX_LOG("output_worldP size=(" << output_worldP->width << ", " << output_worldP->height << ")");
-        FX_LOG("==========");
         
         size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
         VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
@@ -884,8 +873,6 @@ UserChangedParam(PF_InData *in_data,
                  const PF_UserChangedParamExtra *which_hit)
 {
     
-    FX_LOG("UserChangedParam()");
-    
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
     
@@ -1032,8 +1019,6 @@ UpdateParamsUI(
     PF_OutData *out_data,
     PF_ParamDef *params[],
     PF_LayerDef *output) {
-    
-    FX_LOG("UpdateParamUI()");
     
     PF_Err err = PF_Err_NONE;
     AEGP_SuiteHandler suites(in_data->pica_basicP);
