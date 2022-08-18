@@ -24,19 +24,12 @@
 
 namespace AEOGLInterop {
 
-float getMultiplier16bit(GLenum pixelType) {
-    return pixelType == GL_UNSIGNED_SHORT ? (65535.0f / 32768.0f) : 1.0f;
-}
-
-size_t getPixelBytes(GLenum pixelType) {
-    switch (pixelType) {
-        case GL_UNSIGNED_BYTE:
-            return sizeof(PF_Pixel8);
-        case GL_UNSIGNED_SHORT:
-            return sizeof(PF_Pixel16);
-        default:  //case GL_FLOAT:
-            return sizeof(PF_PixelFloat);
-    }
+/**
+  * In After Effects, 16-bit pixel doesn't use the highest bit, and thus each channel ranges 0x0000 - 0x8000. So after passing pixel buffer to GPU, it should be scaled by (0xffff / 0x8000) to normalize the luminance to 0.0-1.0.
+ 
+ */
+float getMultiplier16bit(short bitdepth) {
+    return bitdepth == 16 ? (65535.0f / 32768.0f) : 1.0f;
 }
 
 enum { GL_SPACE = 1,

@@ -481,19 +481,22 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
             }
         }
     }
+    
+    for (auto imageInput : paramInfo->scene->imageInputs()) {
+        if (imageInput->name() == "inputImage") {
+            // Checkout the input image
+            PF_CheckoutResult inResult;
+            ERR(extra->cb->checkout_layer(in_data->effect_ref,
+                                          Param_Input,
+                                          Param_Input,
+                                          &extra->input->output_request,
+                                          in_data->current_time,
+                                          in_data->time_step,
+                                          in_data->time_scale,
+                                          &inResult));
+        }
+    }
 
-    handleSuite->host_unlock_handle(paramInfoH);
-
-    // Checkout the input image
-    PF_CheckoutResult inResult;
-    ERR(extra->cb->checkout_layer(in_data->effect_ref,
-                                  Param_Input,
-                                  Param_Input,
-                                  &extra->input->output_request,
-                                  in_data->current_time,
-                                  in_data->time_step,
-                                  in_data->time_scale,
-                                  &inResult));
     
     // Compute the rect to render
     if (!err) {
@@ -508,8 +511,12 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         UnionLRect(&outputRect, &extra->output->result_rect);
         UnionLRect(&outputRect, &extra->output->max_result_rect);
         
+        paramInfo->outSize = VVGL::Size(outputRect.right, outputRect.bottom);
+        
         extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
     }
+    
+    handleSuite->host_unlock_handle(paramInfoH);
     
     return err;
 }
@@ -525,7 +532,6 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                           kPFPointParamSuiteVersion1, "Couldn't load suite.",
                           (void **)&pointSuite));
 
-    PF_EffectWorld *input_worldP = nullptr, *output_worldP = nullptr;
     PF_WorldSuite2 *wsP = nullptr;
 
     // Retrieve paramInfo
@@ -535,51 +541,31 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         reinterpret_cast<ParamInfo *>(handleSuite->host_lock_handle(
             reinterpret_cast<PF_Handle>(extra->input->pre_render_data)));
 
-    // Checkout layer pixels
-    ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, Param_Input,
-                                          &input_worldP)));
-    ERR(extra->cb->checkout_output(in_data->effect_ref, &output_worldP));
-
     // Setup wsP
     ERR(AEFX_AcquireSuite(in_data, out_data, kPFWorldSuite,
                           kPFWorldSuiteVersion2, "Couldn't load suite.",
                           (void **)&wsP));
 
-    // Get pixel format
-    PF_PixelFormat format = PF_PixelFormat_INVALID;
-    ERR(wsP->PF_GetPixelFormat(input_worldP, &format));
 
     auto *globalData = reinterpret_cast<GlobalData *>(
         handleSuite->host_lock_handle(in_data->global_data));
+    
 
     // OpenGL
     if (!err) {
         globalData->context->bind();
-
-        GLenum pixelType;
-        switch (format) {
-            case PF_PixelFormat_ARGB32:
-                pixelType = GL_UNSIGNED_BYTE;
-                break;
-            case PF_PixelFormat_ARGB64:
-                pixelType = GL_UNSIGNED_SHORT;
-                break;
-            case PF_PixelFormat_ARGB128:
-                pixelType = GL_FLOAT;
-                break;
-        }
+       
+        auto bitdepth = extra->input->bitdepth;
+        auto pixelBytes = bitdepth * 4 / 8;
+        VVGL::Size &outSize = paramInfo->outSize;
         
-        VVGL::Size cropSize(input_worldP->width, input_worldP->height);
-        VVGL::Size outSize(output_worldP->width, output_worldP->height);
-        
-        size_t pixelBytes = AEOGLInterop::getPixelBytes(pixelType);
         VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
-                                      AEOGLInterop::getMultiplier16bit(pixelType));
+                                      AEOGLInterop::getMultiplier16bit(bitdepth));
         globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         
         // Render ISF
-        auto isfImage = createRGBATexWithFormat(outSize, format);
+        auto isfImage = createRGBATexWithBitdepth(outSize, bitdepth);
         {
 
             auto &scene = *paramInfo->scene;
@@ -597,20 +583,28 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                                
                 if (input->name() == "inputImage") {
                     // Upload the original image to GPU and bind it
+                    PF_EffectWorld *input_worldP = nullptr;
+                    ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, Param_Input,
+                                                          &input_worldP)));
+                    
+                    VVGL::Size imageSize(input_worldP->width, input_worldP->height);
+                    VVGL::Size bufferSizeInPixel(input_worldP->rowbytes / pixelBytes, imageSize.height);
+                    
                     VVGL::GLBufferRef inputImageAECPU;
                     
-                    switch (format) {
-                        case PF_PixelFormat_ARGB32:
-                            inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
+                    switch (bitdepth) {
+                        case 8:
+                            inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(bufferSizeInPixel,
                                                                              input_worldP->data,
-                                                                             cropSize,
+                                                                             imageSize,
                                                                              NULL, NULL);
                             break;
                             
-                        case PF_PixelFormat_ARGB128:
-                            inputImageAECPU = VVGL::CreateRGBAFloatCPUBufferUsing(VVGL::Size(input_worldP->rowbytes / pixelBytes, cropSize.height),
+                        case 16:
+                        case 32:
+                            inputImageAECPU = VVGL::CreateRGBAFloatCPUBufferUsing(bufferSizeInPixel,
                                                                                   input_worldP->data,
-                                                                                  cropSize,
+                                                                                  imageSize,
                                                                                   NULL, NULL);
                             break;
                             
@@ -619,6 +613,8 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
 
                     
                     auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
+                    
+                    ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, Param_Input));
                     
                     // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
                     glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
@@ -631,7 +627,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
                     globalData->ae2glScene->setValueForInputNamed(origin, "origin");
                     
-                    VVGL::GLBufferRef inputImage = createRGBATexWithFormat(outSize, format);
+                    VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outSize, bitdepth);
                     
                     globalData->ae2glScene->renderToBuffer(inputImage);
                     
@@ -697,12 +693,14 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         // Download the result of ISF
         {
             // Upload the input image
+            PF_EffectWorld *output_worldP;
+            ERR(extra->cb->checkout_output(in_data->effect_ref, &output_worldP));
             
             auto &scene = *globalData->gl2aeScene;
 
             scene.setBufferForInputNamed(isfImage, "inputImage");
             
-            auto outputImage = createRGBATexWithFormat(outSize, format);
+            auto outputImage = createRGBATexWithBitdepth(outSize, bitdepth);
             scene.VVGL::GLScene::renderToBuffer(outputImage);
             auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);            
 
@@ -724,10 +722,9 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         
     }  // End OpenGL
 
-    // Check in
+
     ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite,
                            kPFWorldSuiteVersion2, "Couldn't release suite."));
-    ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, Param_Input));
 
     return err;
 }

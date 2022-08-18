@@ -86,11 +86,12 @@ SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code) {
     return scenes[code];
 }
 
-VVGL::GLBufferRef createRGBATexWithFormat(VVGL::Size &size, PF_PixelFormat format) {
-    switch (format) {
-        case PF_PixelFormat_ARGB32:
+VVGL::GLBufferRef createRGBATexWithBitdepth(VVGL::Size &size, short bitdepth) {
+    switch (bitdepth) {
+        case 8:
             return VVGL::CreateRGBATex(size);
-        case PF_PixelFormat_ARGB128:
+        case 16:
+        case 32:
             return VVGL::CreateRGBAFloatTex(size);
     }
 }
