@@ -436,37 +436,6 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
     }
     
-    // Get user-defined parameters' values
-    {
-        PF_ParamIndex userParamIndex = 0;
-        
-        for (auto input : paramInfo->scene->inputs()) {
-            if (input->name() == "inputImage") {
-                continue;
-            }
-            
-            UserParamType userParamType = getUserParamTypeForISFValType(input->type());
-            
-            if (userParamType != UserParamType_None) {
-                PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
-                
-                AEFX_CLR_STRUCT(paramDef);
-                ERR(PF_CHECKOUT_PARAM(in_data,
-                                      index,
-                                      in_data->current_time,
-                                      in_data->time_step,
-                                      in_data->time_scale,
-                                      &paramDef));
-                
-                paramInfo->userParams[userParamIndex] = paramDef;
-                
-                ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
-                
-                userParamIndex++;
-            }
-        }
-    }
-    
     for (auto imageInput : paramInfo->scene->imageInputs()) {
         if (imageInput->name() == "inputImage") {
             // Checkout the input image
@@ -630,41 +599,44 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     
                 } else {
                     // Non-buffer uniforms
-                    VVISF::ISFValType type = input->type();
-                    auto &param = paramInfo->userParams[userParamIndex];
+                    auto isfType = input->type();
+                    auto userParamType = getUserParamTypeForISFValType(input->type());
+                    auto paramIndex = getIndexForUserParam(userParamIndex, userParamType);
                     
                     VVISF::ISFVal *val = nullptr;
                     
-                    switch (type) {
-                        case VVISF::ISFValType_Bool:
-                            val = new VVISF::ISFVal(type, param.u.bd.value);
-                            break;
-                        case VVISF::ISFValType_Long: {
-                            auto index = param.u.pd.value - 1; // Begins with 1
-                            auto values = input->valArray();
-                            val = new VVISF::ISFVal(type, values[index]);
+                    switch (userParamType) {
+                        case UserParamType_Bool: {
+                            PF_Boolean v = false;
+                            ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, paramIndex, &v));
+                            val = new VVISF::ISFVal(isfType, v);
                             break;
                         }
-                        case VVISF::ISFValType_Float:
-                            val = new VVISF::ISFVal(type, param.u.fs_d.value);
+                        case UserParamType_Long: {
+                            A_long v = 0;
+                            ERR(AEOGLInterop::getPopupParam(in_data, out_data, paramIndex, &v));
+                            val = new VVISF::ISFVal(isfType, v - 1); // current begins from 1
                             break;
-                            
-                        case VVISF::ISFValType_Point2D: {
-                            
+                        }
+                        case UserParamType_Float: {
+                            A_FpLong v = 0.0;
+                            ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+                            val = new VVISF::ISFVal(isfType, v);
+                            break;
+                        }
+                        case UserParamType_Point2D: {
                             A_FloatPoint point;
-                            ERR(pointSuite->PF_GetFloatingPointValueFromPointDef(in_data->effect_ref,
-                                                                                 &param,
-                                                                                 &point));
-                            val = new VVISF::ISFVal(type, point.x, outSize.height - point.y);
-                            
+                            ERR(AEOGLInterop::getPointParam(in_data, out_data, paramIndex, &point));
+                            // Should be converted to normalized and vertically-flipped coordinate
+                            val = new VVISF::ISFVal(isfType,
+                                                    point.x / outSize.width,
+                                                    1.0 - point.y / outSize.height);
                             break;
                         }
-                        case VVISF::ISFValType_Color: {
+                        case UserParamType_Color: {
                             PF_PixelFloat color;
-                            ERR(suites.ColorParamSuite1()->PF_GetFloatingPointColorFromColorDef(in_data->effect_ref,
-                                                                                                &param,
-                                                                                                &color));
-                            val = new VVISF::ISFVal(type, color.red, color.green, color.blue, color.alpha);
+                            ERR(AEOGLInterop::getColorParam(in_data, out_data, paramIndex, &color));
+                            val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
                             break;
                         }
                             

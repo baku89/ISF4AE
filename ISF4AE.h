@@ -96,7 +96,6 @@ typedef struct {
 
 struct ParamInfo {
     VVISF::ISF4AEScene *scene;
-    PF_ParamDef userParams[NumUserParams];
     VVGL::Size outSize;
 };
 
