@@ -436,21 +436,6 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
         ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
     }
     
-    // Get Time
-    {
-        PF_Boolean useLayerTime = false;
-        ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
-        
-        if (useLayerTime) {
-            paramInfo->time = (double)in_data->current_time / in_data->time_scale;
-        } else {
-            ERR(AEOGLInterop::getFloatSliderParam(in_data,
-                                                  out_data,
-                                                  Param_Time,
-                                                  &paramInfo->time));
-        }
-    }
-    
     // Get user-defined parameters' values
     {
         PF_ParamIndex userParamIndex = 0;
@@ -572,8 +557,18 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             
             // Assign time-related variables
             double fps = in_data->time_scale / in_data->local_time_step;
+            double time = 0;
+            
+            PF_Boolean useLayerTime = false;
+            ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+            
+            if (useLayerTime) {
+                time = (double)in_data->current_time / in_data->time_scale;
+            } else {
+                ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, Param_Time, &time));
+            }
                         
-            scene.setRenderFrameIndex(paramInfo->time * fps);
+            scene.setRenderFrameIndex(time * fps);
             scene.setRenderTimeDelta(1.0 / fps);
             
             // Assign user-defined parameters
@@ -687,7 +682,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             }
             
             // Then, render it!
-            scene.renderToBuffer(isfImage, outSize, (double)paramInfo->time);
+            scene.renderToBuffer(isfImage, outSize, time);
         }
         
         // Download the result of ISF
