@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 
-std::string joinWith(std::vector<std::string> texts, std::string delimiter);
+std::string joinWith(const std::vector<std::string> &texts, const std::string &delimiter);
 
 /**
  * TODO: Generic function must be implemented in a header file

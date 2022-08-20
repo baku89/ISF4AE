@@ -1,6 +1,6 @@
 #include "MiscUtil.h"
 
-std::string joinWith(std::vector<std::string> texts, std::string delimiter) {
+std::string joinWith(const std::vector<std::string> &texts, const std::string &delimiter) {
    
    std::stringstream ss;
    

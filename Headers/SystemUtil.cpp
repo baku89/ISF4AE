@@ -9,7 +9,7 @@
 
 namespace SystemUtil {
 	
-std::string openFileDialog(std::vector<std::string> &fileTypes) {
+std::string openFileDialog(const std::vector<std::string> &fileTypes) {
     
     std::string path;
     
@@ -61,7 +61,7 @@ std::string saveFileDialog(const std::string &filename) {
     return path;
 }
 
-std::string readTextFile(std::string path) {
+std::string readTextFile(const std::string &path) {
     
     std::string text;
     std::ifstream file;
@@ -88,7 +88,7 @@ std::string readTextFile(std::string path) {
     return text;
 }
 
-bool writeTextFile(std::string path, std::string text) {
+bool writeTextFile(const std::string &path, const std::string &text) {
     
     
     std::ofstream file;

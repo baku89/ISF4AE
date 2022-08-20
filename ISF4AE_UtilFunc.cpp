@@ -89,7 +89,7 @@ SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code) {
     return scenes[code];
 }
 
-VVGL::GLBufferRef createRGBATexWithBitdepth(VVGL::Size &size, short bitdepth) {
+VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size &size, short bitdepth) {
     switch (bitdepth) {
         case 8:
             return VVGL::CreateRGBATex(size);
