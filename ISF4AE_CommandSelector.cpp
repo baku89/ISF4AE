@@ -207,7 +207,7 @@ ParamsSetup(
     PF_ADD_ARBITRARY2("GLSL",
                       1, 1, // width, height
                       0,
-                      PF_PUI_NO_ECW_UI,
+                      PF_PUI_NO_ECW_UI | PF_PUI_INVISIBLE,
                       def.u.arb_d.dephault,
                       Param_ISF,
                       ARB_REFCON);
