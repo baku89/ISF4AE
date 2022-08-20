@@ -113,6 +113,10 @@ PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type);
 UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type);
 SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code);
 VVGL::GLBufferRef createRGBATexWithBitdepth(VVGL::Size &size, short format);
+VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size &inCPUBufferSizeInPixels,
+                                                       const void *inCPUBackingPtr,
+                                                       const VVGL::Size &inImageSizeInPixels,
+                                                       const short bitdepth);
 
 // Implemented in ISF4AE_ArbHandler.cpp
 PF_Err

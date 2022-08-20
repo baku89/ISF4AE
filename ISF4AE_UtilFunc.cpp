@@ -98,3 +98,23 @@ VVGL::GLBufferRef createRGBATexWithBitdepth(VVGL::Size &size, short bitdepth) {
             return VVGL::CreateRGBAFloatTex(size);
     }
 }
+
+VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size &inCPUBufferSizeInPixels,
+                                                       const void *inCPUBackingPtr,
+                                                       const VVGL::Size &inImageSizeInPixels,
+                                                       const short bitdepth) {
+    switch (bitdepth) {
+        case 8:
+            return VVGL::CreateRGBACPUBufferUsing(inCPUBufferSizeInPixels,
+                                                  inCPUBackingPtr,
+                                                  inImageSizeInPixels,
+                                                  NULL, NULL);
+            
+        case 16:
+        case 32:
+            return VVGL::CreateRGBAFloatCPUBufferUsing(inCPUBufferSizeInPixels,
+                                                       inCPUBackingPtr,
+                                                       inImageSizeInPixels,
+                                                       NULL, NULL);
+    }
+}

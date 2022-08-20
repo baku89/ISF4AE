@@ -582,176 +582,106 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             
             for (auto input : scene.inputs()) {
                 
+                auto isfType = input->type();
                 auto &name = input->name();
-                               
-                if (name == "inputImage") {
-                    // Upload the original image to GPU and bind it
-                    PF_EffectWorld *input_worldP = nullptr;
-                    ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, Param_Input,
-                                                          &input_worldP)));
-                    
-                    if (input_worldP != nullptr) {
-                        VVGL::Size imageSize(input_worldP->width, input_worldP->height);
-                        VVGL::Size bufferSizeInPixel(input_worldP->rowbytes / pixelBytes, imageSize.height);
-                        
-                        VVGL::GLBufferRef inputImageAECPU;
-                        
-                        switch (bitdepth) {
-                            case 8:
-                                inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(bufferSizeInPixel,
-                                                                                 input_worldP->data,
-                                                                                 imageSize,
-                                                                                 NULL, NULL);
-                                break;
-                                
-                            case 16:
-                            case 32:
-                                inputImageAECPU = VVGL::CreateRGBAFloatCPUBufferUsing(bufferSizeInPixel,
-                                                                                      input_worldP->data,
-                                                                                      imageSize,
-                                                                                      NULL, NULL);
-                                break;
-                                
-                        }
-                        
-
-                        
-                        auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
-                        
-                        ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, Param_Input));
-                        
-                        // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
-                        glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-                        glBindTexture(GL_TEXTURE_2D, 0);
-                        
-                        auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, input_worldP->origin_x, input_worldP->origin_y);
-                                                                       
-                        globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-                        globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-                        
-                        VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outSize, bitdepth);
-                        
-                        globalData->ae2glScene->renderToBuffer(inputImage);
-                        
-                        scene.setBufferForInputNamed(inputImage, name);
+                auto userParamType = getUserParamTypeForISFValType(isfType);
+                bool isInputImage = name == "inputImage";
+                auto paramIndex = isInputImage
+                    ? Param_Input
+                    : getIndexForUserParam(userParamIndex, userParamType);
+                
+                VVISF::ISFVal *val = nullptr;
+                
+                switch (userParamType) {
+                    case UserParamType_Bool: {
+                        PF_Boolean v = false;
+                        ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, paramIndex, &v));
+                        val = new VVISF::ISFVal(isfType, v);
+                        break;
                     }
-                    
-                } else {
-                    // Non-buffer uniforms
-                    auto isfType = input->type();
-                    auto userParamType = getUserParamTypeForISFValType(isfType);
-                    auto paramIndex = getIndexForUserParam(userParamIndex, userParamType);
-                    
-                    VVISF::ISFVal *val = nullptr;
-                    
-                    switch (userParamType) {
-                        case UserParamType_Bool: {
-                            PF_Boolean v = false;
-                            ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, paramIndex, &v));
-                            val = new VVISF::ISFVal(isfType, v);
-                            break;
-                        }
-                        case UserParamType_Long: {
-                            A_long v = 0;
-                            ERR(AEOGLInterop::getPopupParam(in_data, out_data, paramIndex, &v));
-                            val = new VVISF::ISFVal(isfType, v - 1); // current begins from 1
-                            break;
-                        }
-                        case UserParamType_Float: {
-                            A_FpLong v = 0.0;
-                            ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, paramIndex, &v));
-                            val = new VVISF::ISFVal(isfType, v);
-                            break;
-                        }
-                        case UserParamType_Point2D: {
-                            A_FloatPoint point;
-                            ERR(AEOGLInterop::getPointParam(in_data, out_data, paramIndex, &point));
-                            // Should be converted to normalized and vertically-flipped coordinate
-                            val = new VVISF::ISFVal(isfType,
-                                                    point.x / outSize.width,
-                                                    1.0 - point.y / outSize.height);
-                            break;
-                        }
-                        case UserParamType_Color: {
-                            PF_PixelFloat color;
-                            ERR(AEOGLInterop::getColorParam(in_data, out_data, paramIndex, &color));
-                            val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
-                            break;
-                        }
-                        case UserParamType_Image: {
-                            PF_LayerDef *imagePixels = nullptr;
-                            ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, paramIndex,
-                                                                  &imagePixels)));
+                    case UserParamType_Long: {
+                        A_long v = 0;
+                        ERR(AEOGLInterop::getPopupParam(in_data, out_data, paramIndex, &v));
+                        val = new VVISF::ISFVal(isfType, v - 1); // current begins from 1
+                        break;
+                    }
+                    case UserParamType_Float: {
+                        A_FpLong v = 0.0;
+                        ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+                        val = new VVISF::ISFVal(isfType, v);
+                        break;
+                    }
+                    case UserParamType_Point2D: {
+                        A_FloatPoint point;
+                        ERR(AEOGLInterop::getPointParam(in_data, out_data, paramIndex, &point));
+                        // Should be converted to normalized and vertically-flipped coordinate
+                        val = new VVISF::ISFVal(isfType,
+                                                point.x / outSize.width,
+                                                1.0 - point.y / outSize.height);
+                        break;
+                    }
+                    case UserParamType_Color: {
+                        PF_PixelFloat color;
+                        ERR(AEOGLInterop::getColorParam(in_data, out_data, paramIndex, &color));
+                        val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
+                        break;
+                    }
+                    case UserParamType_Image: {
+                        PF_LayerDef *imagePixels = nullptr;
+                        ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, paramIndex,
+                                                              &imagePixels)));
+                        
+                        // imagePixels will be staying null when the parameter has set to empty.
+                        if (imagePixels != nullptr) {
                             
-                            // imagePixels will be staying null when the parameter has set to empty.
-                            if (imagePixels != nullptr) {
-                                
-                                VVGL::Size imageSize(imagePixels->width, imagePixels->height);
-                                VVGL::Size bufferSizeInPixel(imagePixels->rowbytes / pixelBytes, imageSize.height);
-                                VVGL::Size &outImageSize = paramInfo->inputImageSizes[userParamIndex];
-                                
-                                VVGL::GLBufferRef inputImageAECPU;
-                                
-                                switch (bitdepth) {
-                                    case 8:
-                                        inputImageAECPU = VVGL::CreateRGBACPUBufferUsing(bufferSizeInPixel,
-                                                                                         imagePixels->data,
-                                                                                         imageSize,
-                                                                                         NULL, NULL);
-                                        break;
-                                        
-                                    case 16:
-                                    case 32:
-                                        inputImageAECPU = VVGL::CreateRGBAFloatCPUBufferUsing(bufferSizeInPixel,
-                                                                                              imagePixels->data,
-                                                                                              imageSize,
-                                                                                              NULL, NULL);
-                                        break;
-                                }
-                                
-                                auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
-                                
-                                ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, paramIndex));
-                                
-                                // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
-                                glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
-                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-                                glBindTexture(GL_TEXTURE_2D, 0);
-                                
-                                auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D,
-                                                            imagePixels->origin_x,
-                                                            imagePixels->origin_y);
-                                                                               
-                                globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-                                globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-                                
-                                VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
-                                
-                                globalData->ae2glScene->renderToBuffer(inputImage);
-                                
-                                scene.setBufferForInputNamed(inputImage, name);
-                            }
+                            VVGL::Size imageSize(imagePixels->width, imagePixels->height);
+                            VVGL::Size bufferSizeInPixel(imagePixels->rowbytes / pixelBytes, imageSize.height);
+                            VVGL::Size &outImageSize = paramInfo->inputImageSizes[userParamIndex];
                             
-                            break;
+                            VVGL::GLBufferRef inputImageAECPU = createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel,
+                                                                                                     imagePixels->data,
+                                                                                                     imageSize,
+                                                                                                     bitdepth);                            
+                            
+                            auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
+                            
+                            ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, paramIndex));
+                            
+                            // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
+                            glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+                            glBindTexture(GL_TEXTURE_2D, 0);
+                            
+                            auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D,
+                                                        imagePixels->origin_x,
+                                                        imagePixels->origin_y);
+                                                                           
+                            globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+                            globalData->ae2glScene->setValueForInputNamed(origin, "origin");
+                            
+                            VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
+                            
+                            globalData->ae2glScene->renderToBuffer(inputImage);
+                            
+                            scene.setBufferForInputNamed(inputImage, name);
                         }
-                            
-                        default:
-                            FX_LOG("Invalid ISFValType.");
-                            break;
+                        
+                        break;
                     }
-                    
-                    if (val != nullptr) {
-                        scene.setValueForInputNamed(*val, input->name());
-                    }
-                    
-                    if (userParamType != UserParamType_None) {
-                        userParamIndex++;
-                    }
+                        
+                    default:
+                        FX_LOG("Invalid ISFValType.");
+                        break;
                 }
                 
+                if (val != nullptr) {
+                    scene.setValueForInputNamed(*val, input->name());
+                }
+                
+                if (!isInputImage && userParamType != UserParamType_None) {
+                    userParamIndex++;
+                }
             }
             
             // Then, render it!
