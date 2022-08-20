@@ -798,6 +798,26 @@ UserChangedParam(PF_InData *in_data,
                                 param.u.fs_d.value = input->defaultVal().getDoubleVal();
                                 break;
                                 
+                            case UserParamType_Point2D: {
+                                auto x = input->defaultVal().getPointValByIndex(0);
+                                auto y = input->defaultVal().getPointValByIndex(1);
+                                
+                                param.u.td.x_value = x * in_data->width;
+                                param.u.td.y_value = (1.0 - y) * in_data->height;
+                                break;
+                            }
+                                
+                            case UserParamType_Color: {
+                                
+                                auto dephault = input->defaultVal();
+                                
+                                param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
+                                param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
+                                param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
+                                param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+                                break;
+                            }
+                                
                             default:
                                 break;
                         }
@@ -926,6 +946,12 @@ UpdateParamsUI(
         
         switch (userParamType) {
                 
+            case UserParamType_Bool: {
+                
+                param.u.bd.dephault = input->defaultVal().getBoolVal();
+                break;
+            }
+                
             case UserParamType_Long: {
                 
                 auto labels = input->labelArray();
@@ -954,6 +980,17 @@ UpdateParamsUI(
                 param.u.fs_d.slider_min = input->minVal().getDoubleVal();
                 param.u.fs_d.slider_max = input->maxVal().getDoubleVal();
                 param.u.fs_d.dephault = dephault;
+                
+                break;
+            }
+                
+            case UserParamType_Color: {
+                auto dephault = input->defaultVal();
+                
+                param.u.cd.dephault.red = dephault.getColorValByChannel(0) * 255;
+                param.u.cd.dephault.green = dephault.getColorValByChannel(1) * 255;
+                param.u.cd.dephault.blue = dephault.getColorValByChannel(2) * 255;
+                param.u.cd.dephault.alpha = dephault.getColorValByChannel(3) * 255;
                 
                 break;
             }
