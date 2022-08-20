@@ -995,9 +995,9 @@ UpdateParamsUI(
         param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
         
         // Set the label and visibility
-        for (PF_ParamIndex type = 0; type < NumUserParamType; type++) {
+        for (int type = 0; type < NumUserParamType; type++) {
             
-            PF_ParamIndex index = getIndexForUserParam(userParamIndex, type);
+            auto index = getIndexForUserParam(userParamIndex, (UserParamType)type);
             bool visible = type == userParamType;
             
             ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, visible));
@@ -1016,8 +1016,8 @@ UpdateParamsUI(
          
     // Hide all out-of-range parameters
     for (; userParamIndex < NumUserParams; userParamIndex++) {
-        for (PF_ParamIndex userParamType = 0; userParamType < NumUserParamType; userParamType++) {
-            PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
+        for (int userParamType = 0; userParamType < NumUserParamType; userParamType++) {
+            auto index = getIndexForUserParam(userParamIndex, (UserParamType)userParamType);
             ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, false));
         }
     }

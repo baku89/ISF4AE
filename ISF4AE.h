@@ -109,7 +109,7 @@ struct ParamInfo {
 };
 
 // Implemented in ISF4AE_UtilFunc.cpp
-PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type);
+PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type);
 SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size &size, short format);

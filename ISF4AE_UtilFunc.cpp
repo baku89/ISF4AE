@@ -1,6 +1,6 @@
 #include "ISF4AE.h"
 
-PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, PF_ParamIndex type) {
+PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
     return Param_UserOffset + index * NumUserParamType + (int)type;
 }
 
