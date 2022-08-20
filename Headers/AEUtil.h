@@ -25,5 +25,12 @@ PF_Err setParamName(PF_InData *in_data,
                     PF_ParamIndex index,
                     std::string &name);
 
+// Getters for parameters
+PF_Err getPointParam(PF_InData *in_data, PF_OutData *out_data, int paramId, A_FloatPoint *value);
+PF_Err getAngleParam(PF_InData *in_data, PF_OutData *out_data, int paramId, A_FpLong *value);
+PF_Err getPopupParam(PF_InData *in_data, PF_OutData *out_data, int paramId, A_long *value);
+PF_Err getFloatSliderParam(PF_InData *in_data, PF_OutData *out_data, int paramId, PF_FpLong *value);
+PF_Err getCheckboxParam(PF_InData *in_data, PF_OutData *out_data, int paramId, PF_Boolean *value);
+PF_Err getColorParam(PF_InData *in_data, PF_OutData *out_data, int paramIndex, PF_PixelFloat *value);
 
 }  // namespace AEUtil

@@ -8,7 +8,6 @@
 #include "SystemUtil.h"
 #include "AEUtil.h"
 
-#include "AEOGLInterop.hpp"
 #include "MiscUtil.h"
 #include "Debug.h"
 
@@ -550,8 +549,10 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
         auto pixelBytes = bitdepth * 4 / 8;
         VVGL::Size &outSize = paramInfo->outSize;
         
+        // In After Effects, 16-bit pixel doesn't use the highest bit, and thus each channel ranges 0x0000 - 0x8000.
+        // So after passing pixel buffer to GPU, it should be scaled by (0xffff / 0x8000) to normalize the luminance to 0.0-1.0.
         VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float,
-                                      AEOGLInterop::getMultiplier16bit(bitdepth));
+                                      bitdepth == 16 ? (65535.0f / 32768.0f) : 1.0f);
         globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
         
@@ -566,12 +567,12 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
             double time = 0;
             
             PF_Boolean useLayerTime = false;
-            ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+            ERR(AEUtil::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
             
             if (useLayerTime) {
                 time = (double)in_data->current_time / in_data->time_scale;
             } else {
-                ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, Param_Time, &time));
+                ERR(AEUtil::getFloatSliderParam(in_data, out_data, Param_Time, &time));
             }
                         
             scene.setRenderFrameIndex(time * fps);
@@ -595,25 +596,25 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                 switch (userParamType) {
                     case UserParamType_Bool: {
                         PF_Boolean v = false;
-                        ERR(AEOGLInterop::getCheckboxParam(in_data, out_data, paramIndex, &v));
+                        ERR(AEUtil::getCheckboxParam(in_data, out_data, paramIndex, &v));
                         val = new VVISF::ISFVal(isfType, v);
                         break;
                     }
                     case UserParamType_Long: {
                         A_long v = 0;
-                        ERR(AEOGLInterop::getPopupParam(in_data, out_data, paramIndex, &v));
+                        ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &v));
                         val = new VVISF::ISFVal(isfType, v - 1); // current begins from 1
                         break;
                     }
                     case UserParamType_Float: {
                         A_FpLong v = 0.0;
-                        ERR(AEOGLInterop::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+                        ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
                         val = new VVISF::ISFVal(isfType, v);
                         break;
                     }
                     case UserParamType_Point2D: {
                         A_FloatPoint point;
-                        ERR(AEOGLInterop::getPointParam(in_data, out_data, paramIndex, &point));
+                        ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
                         // Should be converted to normalized and vertically-flipped coordinate
                         val = new VVISF::ISFVal(isfType,
                                                 point.x / outSize.width,
@@ -622,7 +623,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     }
                     case UserParamType_Color: {
                         PF_PixelFloat color;
-                        ERR(AEOGLInterop::getColorParam(in_data, out_data, paramIndex, &color));
+                        ERR(AEUtil::getColorParam(in_data, out_data, paramIndex, &color));
                         val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
                         break;
                     }

@@ -194,7 +194,6 @@
 		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = /usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<absolute>"; };
 		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		233B1F2028A476D2000652AC /* AEUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEUtil.h; sourceTree = "<group>"; };
-		233B1F2128A476D2000652AC /* AEOGLInterop.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AEOGLInterop.hpp; sourceTree = "<group>"; };
 		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
 		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
 		233B1F2828A476D2000652AC /* GlobalContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalContext.h; sourceTree = "<group>"; };
@@ -273,7 +272,6 @@
 				233B1F1F28A476D2000652AC /* Debug.h */,
 				233B1F2028A476D2000652AC /* AEUtil.h */,
 				2382660D28A4CED0001F523D /* AEUtil.cpp */,
-				233B1F2128A476D2000652AC /* AEOGLInterop.hpp */,
 				233B1F2228A476D2000652AC /* OGL */,
 				233B1F3628A476D2000652AC /* OGL.h */,
 			);
