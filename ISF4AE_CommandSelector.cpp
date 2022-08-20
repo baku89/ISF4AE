@@ -758,10 +758,6 @@ UserChangedParam(PF_InData *in_data,
                     auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
                     PF_STRCPY(isf->code, isfCode.c_str());
                     
-                    ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref,
-                                                                    Param_ISF,
-                                                                    params[Param_ISF]));
-                    
                     // Set default values
                     auto *desc = getCompiledSceneDesc(globalData, isf->code);
                     
