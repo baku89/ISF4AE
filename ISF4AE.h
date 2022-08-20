@@ -58,10 +58,18 @@ enum {
     Param_UseLayerTime,
     Param_Time,
     Param_UserOffset
+    /*
+     ISF parameters continues.
+     As AESDK cannot change a type of parameter dynamically,
+     this plug-in adapts a strategy to add all types parameters of ISF in order of UserParamType for each ISF input,
+     then toggles their visibilities and only leaves an active type the in UpdateParamsUI.
+     Use the formula shwon below to calculate the parameter index:
+     index = userParamIndex * NumUserParamType + userParamType
+     -- though in most cases, it'd be better to use the function getIndexForUserParam().
+     */
 };
 
 // A subset of ISFValType supported by this plug-in
-// TODO: Will supports all of them below later
  enum UserParamType {
      UserParamType_None = -1,
     UserParamType_Bool = 0,
@@ -69,7 +77,7 @@ enum {
     UserParamType_Float,
     UserParamType_Point2D,
     UserParamType_Color,
-//    UserParamType_Image,
+    UserParamType_Image,
     NumUserParamType
 };
 
@@ -97,6 +105,7 @@ typedef struct {
 struct ParamInfo {
     VVISF::ISF4AEScene *scene;
     VVGL::Size outSize;
+    VVGL::Size inputImageSizes[NumUserParams];
 };
 
 // Implemented in ISF4AE_UtilFunc.cpp

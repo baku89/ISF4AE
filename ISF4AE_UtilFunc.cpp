@@ -21,6 +21,9 @@ UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
         case VVISF::ISFValType_Color:
             return UserParamType_Color;
             
+        case VVISF::ISFValType_Image:
+            return UserParamType_Image;
+            
         default:
             return UserParamType_None;
     }
