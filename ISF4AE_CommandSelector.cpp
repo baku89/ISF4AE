@@ -12,7 +12,7 @@
 #include "Debug.h"
 
 #include <iostream>
-#include <VVGL/VVGL.hpp>
+#include <VVGL.hpp>
 
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple modal dialog.

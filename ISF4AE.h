@@ -31,7 +31,7 @@ typedef short int			int16;
 #include "AEGP_SuiteHandler.h"
 
 #include "OGL.h"
-#include <VVISF/VVISF.hpp>
+#include <VVISF.hpp>
 #include "ISF4AEScene.hpp"
 
 

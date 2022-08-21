@@ -1,6 +1,6 @@
 #pragma once
 
-#include <VVGL/VVGL.hpp>
+#include <VVGL.hpp>
 
 namespace OGL {
 

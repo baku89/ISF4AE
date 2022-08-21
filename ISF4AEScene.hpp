@@ -1,6 +1,6 @@
 #pragma once
 
-#include <VVISF/VVISF.hpp>
+#include <VVISF.hpp>
 #include <string>
 #include <map>
 #include <regex>

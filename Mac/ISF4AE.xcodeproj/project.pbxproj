@@ -18,12 +18,13 @@
 		2382660C28A4AE17001F523D /* ISF4AE_ArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISF4AE_ArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
 		23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */; };
+		23B31A8D28B1C5EB0020958E /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8C28B1C5EB0020958E /* CoreVideo.framework */; };
+		23B31A8F28B1C6030020958E /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8E28B1C6030020958E /* CoreMedia.framework */; };
+		23B31A9128B1C60A0020958E /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A9028B1C60A0020958E /* IOSurface.framework */; };
+		23B31AA128B1FBC00020958E /* VVGL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8828B1C5CF0020958E /* VVGL.a */; };
+		23B31AA228B1FC250020958E /* VVISF.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8A28B1C5D60020958E /* VVISF.a */; };
 		23F1E66428AD8C9000152869 /* ISF4AE_UtilFunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F1E66328AD8C9000152869 /* ISF4AE_UtilFunc.cpp */; };
 		23F1E66628AD901E00152869 /* MiscUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F1E66528AD901E00152869 /* MiscUtil.cpp */; };
-		23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950C928A64A9000F6FF3C /* VVISF.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; };
-		23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230950C128A64A9000F6FF3C /* VVISF.framework */; };
-		23FD786628AA4C0A007E529B /* VVGL.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 230950B328A64A9000F6FF3C /* VVGL.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 924FC63F1F0E13A50075C62A /* SystemUtil.cpp */; };
 		D0FE57600993C4E900139A60 /* ISF4AE_CommandSelector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE575C0993C4E900139A60 /* ISF4AE_CommandSelector.cpp */; };
 		D0FE57610993C4E900139A60 /* ISF4AEPiPL.r in Rez */ = {isa = PBXBuildFile; fileRef = D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */; };
@@ -31,165 +32,7 @@
 		D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0FE579C0993C5E500139A60 /* MissingSuiteError.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		230950AC28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1AE177701E2581BB00E978E5;
-			remoteInfo = VVGL_iOS;
-		};
-		230950AE28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1AE177631E2581B500E978E5;
-			remoteInfo = VVISF_iOS;
-		};
-		230950B028A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A4EEA4F1F17B75B00B6C3F4;
-			remoteInfo = ISFonIOS;
-		};
-		230950B228A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A10DDFB2090AD4A00771795;
-			remoteInfo = VVGL_Mac;
-		};
-		230950B428A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A901A051F4648C0009FEE74;
-			remoteInfo = BasicGLFunc;
-		};
-		230950B628A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A7CA9681F4742C70051F3D6;
-			remoteInfo = DifferingGLVersions;
-		};
-		230950B828A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1AD86D021F4EFB4300DEED3E;
-			remoteInfo = GeoShaderTest;
-		};
-		230950BA28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A569886200F821500437867;
-			remoteInfo = TransFeedbackTest;
-		};
-		230950BC28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A5698C7201012C100437867;
-			remoteInfo = JustTransFeedback;
-		};
-		230950BE28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A32CBCE20C87E73002EDFB9;
-			remoteInfo = TexDownloadUpload;
-		};
-		230950C028A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A365CC12090B35C00771520;
-			remoteInfo = VVISF_Mac;
-		};
-		230950C228A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A6ED6101F47A40A00227712;
-			remoteInfo = ISFFuncTest;
-		};
-		230950C428A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A023C8F1F2011AD004FFB3A;
-			remoteInfo = "ISF Editor";
-		};
-		230950C628A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A365CFE2090B97800771520;
-			remoteInfo = VVGL_GLFW;
-		};
-		230950C828A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A365D102090B98000771520;
-			remoteInfo = VVISF_GLFW;
-		};
-		230950CA28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1A23114D1E2D63C700B0EF84;
-			remoteInfo = ISFinGLFW;
-		};
-		230950CC28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1ABBEF53231EF8CB00EE1DB5;
-			remoteInfo = ISFQL;
-		};
-		230950CE28A64A9000F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 1ABBEF63231EF8D700EE1DB5;
-			remoteInfo = ISFQL_Renderer;
-		};
-		230950D028A64B8100F6FF3C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 1A10DDFA2090AD4A00771795;
-			remoteInfo = VVGL_Mac;
-		};
-		23FD786228AA4BE8007E529B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 1A365CC02090B35C00771520;
-			remoteInfo = VVISF_Mac;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		230950D328A64BD100F6FF3C /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				23FD786628AA4C0A007E529B /* VVGL.framework in CopyFiles */,
-				23FD785E28AA4B4C007E529B /* VVISF.framework in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ISFSandbox.xcodeproj; path = "../VVISF-GL/examples/apple/ISFSandbox.xcodeproj"; sourceTree = "<group>"; };
 		233B1F1A28A46D35000652AC /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.3.dylib; path = /usr/local/Cellar/glfw/3.3.8/lib/libglfw.3.3.dylib; sourceTree = "<absolute>"; };
 		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
@@ -206,8 +49,15 @@
 		2382660828A49101001F523D /* MissingSuiteError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MissingSuiteError.cpp; path = ../../../Util/MissingSuiteError.cpp; sourceTree = "<group>"; };
 		2382660B28A4AE17001F523D /* ISF4AE_ArbHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISF4AE_ArbHandler.cpp; path = ../ISF4AE_ArbHandler.cpp; sourceTree = "<group>"; };
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
+		2398563A28B1BBA300FC0A9E /* libVVISF.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libVVISF.a; path = "../VVISF-GL/VVISF/bin/libVVISF.a"; sourceTree = "<group>"; };
+		2398563C28B1BBAD00FC0A9E /* libVVGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libVVGL.a; path = "../VVISF-GL/VVGL/bin/libVVGL.a"; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ISF4AEScene.hpp; path = ../ISF4AEScene.hpp; sourceTree = "<group>"; };
+		23B31A8828B1C5CF0020958E /* VVGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = VVGL.a; path = "../VVISF-GL/VVGL/bin/VVGL.a"; sourceTree = "<group>"; };
+		23B31A8A28B1C5D60020958E /* VVISF.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = VVISF.a; path = "../VVISF-GL/VVISF/bin/VVISF.a"; sourceTree = "<group>"; };
+		23B31A8C28B1C5EB0020958E /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		23B31A8E28B1C6030020958E /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		23B31A9028B1C60A0020958E /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		23CA9DA628AD0CA5001845E3 /* MiscUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MiscUtil.h; sourceTree = "<group>"; };
 		23F1E66328AD8C9000152869 /* ISF4AE_UtilFunc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISF4AE_UtilFunc.cpp; path = ../ISF4AE_UtilFunc.cpp; sourceTree = "<group>"; };
 		23F1E66528AD901E00152869 /* MiscUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MiscUtil.cpp; path = ../MiscUtil.cpp; sourceTree = "<group>"; };
@@ -227,9 +77,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23FD786428AA4BFF007E529B /* VVGL.framework in Frameworks */,
-				23FD786528AA4BFF007E529B /* VVISF.framework in Frameworks */,
+				23B31A9128B1C60A0020958E /* IOSurface.framework in Frameworks */,
+				23B31A8F28B1C6030020958E /* CoreMedia.framework in Frameworks */,
+				23B31A8D28B1C5EB0020958E /* CoreVideo.framework in Frameworks */,
 				2382660328A49081001F523D /* Cocoa.framework in Frameworks */,
+				23B31AA228B1FC250020958E /* VVISF.a in Frameworks */,
+				23B31AA128B1FBC00020958E /* VVGL.a in Frameworks */,
 				233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -237,31 +90,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2309509428A64A9000F6FF3C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				230950AD28A64A9000F6FF3C /* VVGL.framework */,
-				230950AF28A64A9000F6FF3C /* VVISF.framework */,
-				230950B128A64A9000F6FF3C /* ISFonIOS.app */,
-				230950B328A64A9000F6FF3C /* VVGL.framework */,
-				230950B528A64A9000F6FF3C /* BasicGLFunc.app */,
-				230950B728A64A9000F6FF3C /* DifferingGLVersions.app */,
-				230950B928A64A9000F6FF3C /* GeoShaderTest.app */,
-				230950BB28A64A9000F6FF3C /* TransFeedbackTest.app */,
-				230950BD28A64A9000F6FF3C /* JustTransFeedback.app */,
-				230950BF28A64A9000F6FF3C /* TexDownloadUpload.app */,
-				230950C128A64A9000F6FF3C /* VVISF.framework */,
-				230950C328A64A9000F6FF3C /* ISFFuncTest.app */,
-				230950C528A64A9000F6FF3C /* ISF Editor.app */,
-				230950C728A64A9000F6FF3C /* VVGL.framework */,
-				230950C928A64A9000F6FF3C /* VVISF.framework */,
-				230950CB28A64A9000F6FF3C /* ISFinGLFW.app */,
-				230950CD28A64A9000F6FF3C /* ISFQL.qlgenerator */,
-				230950CF28A64A9000F6FF3C /* com.vidvox.ISFQL-Renderer.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		233B1F1E28A476D2000652AC /* Headers */ = {
 			isa = PBXGroup;
 			children = (
@@ -293,6 +121,13 @@
 		92099B601F0CFBA30080F057 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				23B31A9028B1C60A0020958E /* IOSurface.framework */,
+				23B31A8E28B1C6030020958E /* CoreMedia.framework */,
+				23B31A8C28B1C5EB0020958E /* CoreVideo.framework */,
+				23B31A8A28B1C5D60020958E /* VVISF.a */,
+				23B31A8828B1C5CF0020958E /* VVGL.a */,
+				2398563C28B1BBAD00FC0A9E /* libVVGL.a */,
+				2398563A28B1BBA300FC0A9E /* libVVISF.a */,
 				2382660228A49081001F523D /* Cocoa.framework */,
 				233B1F1C28A46D55000652AC /* libglfw.3.3.dylib */,
 				233B1F1A28A46D35000652AC /* OpenGL.framework */,
@@ -303,7 +138,6 @@
 		C4E6187C095A3C800012CA3F = {
 			isa = PBXGroup;
 			children = (
-				2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */,
 				2382660028A48EDF001F523D /* shaders */,
 				233B1F1E28A476D2000652AC /* Headers */,
 				23A0241F28A3F3E900E021FB /* Config.h */,
@@ -347,18 +181,16 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C4E618CE095A3CE90012CA3F /* Build configuration list for PBXNativeTarget "ISF4AE" */;
 			buildPhases = (
+				23B31AA328B1FD9B0020958E /* Run Script */,
 				C4E618C8095A3CE80012CA3F /* Resources */,
 				C4E618C9095A3CE80012CA3F /* Sources */,
 				C4E618CA095A3CE80012CA3F /* Frameworks */,
 				C4E618EA095A3E040012CA3F /* Rez */,
-				230950D328A64BD100F6FF3C /* CopyFiles */,
 				237BF26628A3A13000343DF7 /* ShellScript */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				230950D128A64B8100F6FF3C /* PBXTargetDependency */,
-				23FD786328AA4BE8007E529B /* PBXTargetDependency */,
 			);
 			name = ISF4AE;
 			productName = Skeleton.plugin;
@@ -384,147 +216,12 @@
 			mainGroup = C4E6187C095A3C800012CA3F;
 			productRefGroup = C4E6188C095A3C800012CA3F /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 2309509428A64A9000F6FF3C /* Products */;
-					ProjectRef = 2309509328A64A9000F6FF3C /* ISFSandbox.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				C4E618CB095A3CE80012CA3F /* ISF4AE */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		230950AD28A64A9000F6FF3C /* VVGL.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVGL.framework;
-			remoteRef = 230950AC28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950AF28A64A9000F6FF3C /* VVISF.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVISF.framework;
-			remoteRef = 230950AE28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950B128A64A9000F6FF3C /* ISFonIOS.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = ISFonIOS.app;
-			remoteRef = 230950B028A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950B328A64A9000F6FF3C /* VVGL.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVGL.framework;
-			remoteRef = 230950B228A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950B528A64A9000F6FF3C /* BasicGLFunc.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = BasicGLFunc.app;
-			remoteRef = 230950B428A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950B728A64A9000F6FF3C /* DifferingGLVersions.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = DifferingGLVersions.app;
-			remoteRef = 230950B628A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950B928A64A9000F6FF3C /* GeoShaderTest.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = GeoShaderTest.app;
-			remoteRef = 230950B828A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950BB28A64A9000F6FF3C /* TransFeedbackTest.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = TransFeedbackTest.app;
-			remoteRef = 230950BA28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950BD28A64A9000F6FF3C /* JustTransFeedback.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = JustTransFeedback.app;
-			remoteRef = 230950BC28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950BF28A64A9000F6FF3C /* TexDownloadUpload.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = TexDownloadUpload.app;
-			remoteRef = 230950BE28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950C128A64A9000F6FF3C /* VVISF.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVISF.framework;
-			remoteRef = 230950C028A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950C328A64A9000F6FF3C /* ISFFuncTest.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = ISFFuncTest.app;
-			remoteRef = 230950C228A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950C528A64A9000F6FF3C /* ISF Editor.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = "ISF Editor.app";
-			remoteRef = 230950C428A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950C728A64A9000F6FF3C /* VVGL.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVGL.framework;
-			remoteRef = 230950C628A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950C928A64A9000F6FF3C /* VVISF.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = VVISF.framework;
-			remoteRef = 230950C828A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950CB28A64A9000F6FF3C /* ISFinGLFW.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = ISFinGLFW.app;
-			remoteRef = 230950CA28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950CD28A64A9000F6FF3C /* ISFQL.qlgenerator */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = ISFQL.qlgenerator;
-			remoteRef = 230950CC28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		230950CF28A64A9000F6FF3C /* com.vidvox.ISFQL-Renderer.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = "com.vidvox.ISFQL-Renderer.app";
-			remoteRef = 230950CE28A64A9000F6FF3C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		C4E618C8095A3CE80012CA3F /* Resources */ = {
@@ -566,6 +263,24 @@
 			shellPath = /bin/sh;
 			shellScript = "$SRCROOT/install-plugin.sh\n";
 		};
+		23B31AA328B1FD9B0020958E /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd $SRCROOT/../VVISF-GL/VVGL\n\nif [ ! -f \"./bin/VVGL.a\" ]; then\n    ./macos_universal_binary.sh\n    cp ./bin/libVVGL.a ./bin/VVGL.a\nfi\n\ncd $SRCROOT/../VVISF-GL/VVISF\nif [ ! -f \"./bin/VVISF.a\" ]; then\n    ./macos_universal_binary.sh\n    cp ./bin/libVVISF.a ./bin/VVISF.a\nfi\n\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -591,19 +306,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		230950D128A64B8100F6FF3C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = VVGL_Mac;
-			targetProxy = 230950D028A64B8100F6FF3C /* PBXContainerItemProxy */;
-		};
-		23FD786328AA4BE8007E529B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = VVISF_Mac;
-			targetProxy = 23FD786228AA4BE8007E529B /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C4E61880095A3C800012CA3F /* Debug */ = {
@@ -661,11 +363,11 @@
 					../../../Headers/SP,
 					../../../Resources,
 					"\"$(SRCROOT)/../Headers\"",
-					"\"$(SRCROOT)/../Headers/glad/include\"",
 					"\"$(SRCROOT)/../VVISF-GL/VVGL/include\"",
+					"\"$(SRCROOT)/../VVISF-GL/VVISF/include\"",
 				);
 				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DVVGL_SDK_MAC";
