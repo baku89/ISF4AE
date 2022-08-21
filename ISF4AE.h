@@ -62,7 +62,7 @@ enum {
      ISF parameters continues.
      As AESDK cannot change a type of parameter dynamically,
      this plug-in adapts a strategy to add all types parameters of ISF in order of UserParamType for each ISF input,
-     then toggles their visibilities and only leaves an active type the in UpdateParamsUI.
+     then toggles their visibilities and only leaves an active type in UpdateParamsUI.
      Use the formula shwon below to calculate the parameter index:
      index = userParamIndex * NumUserParamType + userParamType
      -- though in most cases, it'd be better to use the function getIndexForUserParam().
