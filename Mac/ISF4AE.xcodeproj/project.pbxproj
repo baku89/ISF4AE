@@ -60,7 +60,7 @@
 		23B31A9028B1C60A0020958E /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		23CA9DA628AD0CA5001845E3 /* MiscUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MiscUtil.h; sourceTree = "<group>"; };
 		23F1E66328AD8C9000152869 /* ISF4AE_UtilFunc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISF4AE_UtilFunc.cpp; path = ../ISF4AE_UtilFunc.cpp; sourceTree = "<group>"; };
-		23F1E66528AD901E00152869 /* MiscUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MiscUtil.cpp; path = ../MiscUtil.cpp; sourceTree = "<group>"; };
+		23F1E66528AD901E00152869 /* MiscUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MiscUtil.cpp; sourceTree = "<group>"; };
 		7EF36FB816F29807002A3CB3 /* ISF4AE.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ISF4AE.h; path = ../ISF4AE.h; sourceTree = "<group>"; };
 		924FC63E1F0E132C0075C62A /* SystemUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemUtil.h; sourceTree = "<group>"; };
 		924FC63F1F0E13A50075C62A /* SystemUtil.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; fileEncoding = 4; path = SystemUtil.cpp; sourceTree = "<group>"; };
