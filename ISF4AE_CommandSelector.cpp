@@ -482,7 +482,7 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
             size.height = inResult.ref_height;
         }
         
-        if (userParamType != UserParamType_None) {
+        if (userParamType != UserParamType_Unsupported) {
             userParamIndex++;
         }
     }
@@ -680,7 +680,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     scene.setValueForInputNamed(*val, input->name());
                 }
                 
-                if (!isInputImage && userParamType != UserParamType_None) {
+                if (!isInputImage && userParamType != UserParamType_Unsupported) {
                     userParamIndex++;
                 }
             }

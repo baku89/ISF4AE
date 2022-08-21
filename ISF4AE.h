@@ -71,7 +71,7 @@ enum {
 
 // A subset of ISFValType supported by this plug-in
  enum UserParamType {
-     UserParamType_None = -1,
+     UserParamType_Unsupported = -1,
     UserParamType_Bool = 0,
     UserParamType_Long,
     UserParamType_Float,

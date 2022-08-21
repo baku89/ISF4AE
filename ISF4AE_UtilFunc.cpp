@@ -25,7 +25,7 @@ UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
             return UserParamType_Image;
             
         default:
-            return UserParamType_None;
+            return UserParamType_Unsupported;
     }
 }
 
