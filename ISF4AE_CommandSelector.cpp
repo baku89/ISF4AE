@@ -778,91 +778,98 @@ UserChangedParam(PF_InData *in_data,
                 std::string isfCode = SystemUtil::readTextFile(srcPath);
                 
                 if (!isfCode.empty()) {
-                    params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
-                    
-                    auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-                    PF_STRCPY(isf->code, isfCode.c_str());
-                    
-                    // Set default values
-                    auto *desc = getCompiledSceneDesc(globalData, isf->code);
-                    
-                    int userParamIndex = 0;
-                    
-                    for (auto &input : desc->scene->inputs()) {
-                        if (input->name() == "inputImage") {
-                            continue;
-                        }
+                    if (isfCode.size() < ISFCODE_MAX_LEN) {
+                        params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
                         
-                        auto userParamType = getUserParamTypeForISFAttr(input);
-                        auto index = getIndexForUserParam(userParamIndex, userParamType);
-                        auto &param = *params[index];
+                        auto *isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+                        PF_STRCPY(isf->code, isfCode.c_str());
                         
-                        param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                        // Set default values
+                        auto *desc = getCompiledSceneDesc(globalData, isf->code);
                         
-                        switch (userParamType) {
-                            case UserParamType_Bool:
-                                param.u.bd.dephault = input->defaultVal().getBoolVal();
-                                break;
-                            
-                            case UserParamType_Long: {
-                                
-                                auto values = input->valArray();
-                                auto dephaultVal = input->defaultVal().getLongVal();
-                                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
-                                
-                                param.u.pd.value = dephaultIndex;
-                                break;
+                        int userParamIndex = 0;
+                        
+                        for (auto &input : desc->scene->inputs()) {
+                            if (input->name() == "inputImage") {
+                                continue;
                             }
+                            
+                            auto userParamType = getUserParamTypeForISFAttr(input);
+                            auto index = getIndexForUserParam(userParamIndex, userParamType);
+                            auto &param = *params[index];
+                            
+                            param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+                            
+                            switch (userParamType) {
+                                case UserParamType_Bool:
+                                    param.u.bd.dephault = input->defaultVal().getBoolVal();
+                                    break;
                                 
-                            case UserParamType_Float: {
-                                
-                                double dephault = input->defaultVal().getDoubleVal();
-                                
-                                if (input->unit() == VVISF::ISFValUnit_Length) {
-                                    dephault *= in_data->width;
-                                } else if (input->unit() == VVISF::ISFValUnit_Percent) {
-                                    dephault *= 100;
+                                case UserParamType_Long: {
+                                    
+                                    auto values = input->valArray();
+                                    auto dephaultVal = input->defaultVal().getLongVal();
+                                    A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+                                    
+                                    param.u.pd.value = dephaultIndex;
+                                    break;
+                                }
+                                    
+                                case UserParamType_Float: {
+                                    
+                                    double dephault = input->defaultVal().getDoubleVal();
+                                    
+                                    if (input->unit() == VVISF::ISFValUnit_Length) {
+                                        dephault *= in_data->width;
+                                    } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                                        dephault *= 100;
+                                    }
+                                    
+                                    param.u.fs_d.value = dephault;
+                                    break;
                                 }
                                 
-                                param.u.fs_d.value = dephault;
-                                break;
+                                case UserParamType_Angle: {
+                                    
+                                    // TODO: the code below somehow won't work
+                                    double rad = input->defaultVal().getDoubleVal();
+                                    param.u.ad.value = -(rad * 180.0 / PI) + 90.0;
+                                    break;
+                                }
+                                    
+                                case UserParamType_Point2D: {
+                                    
+                                    // TODO: the code below somehow won't work
+                                    auto x = input->defaultVal().getPointValByIndex(0);
+                                    auto y = input->defaultVal().getPointValByIndex(1);
+                                    
+                                    param.u.td.x_value = x * in_data->width;
+                                    param.u.td.y_value = (1.0 - y) * in_data->height;
+                                    break;
+                                }
+                                    
+                                case UserParamType_Color: {
+                                    
+                                    auto dephault = input->defaultVal();
+                                    
+                                    param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
+                                    param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
+                                    param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
+                                    param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+                                    break;
+                                }
+                                    
+                                default:
+                                    break;
                             }
                             
-                            case UserParamType_Angle: {
-                                
-                                // TODO: the code below somehow won't work
-                                double rad = input->defaultVal().getDoubleVal();
-                                param.u.ad.value = -(rad * 180.0 / PI) + 90.0;
-                                break;
-                            }
-                                
-                            case UserParamType_Point2D: {
-                                
-                                // TODO: the code below somehow won't work
-                                auto x = input->defaultVal().getPointValByIndex(0);
-                                auto y = input->defaultVal().getPointValByIndex(1);
-                                
-                                param.u.td.x_value = x * in_data->width;
-                                param.u.td.y_value = (1.0 - y) * in_data->height;
-                                break;
-                            }
-                                
-                            case UserParamType_Color: {
-                                
-                                auto dephault = input->defaultVal();
-                                
-                                param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
-                                param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
-                                param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
-                                param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
-                                break;
-                            }
-                                
-                            default:
-                                break;
+                            userParamIndex++;
                         }
-                        
-                        userParamIndex++;
+                    } else {
+                        // In the case that the code is way too long
+                        suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
+                                                              "The length of ISF code, %d characters, has to be shorter than %d.", isfCode.size(), ISFCODE_MAX_LEN);
+                        out_data->out_flags = PF_OutFlag_DISPLAY_ERROR_MESSAGE;
                     }
                     
                     
