@@ -286,6 +286,7 @@ ParamsSetup(
         AEFX_CLR_STRUCT(def);
         def.u.ad.valid_min = -1000000;
         def.u.ad.valid_max = +1000000;
+        def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
         PF_ADD_ANGLE(name,
                      0,
                      getIndexForUserParam(userParamIndex, UserParamType_Angle));
