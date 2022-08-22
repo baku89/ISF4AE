@@ -36,6 +36,12 @@ public:
         return std::regex_search(fs, re);
     }
     
+    std::string getFragCode() {
+        auto doc = this->doc();
+        
+        return *doc->jsonSourceString() + *doc->fragShaderSource();
+    }
+    
 protected:
     
     void _setUpRenderPrepCallback() {
