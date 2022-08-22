@@ -75,6 +75,7 @@ enum {
     UserParamType_Bool = 0,
     UserParamType_Long,
     UserParamType_Float,
+    UserParamType_Angle,
     UserParamType_Point2D,
     UserParamType_Color,
     UserParamType_Image,
@@ -110,7 +111,7 @@ struct ParamInfo {
 
 // Implemented in ISF4AE_UtilFunc.cpp
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
-UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type);
+UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 SceneDesc* getCompiledSceneDesc(GlobalData *globalData, A_char *code);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size &size, short format);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size &inCPUBufferSizeInPixels,

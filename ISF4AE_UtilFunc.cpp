@@ -4,8 +4,8 @@ PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
     return Param_UserOffset + index * NumUserParamType + (int)type;
 }
 
-UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
-    switch (type) {
+UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
+    switch (input->type()) {
         case VVISF::ISFValType_Bool:
             return UserParamType_Bool;
             
@@ -13,7 +13,12 @@ UserParamType getUserParamTypeForISFValType(VVISF::ISFValType type) {
             return UserParamType_Long;
             
         case VVISF::ISFValType_Float:
-            return UserParamType_Float;
+            switch (input->unit()) {
+                case VVISF::ISFValUnit_Angle:
+                    return UserParamType_Angle;
+                default:
+                    return UserParamType_Float;
+            }
             
         case VVISF::ISFValType_Point2D:
             return UserParamType_Point2D;

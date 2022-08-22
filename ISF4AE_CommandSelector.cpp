@@ -14,6 +14,8 @@
 #include <iostream>
 #include <VVGL.hpp>
 
+#define PI 3.14159265358979323846
+
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple modal dialog.
  */
@@ -280,6 +282,11 @@ ParamsSetup(
                              PF_ParamFlag_COLLAPSE_TWIRLY,
                              getIndexForUserParam(userParamIndex, UserParamType_Float));
         
+        PF_SPRINTF(name, "Angle %d", userParamIndex);
+        PF_ADD_ANGLE(name,
+                     0,
+                     getIndexForUserParam(userParamIndex, UserParamType_Angle));
+        
         PF_SPRINTF(name, "Point2D %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
         def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
@@ -444,9 +451,9 @@ static PF_Err SmartPreRender(PF_InData *in_data, PF_OutData *out_data,
     int userParamIndex = 0;
     PF_CheckoutResult inResult;
     
-    for (auto input : paramInfo->scene->inputs()) {
+    for (auto input : paramInfo->scene->inputs()) {        
         
-        UserParamType userParamType = getUserParamTypeForISFValType(input->type());
+        UserParamType userParamType = getUserParamTypeForISFAttr(input);
         
         if (userParamType == UserParamType_Image) {
             
@@ -585,7 +592,7 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                 
                 auto isfType = input->type();
                 auto &name = input->name();
-                auto userParamType = getUserParamTypeForISFValType(isfType);
+                auto userParamType = getUserParamTypeForISFAttr(input);
                 bool isInputImage = name == "inputImage";
                 auto paramIndex = isInputImage
                     ? Param_Input
@@ -609,6 +616,13 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     case UserParamType_Float: {
                         A_FpLong v = 0.0;
                         ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+                        val = new VVISF::ISFVal(isfType, v);
+                        break;
+                    }
+                    case UserParamType_Angle: {
+                        A_FpLong v = 0.0;
+                        AEUtil::getAngleParam(in_data, out_data, paramIndex, &v);
+                        v = (-v + 90.0) * (PI / 180.0);
                         val = new VVISF::ISFVal(isfType, v);
                         break;
                     }
@@ -768,7 +782,7 @@ UserChangedParam(PF_InData *in_data,
                             continue;
                         }
                         
-                        auto userParamType = getUserParamTypeForISFValType(input->type());
+                        auto userParamType = getUserParamTypeForISFAttr(input);
                         auto index = getIndexForUserParam(userParamIndex, userParamType);
                         auto &param = *params[index];
                         
@@ -933,7 +947,7 @@ UpdateParamsUI(
             continue;
         }
         
-        userParamType = getUserParamTypeForISFValType(input->type());
+        userParamType = getUserParamTypeForISFAttr(input);
         
         auto index = getIndexForUserParam(userParamIndex, userParamType);
         
