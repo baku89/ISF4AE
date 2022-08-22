@@ -283,6 +283,9 @@ ParamsSetup(
                              getIndexForUserParam(userParamIndex, UserParamType_Float));
         
         PF_SPRINTF(name, "Angle %d", userParamIndex);
+        AEFX_CLR_STRUCT(def);
+        def.u.ad.valid_min = -1000000;
+        def.u.ad.valid_max = +1000000;
         PF_ADD_ANGLE(name,
                      0,
                      getIndexForUserParam(userParamIndex, UserParamType_Angle));
