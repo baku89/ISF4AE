@@ -810,8 +810,18 @@ UserChangedParam(PF_InData *in_data,
                                 
                                 param.u.fs_d.value = input->defaultVal().getDoubleVal();
                                 break;
+                            
+                            case UserParamType_Angle: {
+                                
+                                // TODO: the code below somehow won't work
+                                double rad = input->defaultVal().getDoubleVal();
+                                param.u.ad.value = -(rad * 180.0 / PI) + 90.0;
+                                break;
+                            }
                                 
                             case UserParamType_Point2D: {
+                                
+                                // TODO: the code below somehow won't work
                                 auto x = input->defaultVal().getPointValByIndex(0);
                                 auto y = input->defaultVal().getPointValByIndex(1);
                                 
@@ -993,6 +1003,14 @@ UpdateParamsUI(
                 param.u.fs_d.slider_min = input->minVal().getDoubleVal();
                 param.u.fs_d.slider_max = input->maxVal().getDoubleVal();
                 param.u.fs_d.dephault = dephault;
+                
+                break;
+            }
+                
+            case UserParamType_Angle: {
+                
+                double deg = input->defaultVal().getDoubleVal();
+                param.u.ad.dephault = -(deg * 180.0 / PI) + 90.0;;
                 
                 break;
             }
