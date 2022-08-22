@@ -620,6 +620,13 @@ static PF_Err SmartRender(PF_InData *in_data, PF_OutData *out_data,
                     case UserParamType_Float: {
                         A_FpLong v = 0.0;
                         ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+                        
+                        if (input->unit() == VVISF::ISFValUnit_Length) {
+                            v /= outSize.width;
+                        } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                            v /= 100;
+                        }
+                        
                         val = new VVISF::ISFVal(isfType, v);
                         break;
                     }
@@ -807,10 +814,19 @@ UserChangedParam(PF_InData *in_data,
                                 break;
                             }
                                 
-                            case UserParamType_Float:
+                            case UserParamType_Float: {
                                 
-                                param.u.fs_d.value = input->defaultVal().getDoubleVal();
+                                double dephault = input->defaultVal().getDoubleVal();
+                                
+                                if (input->unit() == VVISF::ISFValUnit_Length) {
+                                    dephault *= in_data->width;
+                                } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                                    dephault *= 100;
+                                }
+                                
+                                param.u.fs_d.value = dephault;
                                 break;
+                            }
                             
                             case UserParamType_Angle: {
                                 
@@ -1001,9 +1017,26 @@ UpdateParamsUI(
             case UserParamType_Float: {
                 
                 auto dephault = input->defaultVal().getDoubleVal();
-                param.u.fs_d.slider_min = input->minVal().getDoubleVal();
-                param.u.fs_d.slider_max = input->maxVal().getDoubleVal();
+                auto min = input->minVal().getDoubleVal();
+                auto max = input->maxVal().getDoubleVal();
+                PF_ValueDisplayFlags displayFlags = PF_ValueDisplayFlag_NONE;
+                
+                
+                if (input->unit() == VVISF::ISFValUnit_Length) {
+                    dephault = 0;
+                    min = 0;
+                    max = 100;
+                } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                    dephault *= 100;
+                    min *= 100;
+                    max *= 100;
+                    displayFlags |= PF_ValueDisplayFlag_PERCENT;
+                }
+                
                 param.u.fs_d.dephault = dephault;
+                param.u.fs_d.slider_min = min;
+                param.u.fs_d.slider_max = max;
+                param.u.fs_d.display_flags = displayFlags;
                 
                 break;
             }
