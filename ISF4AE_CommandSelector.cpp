@@ -297,14 +297,14 @@ ParamsSetup(
         PF_ADD_POINT(name,
                      0, 0,
                      0,
-                     getIndexForUserParam(userParamIndex, UserParamType_Float));
+                     getIndexForUserParam(userParamIndex, UserParamType_Point2D));
         
         PF_SPRINTF(name, "Color %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
         def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
         PF_ADD_COLOR(name,
                      1, 1, 1,
-                     getIndexForUserParam(userParamIndex, UserParamType_Float));
+                     getIndexForUserParam(userParamIndex, UserParamType_Color));
         
         PF_SPRINTF(name, "Image %d", userParamIndex);
         AEFX_CLR_STRUCT(def);
