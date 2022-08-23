@@ -2,6 +2,10 @@
 
 #include <regex>
 
+#include "AEFX_SuiteHelper.h"
+
+#include "SystemUtil.h"
+
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
   return Param_UserOffset + index * NumUserParamType + (int)type;
 }
@@ -137,6 +141,59 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
   }
 
   return scenes[code];
+}
+
+PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+
+  // Save the current shader
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  AEFX_SuiteScoper<PF_HandleSuite1> handleSuite =
+      AEFX_SuiteScoper<PF_HandleSuite1>(in_data, kPFHandleSuite, kPFHandleSuiteVersion1, out_data);
+
+  auto* globalData = reinterpret_cast<GlobalData*>(handleSuite->host_lock_handle(in_data->global_data));
+
+  // Set name of an effect instance as default file name
+  // https://ae-plugins.docsforadobe.dev/aegps/aegp-suites.html#streamrefs-and-effectrefs
+  AEGP_EffectRefH effectH = NULL;
+  AEGP_StreamRefH glslStreamH, effectStreamH;
+  A_char effectName[AEGP_MAX_ITEM_NAME_SIZE] = "shader.frag";
+
+  ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(globalData->aegpId, in_data->effect_ref, &effectH));
+
+  ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(globalData->aegpId, effectH, Param_ISF, &glslStreamH));
+
+  ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(globalData->aegpId, glslStreamH, &effectStreamH));
+
+  ERR(suites.StreamSuite2()->AEGP_GetStreamName(effectStreamH, FALSE, effectName));
+
+  // Then confirm a destination path and save it
+  std::string dstPath = SystemUtil::saveFileDialog(std::string(effectName) + ".fs");
+
+  if (!err && !dstPath.empty()) {
+    PF_ParamDef paramIsf;
+    AEFX_CLR_STRUCT(paramIsf);
+    ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale,
+                          &paramIsf));
+
+    auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
+
+    std::string isfCode = std::string(isf->code);
+
+    if (isfCode.empty()) {
+      auto& doc = *globalData->defaultScene->doc();
+      isfCode = *doc.jsonSourceString() + *doc.fragShaderSource();
+    }
+
+    SystemUtil::writeTextFile(dstPath, isfCode);
+
+    ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
+  }
+
+  handleSuite->host_unlock_handle(in_data->global_data);
+
+  return err;
 }
 
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short bitdepth) {
