@@ -314,12 +314,11 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
       PF_RenderRequest req = extra->input->output_request;
 
-      if (!isInputImage) {
-        req.rect.left = -100000;
-        req.rect.top = -100000;
-        req.rect.right = 100000;
-        req.rect.bottom = 100000;
-      }
+      req.rect.left = -100000;
+      req.rect.top = -100000;
+      req.rect.right = 100000;
+      req.rect.bottom = 100000;
+      req.preserve_rgb_of_zero_alpha = true;
 
       ERR(extra->cb->checkout_layer(in_data->effect_ref,
                                     // A parameter index of layer to checkout
@@ -330,8 +329,8 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
                                     &inResult));
 
       VVGL::Size& size = paramInfo->inputImageSizes[userParamIndex];
-      size.width = inResult.ref_width;
-      size.height = inResult.ref_height;
+      size.width = inResult.ref_width * in_data->downsample_x.num / in_data->downsample_x.den;
+      size.height = inResult.ref_height * in_data->downsample_y.num / in_data->downsample_y.den;
     }
 
     if (isISFAttrVisibleInECW(input)) {
