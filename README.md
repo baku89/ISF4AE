@@ -26,7 +26,7 @@ This plug-in has been published under an MIT License. See the included [LICENSE 
 
 ## Acknowledgments and Inspirations
 
-- [mizt](https://github.com/mizt), [0b5vr](https://0b5vr.com): Tehy gave me many advices for handling AESDK/OpenGL.
+- [mizt](https://github.com/mizt), [0b5vr](https://0b5vr.com): They gave me many advices for handling AESDK/OpenGL.
 - [cryo9](https://github.com/cryo9): His working-in-progress [AE-GLSL](https://github.com/cryo9/AE-GLSL) hinted me for the fundamental idea of this plug-in.
 - [Patricio Gonzalez Vivo](https://github.com/patriciogonzalezvivo): One of my reason for being hooked on shaders is his cool project [The Book of Shaders](http://thebookofshaders.com). This plug-in once aimed to support the format of [its editor](http://editor.thebookofshaders.com/).
 - [PixelsWorld](https://aescripts.com/pixelsworld/): Scripting environment that supports Lua, GLSL, and shadertoy.com.
