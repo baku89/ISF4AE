@@ -5,6 +5,8 @@
 	#include <AE_General.r>
 #endif
 
+#define IS_PIPL
+
 #include "Config.h"
 	
 resource 'PiPL' (16000) {
@@ -43,7 +45,12 @@ resource 'PiPL' (16000) {
 		},
 		/* [8] */
 		AE_Effect_Version {
-            0x80001	/* 1.0 */
+			// https://community.adobe.com/t5/after-effects-discussions/pipl-and-code-version-mismatch-warning/td-p/5531272
+			MAJOR_VERSION * 0x80000 +
+			MINOR_VERSION * 0x8000 +
+			BUG_VERSION   * 0x800 +
+			STAGE_VERSION * 0x200 +
+			BUILD_VERSION
 		},
 		/* [9] */
 		AE_Effect_Info_Flags {
