@@ -121,26 +121,16 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size &inCPUBu
 
 // Implemented in ISF4AE_ArbHandler.cpp
 PF_Err
-CreateDefaultArb(
-    PF_InData            *in_data,
-    PF_OutData           *out_data,
-    PF_ArbitraryH        *dephault);
+CreateDefaultArb(PF_InData		*in_data,
+				 PF_OutData		*out_data,
+				 PF_ArbitraryH	*dephault);
 
 PF_Err
-ArbCopy(
-    PF_InData            *in_data,
-    PF_OutData           *out_data,
-    const PF_ArbitraryH  *srcP,
-    PF_ArbitraryH        *dstP);
-
-PF_Err
-ArbCompare(
-    PF_InData                *in_data,
-    PF_OutData                *out_data,
-    const PF_ArbitraryH        *a_arbP,
-    const PF_ArbitraryH        *b_arbP,
-    PF_ArbCompareResult        *resultP);
-
+HandleArbitrary(PF_InData			*in_data,
+				PF_OutData			*out_data,
+				PF_ParamDef			*params[],
+				PF_LayerDef			*output,
+				PF_ArbParamsExtra	*extra);
 
 extern "C" {
 

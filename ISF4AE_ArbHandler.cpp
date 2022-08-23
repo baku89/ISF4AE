@@ -101,3 +101,83 @@ ArbCompare(
     
     return err;
 }
+
+PF_Err
+HandleArbitrary(
+	PF_InData            *in_data,
+	PF_OutData            *out_data,
+	PF_ParamDef            *params[],
+	PF_LayerDef            *output,
+	PF_ArbParamsExtra    *extra)
+{
+	PF_Err     err     = PF_Err_NONE;
+	
+	switch (extra->which_function) {
+		case PF_Arbitrary_NEW_FUNC:
+			if (extra->u.new_func_params.refconPV != ARB_REFCON) {
+				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+			} else {
+				err = CreateDefaultArb(in_data, out_data, extra->u.new_func_params.arbPH);
+			}
+			break;
+			
+		case PF_Arbitrary_DISPOSE_FUNC:
+			if (extra->u.dispose_func_params.refconPV != ARB_REFCON) {
+				err = PF_Err_INTERNAL_STRUCT_DAMAGED;
+			} else {
+				PF_DISPOSE_HANDLE(extra->u.dispose_func_params.arbH);
+			}
+			break;
+		
+		case PF_Arbitrary_COPY_FUNC:
+			if(extra->u.copy_func_params.refconPV == ARB_REFCON) {
+				ERR(CreateDefaultArb(in_data,
+									 out_data,
+									 extra->u.copy_func_params.dst_arbPH));
+
+				ERR(ArbCopy(in_data,
+							out_data,
+							&extra->u.copy_func_params.src_arbH,
+							extra->u.copy_func_params.dst_arbPH));
+			}
+			break;
+		
+		case PF_Arbitrary_FLAT_SIZE_FUNC:
+			*(extra->u.flat_size_func_params.flat_data_sizePLu) = sizeof(ParamArbIsf);
+			break;
+
+		case PF_Arbitrary_FLATTEN_FUNC:
+			if(extra->u.flatten_func_params.buf_sizeLu == sizeof(ParamArbIsf)){
+				void *src = (ParamArbIsf*)PF_LOCK_HANDLE(extra->u.flatten_func_params.arbH);
+				void *dst = extra->u.flatten_func_params.flat_dataPV;
+				if (src) {
+					memcpy(dst, src, sizeof(ParamArbIsf));
+				}
+				PF_UNLOCK_HANDLE(extra->u.flatten_func_params.arbH);
+			}
+			break;
+
+		case PF_Arbitrary_UNFLATTEN_FUNC:
+			if(extra->u.unflatten_func_params.buf_sizeLu == sizeof(ParamArbIsf)){
+				PF_Handle    handle = PF_NEW_HANDLE(sizeof(ParamArbIsf));
+				void *dst = (ParamArbIsf*)PF_LOCK_HANDLE(handle);
+				void *src = (void*)extra->u.unflatten_func_params.flat_dataPV;
+				if (src) {
+					memcpy(dst, src, sizeof(ParamArbIsf));
+				}
+				*(extra->u.unflatten_func_params.arbPH) = handle;
+				PF_UNLOCK_HANDLE(handle);
+			}
+			break;
+		
+		case PF_Arbitrary_COMPARE_FUNC:
+			ERR(ArbCompare(in_data,
+						   out_data,
+						   &extra->u.compare_func_params.a_arbH,
+						   &extra->u.compare_func_params.b_arbH,
+						   extra->u.compare_func_params.compareP));
+			break;
+	}
+	
+	return err;
+}
