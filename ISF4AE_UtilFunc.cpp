@@ -1,5 +1,7 @@
 #include "ISF4AE.h"
 
+#include <regex>
+
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
   return Param_UserOffset + index * NumUserParamType + (int)type;
 }
@@ -97,11 +99,39 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
     desc->status = isfErr.getTypeString();
     desc->errorLog = "";
 
+    // Pretty-format the risen error
     for (auto err : isfErr.details) {
-      if (err.first == "fragSrc" || err.first == "vertSrc")
+      if (err.first == "fragSrc" || err.first == "vertSrc") {
         continue;
-      desc->errorLog += "[" + err.first + "] " + err.second + "\n";
+      }
+
+      if (err.first == "fragErrLog" || err.first == "vertErrLog") {
+        // Omit the text "ERROR: 0:"
+        std::string log = err.second;
+        log.erase(0, 9);
+        desc->errorLog += "Line " + log + "\n";
+
+      } else if (err.first == "jsonErrLog") {
+        std::string str = err.second;
+        std::smatch m;
+        std::regex re(R"(\[.+\] parse error at line ([0-9]+).+?: (.+); last read.*)");
+        if (std::regex_match(str, m, re)) {
+          std::string line = m[1].str();
+          std::string msg = m[2].str();
+          desc->errorLog += "Line " + line + ": " + msg + "\n";
+        } else {
+          desc->errorLog += err.second;
+        }
+      }
     }
+
+    scenes[code] = desc;
+
+  } catch (...) {
+    auto* desc = new SceneDesc();
+    desc->scene = globalData->defaultScene;
+    desc->status = "Unknown Error";
+    desc->errorLog = "";
 
     scenes[code] = desc;
   }
