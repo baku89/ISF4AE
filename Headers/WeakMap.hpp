@@ -1,7 +1,7 @@
 #pragma once
 
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
 using namespace std;
 
@@ -10,12 +10,11 @@ using namespace std;
  */
 template <class K, class V>
 class WeakMap {
-private:
-    unordered_map<K, weak_ptr<V>> _map;
-    
-public:
-    shared_ptr<V> get(const K &key);
-    bool has(const K &key);
-    void set(const K &key, const shared_ptr<V> &value);
-    
+ private:
+  unordered_map<K, weak_ptr<V>> _map;
+
+ public:
+  shared_ptr<V> get(const K& key);
+  bool has(const K& key);
+  void set(const K& key, const shared_ptr<V>& value);
 };
