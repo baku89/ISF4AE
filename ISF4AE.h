@@ -20,8 +20,8 @@ typedef unsigned short PixelType;
 #include <Windows.h>
 #endif
 
-#include "AEFX_ChannelDepthTpl.h"
-#include "AEGP_SuiteHandler.h"
+#include "entry.h"
+
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
 #include "AE_EffectCBSuites.h"
@@ -29,13 +29,16 @@ typedef unsigned short PixelType;
 #include "AE_Macros.h"
 #include "Param_Utils.h"
 #include "String_Utils.h"
-#include "entry.h"
 
-#include <VVISF.hpp>
-#include "ISF4AEScene.hpp"
-#include "OGL.h"
+#include "AEFX_ChannelDepthTpl.h"
+#include "AEGP_SuiteHandler.h"
 
 #include <unordered_map>
+
+#include <VVISF.hpp>
+
+#include "ISF4AEScene.hpp"
+#include "OGL.h"
 
 /* Versioning information */
 
