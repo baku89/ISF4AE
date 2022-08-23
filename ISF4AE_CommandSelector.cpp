@@ -334,7 +334,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
       size.height = inResult.ref_height;
     }
 
-    if (userParamType != UserParamType_Unsupported) {
+    if (isISFAttrVisibleInECW(input)) {
       userParamIndex++;
     }
   }
@@ -522,10 +522,10 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
           scene.setValueForInputNamed(*val, input->name());
         }
 
-        if (!isInputImage && userParamType != UserParamType_Unsupported) {
+        if (isISFAttrVisibleInECW(input)) {
           userParamIndex++;
         }
-      }
+      }  // End of for each ISF->inputs
 
       // Then, render it!
       scene.renderToBuffer(isfImage, outSize, time);
@@ -600,7 +600,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
             int userParamIndex = 0;
 
             for (auto& input : desc->scene->inputs()) {
-              if (input->name() == "inputImage") {
+              if (!isISFAttrVisibleInECW(input)) {
                 continue;
               }
 
@@ -669,7 +669,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
               }
 
               userParamIndex++;
-            }
+            }  // End of for-each ISF's inputs
           } else {
             // In the case that the code is way too long
             suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
@@ -762,7 +762,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
       break;
     }
 
-    if (input->name() == "inputImage") {
+    if (!isISFAttrVisibleInECW(input)) {
       continue;
     }
 

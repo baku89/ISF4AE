@@ -35,6 +35,23 @@ UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
 }
 
 /**
+ * Check if an ISF input should be promoted and visible in Effect Conrol Window
+ */
+bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
+  auto userParamType = getUserParamTypeForISFAttr(input);
+  auto& name = input->name();
+
+  bool isInputImage = name == "inputImage";
+  bool isISF4AESpecialAttr = name.rfind("i4a_") == 0;
+
+  if (userParamType == UserParamType_Unsupported || isInputImage || isISF4AESpecialAttr) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
