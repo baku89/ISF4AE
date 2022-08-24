@@ -6,6 +6,7 @@
 #include <string>
 
 using namespace VVGL;
+using namespace VVISF;
 
 namespace VVISF {
 
@@ -24,8 +25,9 @@ class ISF4AEScene : public ISFScene {
     compileProgramIfNecessary();
 
     if (_errDict.size() > 0) {
-      VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL, "Shader Problem",
-                                        "check error dict for more info", _errDict);
+      auto err = ISFErr(ISFErrType_ErrorCompilingGLSL, "Shader Problem", "", _errDict);
+      throw err;
+    }
       throw err;
     }
   }
