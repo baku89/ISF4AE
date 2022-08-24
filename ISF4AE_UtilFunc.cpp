@@ -111,9 +111,9 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
 
       if (err.first == "fragErrLog" || err.first == "vertErrLog") {
         // Omit the text "ERROR: 0:"
-        std::string log = err.second;
-        log.erase(0, 9);
-        desc->errorLog += "Line " + log + "\n";
+        auto log = std::regex_replace(err.second, std::regex("ERROR: 0:"), "Line ");
+
+        desc->errorLog += log + "\n";
 
       } else if (err.first == "jsonErrLog") {
         std::string str = err.second;
@@ -223,4 +223,25 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
       return VVGL::CreateRGBAFloatCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL,
                                                  NULL);
   }
+}
+
+// Function to convert and copy string literals to A_UTF16Char.
+// On Win: Pass the input directly to the output
+// On Mac: All conversion happens through the CFString format
+void copyConvertStringLiteralIntoUTF16(const wchar_t* inputString, A_UTF16Char* destination) {
+#ifdef AE_OS_MAC
+  int length = wcslen(inputString);
+  CFRange range = {0, AEGP_MAX_PATH_SIZE};
+  range.length = length;
+  CFStringRef inputStringCFSR =
+      CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<const UInt8*>(inputString),
+                              length * sizeof(wchar_t), kCFStringEncodingUTF32LE, FALSE);
+  CFStringGetBytes(inputStringCFSR, range, kCFStringEncodingUTF16, 0, FALSE, reinterpret_cast<UInt8*>(destination),
+                   length * (sizeof(A_UTF16Char)), NULL);
+  destination[length] = 0;  // Set NULL-terminator, since CFString calls don't set it
+  CFRelease(inputStringCFSR);
+#elif defined AE_OS_WIN
+  size_t length = wcslen(inputString);
+  wcscpy_s(reinterpret_cast<wchar_t*>(destination), length + 1, inputString);
+#endif
 }
