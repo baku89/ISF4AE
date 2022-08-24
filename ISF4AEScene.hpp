@@ -28,6 +28,17 @@ class ISF4AEScene : public ISFScene {
       auto err = ISFErr(ISFErrType_ErrorCompilingGLSL, "Shader Problem", "", _errDict);
       throw err;
     }
+
+    // Check if types of i4a_* uniforms are correct
+    ISFAttrRef attr;
+
+    attr = inputNamed("i4a_Downsample");
+    if (attr && attr->type() != ISFValType_Point2D) {
+      std::map<std::string, std::string> errDict;
+
+      errDict["ia4ErrLog"] = R"(The type of uniform i4a_Downsample has to be "point2D")";
+
+      auto err = ISFErr(ISFErrType_ErrorCompilingGLSL, "Invalid uniform", "", errDict);
       throw err;
     }
   }

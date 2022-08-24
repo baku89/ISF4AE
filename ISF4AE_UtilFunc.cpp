@@ -116,6 +116,8 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
         } else {
           desc->errorLog += err.second;
         }
+      } else {
+        desc->errorLog += err.second;
       }
     }
 

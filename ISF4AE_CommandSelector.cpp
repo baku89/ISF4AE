@@ -484,9 +484,16 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
           }
           case UserParamType_Point2D: {
             A_FloatPoint point;
-            ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
-            // Should be converted to normalized and vertically-flipped coordinate
-            val = new VVISF::ISFVal(isfType, point.x / outSize.width, 1.0 - point.y / outSize.height);
+            if (name == "i4a_Downsample") {
+              point.x = (float)in_data->downsample_x.num / in_data->downsample_x.den;
+              point.y = (float)in_data->downsample_y.num / in_data->downsample_y.den;
+            } else {
+              ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
+              // Should be converted to normalized and vertically-flipped coordinate
+              point.x = point.x / outSize.width;
+              point.y = 1.0 - point.y / outSize.height;
+            }
+            val = new VVISF::ISFVal(isfType, point.x, point.y);
             break;
           }
           case UserParamType_Color: {
