@@ -126,6 +126,13 @@ PF_Err HandleArbitrary(PF_InData* in_data,
                        PF_LayerDef* output,
                        PF_ArbParamsExtra* extra);
 
+// Implemented in ISF4AE_EventHandler.cpp
+PF_Err HandleEvent(PF_InData* in_data,
+                   PF_OutData* out_data,
+                   PF_ParamDef* params[],
+                   PF_LayerDef* output,
+                   PF_EventExtra* event_extraP);
+
 extern "C" {
 
 DllExport PF_Err EffectMain(PF_Cmd cmd,

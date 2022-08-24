@@ -17,6 +17,7 @@
 		2382660928A49101001F523D /* MissingSuiteError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660828A49101001F523D /* MissingSuiteError.cpp */; };
 		2382660C28A4AE17001F523D /* ISF4AE_ArbHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660B28A4AE17001F523D /* ISF4AE_ArbHandler.cpp */; };
 		2382660E28A4CED0001F523D /* AEUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660D28A4CED0001F523D /* AEUtil.cpp */; };
+		239C1CD928B51511000A7426 /* ISF4AE_EventHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 239C1CD828B51511000A7426 /* ISF4AE_EventHandler.cpp */; };
 		23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */; };
 		23B31A8D28B1C5EB0020958E /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8C28B1C5EB0020958E /* CoreVideo.framework */; };
 		23B31A8F28B1C6030020958E /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23B31A8E28B1C6030020958E /* CoreMedia.framework */; };
@@ -52,6 +53,7 @@
 		2382660D28A4CED0001F523D /* AEUtil.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AEUtil.cpp; sourceTree = "<group>"; };
 		2398563A28B1BBA300FC0A9E /* libVVISF.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libVVISF.a; path = "../VVISF-GL/VVISF/bin/libVVISF.a"; sourceTree = "<group>"; };
 		2398563C28B1BBAD00FC0A9E /* libVVGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libVVGL.a; path = "../VVISF-GL/VVGL/bin/libVVGL.a"; sourceTree = "<group>"; };
+		239C1CD828B51511000A7426 /* ISF4AE_EventHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ISF4AE_EventHandler.cpp; path = ../ISF4AE_EventHandler.cpp; sourceTree = "<group>"; };
 		23A0241F28A3F3E900E021FB /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ../Config.h; sourceTree = "<group>"; };
 		23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ISF4AEScene.hpp; path = ../ISF4AEScene.hpp; sourceTree = "<group>"; };
 		23B31A8828B1C5CF0020958E /* VVGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = VVGL.a; path = "../VVISF-GL/VVGL/bin/VVGL.a"; sourceTree = "<group>"; };
@@ -150,6 +152,7 @@
 				D0FE575C0993C4E900139A60 /* ISF4AE_CommandSelector.cpp */,
 				2382660B28A4AE17001F523D /* ISF4AE_ArbHandler.cpp */,
 				23F1E66328AD8C9000152869 /* ISF4AE_UtilFunc.cpp */,
+				239C1CD828B51511000A7426 /* ISF4AE_EventHandler.cpp */,
 				23A40DD128AA9C3600E1EAF8 /* ISF4AEScene.hpp */,
 				D0FE575E0993C4E900139A60 /* ISF4AEPiPL.r */,
 				D0FE57630993C4FD00139A60 /* Supporting Code */,
@@ -302,6 +305,7 @@
 				23F45FB828B38568009474EB /* WeakMap.cpp in Sources */,
 				D0FE57600993C4E900139A60 /* ISF4AE_CommandSelector.cpp in Sources */,
 				D0FE579D0993C5E500139A60 /* AEGP_SuiteHandler.cpp in Sources */,
+				239C1CD928B51511000A7426 /* ISF4AE_EventHandler.cpp in Sources */,
 				2382660C28A4AE17001F523D /* ISF4AE_ArbHandler.cpp in Sources */,
 				924FC6401F0E13A60075C62A /* SystemUtil.cpp in Sources */,
 				2382660728A490F5001F523D /* AEFX_SuiteHelper.c in Sources */,

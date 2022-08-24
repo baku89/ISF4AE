@@ -60,7 +60,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   out_data->my_version = PF_VERSION(MAJOR_VERSION, MINOR_VERSION, BUG_VERSION, STAGE_VERSION, BUILD_VERSION);
 
   out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG |
-                        PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_SEND_UPDATE_PARAMS_UI;
+                        PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_SEND_UPDATE_PARAMS_UI | PF_OutFlag_CUSTOM_UI;
   out_data->out_flags2 =
       PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS;
 
@@ -249,6 +249,23 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
     PF_SPRINTF(name, "Image %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     PF_ADD_LAYER(name, PF_LayerDefault_NONE, getIndexForUserParam(userParamIndex, UserParamType_Image));
+  }
+
+  if (!err) {
+    // Referencing Examples/UI/CCU
+    PF_CustomUIInfo ci;
+
+    AEFX_CLR_STRUCT(ci);
+
+    ci.events = PF_CustomEFlag_LAYER | PF_CustomEFlag_COMP;
+    ci.comp_ui_width = ci.comp_ui_height = 0;
+    ci.layer_ui_width = ci.layer_ui_height = 0;
+    ci.preview_ui_width = ci.preview_ui_height = 0;
+    ci.comp_ui_alignment = PF_UIAlignment_NONE;
+    ci.layer_ui_alignment = PF_UIAlignment_NONE;
+    ci.preview_ui_alignment = PF_UIAlignment_NONE;
+
+    err = (*(in_data->inter.register_ui))(in_data->effect_ref, &ci);
   }
 
   // Set PF_OutData->num_params to match the parameter count.
@@ -930,6 +947,10 @@ PF_Err EffectMain(PF_Cmd cmd,
 
       case PF_Cmd_QUERY_DYNAMIC_FLAGS:
         err = QueryDynamicFlags(in_data, out_data, params, extra);
+        break;
+
+      case PF_Cmd_EVENT:
+        err = HandleEvent(in_data, out_data, params, output, reinterpret_cast<PF_EventExtra*>(extra));
         break;
     }
   } catch (PF_Err& thrown_err) {
