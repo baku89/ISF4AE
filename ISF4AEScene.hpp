@@ -18,6 +18,18 @@ class ISF4AEScene : public ISFScene {
 
   ISF4AEScene(const GLContextRef& inCtx) : ISFScene(inCtx) { _setUpRenderPrepCallback(); }
 
+  void useCode(const std::string code) {
+    auto doc = VVISF::CreateISFDocRefWith(code);
+    useDoc(doc);
+    compileProgramIfNecessary();
+
+    if (_errDict.size() > 0) {
+      VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL, "Shader Problem",
+                                        "check error dict for more info", _errDict);
+      throw err;
+    }
+  }
+
   std::map<std::string, std::string> errDict() { return _errDict; }
 
   bool isTimeDependant() {

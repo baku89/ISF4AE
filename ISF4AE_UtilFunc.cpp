@@ -78,17 +78,7 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
   scene->setManualTime(true);
 
   try {
-    auto doc = VVISF::CreateISFDocRefWith(code);
-    scene->useDoc(doc);
-    scene->compileProgramIfNecessary();
-
-    auto errDict = scene->errDict();
-
-    if (errDict.size() > 0) {
-      VVISF::ISFErr err = VVISF::ISFErr(VVISF::ISFErrType_ErrorCompilingGLSL, "Shader Problem",
-                                        "check error dict for more info", errDict);
-      throw err;
-    }
+    scene->useCode(code);
 
     auto* desc = new SceneDesc();
     desc->scene = scene;
