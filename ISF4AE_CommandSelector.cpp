@@ -239,7 +239,11 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
     PF_SPRINTF(name, "Point2D %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
-    PF_ADD_POINT(name, 0, 0, 0, getIndexForUserParam(userParamIndex, UserParamType_Point2D));
+    PF_ADD_POINT(name,
+                 // at a center of layer, with specifying in percentage
+                 50L, 50L,
+                 // restrict_bounds
+                 0, getIndexForUserParam(userParamIndex, UserParamType_Point2D));
 
     PF_SPRINTF(name, "Color %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -654,19 +658,17 @@ static PF_Err UserChangedParam(PF_InData* in_data,
                 }
 
                 case UserParamType_Angle: {
-                  // TODO: the code below somehow won't work
                   double rad = input->defaultVal().getDoubleVal();
-                  param.u.ad.value = -(rad * 180.0 / PI) + 90.0;
+                  param.u.ad.value = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
                   break;
                 }
 
                 case UserParamType_Point2D: {
-                  // TODO: the code below somehow won't work
                   auto x = input->defaultVal().getPointValByIndex(0);
                   auto y = input->defaultVal().getPointValByIndex(1);
 
-                  param.u.td.x_value = x * in_data->width;
-                  param.u.td.y_value = (1.0 - y) * in_data->height;
+                  param.u.td.x_value = FLOAT2FIX(x * in_data->width);
+                  param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
                   break;
                 }
 
@@ -806,9 +808,18 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
 
       case UserParamType_Angle: {
         double deg = input->defaultVal().getDoubleVal();
-        param.u.ad.dephault = -(deg * 180.0 / PI) + 90.0;
+        param.u.ad.dephault = FLOAT2FIX(-(deg * 180.0 / PI) + 90.0);
         ;
 
+        break;
+      }
+
+      case UserParamType_Point2D: {
+        auto x = input->defaultVal().getPointValByIndex(0);
+        auto y = input->defaultVal().getPointValByIndex(1);
+
+        param.u.td.x_dephault = FLOAT2FIX(x * in_data->width);
+        param.u.td.y_dephault = FLOAT2FIX((1.0 - y) * in_data->height);
         break;
       }
 
