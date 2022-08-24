@@ -6,6 +6,8 @@
 
 std::string joinWith(const std::vector<std::string>& texts, const std::string& delimiter);
 
+std::vector<std::string> splitWith(std::string s, std::string delimiter);
+
 /**
  * TODO: Generic function must be implemented in a header file
  * https://stackoverflow.com/questions/10632251/undefined-reference-to-template-function
