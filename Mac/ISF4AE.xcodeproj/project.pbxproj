@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		233B1F1B28A46D35000652AC /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 233B1F1A28A46D35000652AC /* OpenGL.framework */; };
 		233B1F3728A476D2000652AC /* GlobalContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2328A476D2000652AC /* GlobalContext.cpp */; };
-		233B1F3828A476D2000652AC /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B1F2428A476D2000652AC /* Common.cpp */; };
 		2382660128A48EDF001F523D /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = 2382660028A48EDF001F523D /* shaders */; };
 		2382660328A49081001F523D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2382660228A49081001F523D /* Cocoa.framework */; };
 		2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2382660428A490ED001F523D /* Smart_Utils.cpp */; };
@@ -40,9 +39,7 @@
 		233B1F1F28A476D2000652AC /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		233B1F2028A476D2000652AC /* AEUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEUtil.h; sourceTree = "<group>"; };
 		233B1F2328A476D2000652AC /* GlobalContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalContext.cpp; sourceTree = "<group>"; };
-		233B1F2428A476D2000652AC /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Common.cpp; sourceTree = "<group>"; };
 		233B1F2828A476D2000652AC /* GlobalContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalContext.h; sourceTree = "<group>"; };
-		233B1F2C28A476D2000652AC /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		233B1F3628A476D2000652AC /* OGL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OGL.h; sourceTree = "<group>"; };
 		2382660028A48EDF001F523D /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../shaders; sourceTree = "<group>"; };
 		2382660228A49081001F523D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -117,8 +114,6 @@
 		233B1F2228A476D2000652AC /* OGL */ = {
 			isa = PBXGroup;
 			children = (
-				233B1F2C28A476D2000652AC /* Common.h */,
-				233B1F2428A476D2000652AC /* Common.cpp */,
 				233B1F2828A476D2000652AC /* GlobalContext.h */,
 				233B1F2328A476D2000652AC /* GlobalContext.cpp */,
 			);
@@ -317,7 +312,6 @@
 				D0FE579E0993C5E500139A60 /* MissingSuiteError.cpp in Sources */,
 				23A40DD228AA9C3600E1EAF8 /* ISF4AEScene.hpp in Sources */,
 				2382660528A490ED001F523D /* Smart_Utils.cpp in Sources */,
-				233B1F3828A476D2000652AC /* Common.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
