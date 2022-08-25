@@ -196,6 +196,8 @@ VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short bitdep
       return VVGL::CreateRGBAShortTex(size);
     case 32:
       return VVGL::CreateRGBAFloatTex(size);
+    default:
+      throw std::invalid_argument("Invalid bitdepth");
   }
 }
 
@@ -214,6 +216,9 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
     case 32:
       return VVGL::CreateRGBAFloatCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL,
                                                  NULL);
+
+    default:
+      throw std::invalid_argument("Invalid bitdepth");
   }
 }
 

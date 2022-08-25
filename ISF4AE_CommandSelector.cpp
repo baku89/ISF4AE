@@ -14,6 +14,7 @@
 #include <VVGL.hpp>
 #include <iostream>
 
+#define GL_SILENCE_DEPRECATION
 #define PI 3.14159265358979323846
 
 /**
@@ -706,7 +707,6 @@ static PF_Err UserChangedParam(PF_InData* in_data,
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
-  auto* seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
   switch (which_hit->param_index) {
     case Param_Edit: {
@@ -816,7 +816,6 @@ static PF_Err UserChangedParam(PF_InData* in_data,
   }
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
-  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
 
   return PF_Err_NONE;
 }
@@ -948,6 +947,9 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
 
         break;
       }
+
+      default:
+        break;
     }
 
     param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;

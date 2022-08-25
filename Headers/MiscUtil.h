@@ -20,7 +20,7 @@ int findIndex(std::vector<T> vals, T target) {
   if (itr == vals.end()) {
     return -1;
   } else {
-    return std::distance(vals.begin(), itr);
+    return (int)std::distance(vals.begin(), itr);
   }
 }
 

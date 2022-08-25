@@ -9,7 +9,7 @@
 #include "Debug.h"
 #include "MiscUtil.h"
 
-DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* extra) {
+static DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* extra) {
   PF_FixedPoint pts[3];
 
   pts[0].x = FLOAT2FIX(0.0);
@@ -47,7 +47,7 @@ DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* extra) 
   return xform;
 }
 
-DRAWBOT_UTF16Char* convertStringToUTF16Char(std::string line) {
+static DRAWBOT_UTF16Char* convertStringToUTF16Char(std::string line) {
   std::wstring lineWstr = std::wstring(line.begin(), line.end());
   DRAWBOT_UTF16Char* lineUTF16Char = new DRAWBOT_UTF16Char[lineWstr.length()];
 
@@ -56,11 +56,11 @@ DRAWBOT_UTF16Char* convertStringToUTF16Char(std::string line) {
   return lineUTF16Char;
 }
 
-PF_Err DrawEvent(PF_InData* in_data,
-                 PF_OutData* out_data,
-                 PF_ParamDef* params[],
-                 PF_LayerDef* output,
-                 PF_EventExtra* extra) {
+static PF_Err DrawEvent(PF_InData* in_data,
+                        PF_OutData* out_data,
+                        PF_ParamDef* params[],
+                        PF_LayerDef* output,
+                        PF_EventExtra* extra) {
   PF_Err err = PF_Err_NONE;
 
   if ((*extra->contextH)->w_type != PF_Window_LAYER && (*extra->contextH)->w_type != PF_Window_COMP) {
