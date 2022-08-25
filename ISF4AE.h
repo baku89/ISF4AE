@@ -96,7 +96,8 @@ typedef struct {
 } GlobalData;
 
 typedef struct {
-  A_Boolean showISFOption;
+  bool showISFOption;
+  bool needsUpdateUserParamsUI;
 } SequenceData;
 
 typedef struct {

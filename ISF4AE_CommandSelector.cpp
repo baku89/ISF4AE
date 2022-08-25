@@ -605,6 +605,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto* seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
   switch (which_hit->param_index) {
     case Param_Edit: {
@@ -618,6 +619,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
 
         if (!isfCode.empty()) {
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+          seqData->needsUpdateUserParamsUI = true;
 
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
           isf->code = isfCode;
@@ -711,6 +713,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
   }
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
 
   return PF_Err_NONE;
 }
@@ -722,153 +725,159 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
-  auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-  auto* desc = getCompiledSceneDesc(globalData, isf->code);
+  if (seqData->needsUpdateUserParamsUI) {
+    seqData->needsUpdateUserParamsUI = false;
 
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
+    auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+    auto* desc = getCompiledSceneDesc(globalData, isf->code);
 
-  // Set the shader status as a label for 'Edit Shader'
-  std::string statusLabel = "ISF: " + desc->status;
-  AEUtil::setParamName(in_data, params, Param_ISFGroupStart, statusLabel);
+    // Toggle the visibility of ISF options
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
 
-  // Show the time parameters if the current shader is time dependant
-  bool isTimeDependant = desc->scene->isTimeDependant();
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_UseLayerTime, isTimeDependant));
+    // Set the shader status as a label for 'Edit Shader'
+    std::string statusLabel = "ISF: " + desc->status;
+    AEUtil::setParamName(in_data, params, Param_ISFGroupStart, statusLabel);
 
-  // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
-  A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_Time, !useLayerTime && isTimeDependant));
+    // Show the time parameters if the current shader is time dependant
+    bool isTimeDependant = desc->scene->isTimeDependant();
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_UseLayerTime, isTimeDependant));
 
-  // Change the visiblity of user params
-  PF_ParamIndex userParamIndex = 0;
-  UserParamType userParamType;
+    // Toggle the visibility of 'Time' parameter depending on 'Use Layer Time'
+    A_Boolean useLayerTime = params[Param_UseLayerTime]->u.bd.value;
+    ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_Time, !useLayerTime && isTimeDependant));
 
-  auto inputs = desc->scene->inputs();
+    // Change the visiblity of user params
+    PF_ParamIndex userParamIndex = 0;
+    UserParamType userParamType;
 
-  for (auto& input : inputs) {
-    if (userParamIndex >= inputs.size()) {
-      break;
-    }
+    auto inputs = desc->scene->inputs();
 
-    if (!isISFAttrVisibleInECW(input)) {
-      continue;
-    }
-
-    userParamType = getUserParamTypeForISFAttr(input);
-
-    auto index = getIndexForUserParam(userParamIndex, userParamType);
-
-    // Update the value and other UI options
-    auto& param = *params[index];
-
-    switch (userParamType) {
-      case UserParamType_Bool: {
-        param.u.bd.dephault = input->defaultVal().getBoolVal();
+    for (auto& input : inputs) {
+      if (userParamIndex >= inputs.size()) {
         break;
       }
 
-      case UserParamType_Long: {
-        auto labels = input->labelArray();
-        auto values = input->valArray();
-
-        param.u.pd.num_choices = labels.size();
-
-        auto joinedLabels = joinWith(labels, "|");
-
-        A_char* names = new A_char[joinedLabels.length() + 1];
-        PF_STRCPY(names, joinedLabels.c_str());
-
-        param.u.pd.u.namesptr = names;
-
-        auto dephaultVal = input->defaultVal().getLongVal();
-        A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
-
-        param.u.pd.dephault = dephaultIndex;
-
-        break;
+      if (!isISFAttrVisibleInECW(input)) {
+        continue;
       }
 
-      case UserParamType_Float: {
-        auto dephault = input->defaultVal().getDoubleVal();
-        auto min = input->minVal().getDoubleVal();
-        auto max = input->maxVal().getDoubleVal();
-        PF_ValueDisplayFlags displayFlags = PF_ValueDisplayFlag_NONE;
+      userParamType = getUserParamTypeForISFAttr(input);
 
-        if (input->unit() == VVISF::ISFValUnit_Length) {
-          dephault = 0;
-          min = 0;
-          max = 100;
-        } else if (input->unit() == VVISF::ISFValUnit_Percent) {
-          dephault *= 100;
-          min *= 100;
-          max *= 100;
-          displayFlags |= PF_ValueDisplayFlag_PERCENT;
+      auto index = getIndexForUserParam(userParamIndex, userParamType);
+
+      // Update the value and other UI options
+      auto& param = *params[index];
+
+      switch (userParamType) {
+        case UserParamType_Bool: {
+          param.u.bd.dephault = input->defaultVal().getBoolVal();
+          break;
         }
 
-        param.u.fs_d.dephault = dephault;
-        param.u.fs_d.slider_min = min;
-        param.u.fs_d.slider_max = max;
-        param.u.fs_d.display_flags = displayFlags;
+        case UserParamType_Long: {
+          auto labels = input->labelArray();
+          auto values = input->valArray();
 
-        break;
+          param.u.pd.num_choices = labels.size();
+
+          auto joinedLabels = joinWith(labels, "|");
+
+          A_char* names = new A_char[joinedLabels.length() + 1];
+          PF_STRCPY(names, joinedLabels.c_str());
+
+          param.u.pd.u.namesptr = names;
+
+          auto dephaultVal = input->defaultVal().getLongVal();
+          A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+
+          param.u.pd.dephault = dephaultIndex;
+
+          break;
+        }
+
+        case UserParamType_Float: {
+          auto dephault = input->defaultVal().getDoubleVal();
+          auto min = input->minVal().getDoubleVal();
+          auto max = input->maxVal().getDoubleVal();
+          PF_ValueDisplayFlags displayFlags = PF_ValueDisplayFlag_NONE;
+
+          if (input->unit() == VVISF::ISFValUnit_Length) {
+            dephault = 0;
+            min = 0;
+            max = 100;
+          } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+            dephault *= 100;
+            min *= 100;
+            max *= 100;
+            displayFlags |= PF_ValueDisplayFlag_PERCENT;
+          }
+
+          param.u.fs_d.dephault = dephault;
+          param.u.fs_d.slider_min = min;
+          param.u.fs_d.slider_max = max;
+          param.u.fs_d.display_flags = displayFlags;
+
+          break;
+        }
+
+        case UserParamType_Angle: {
+          double deg = input->defaultVal().getDoubleVal();
+          param.u.ad.dephault = FLOAT2FIX(-(deg * 180.0 / PI) + 90.0);
+          ;
+
+          break;
+        }
+
+        case UserParamType_Point2D: {
+          auto x = input->defaultVal().getPointValByIndex(0);
+          auto y = input->defaultVal().getPointValByIndex(1);
+
+          param.u.td.x_dephault = FLOAT2FIX(x * in_data->width);
+          param.u.td.y_dephault = FLOAT2FIX((1.0 - y) * in_data->height);
+          break;
+        }
+
+        case UserParamType_Color: {
+          auto dephault = input->defaultVal();
+
+          param.u.cd.dephault.red = dephault.getColorValByChannel(0) * 255;
+          param.u.cd.dephault.green = dephault.getColorValByChannel(1) * 255;
+          param.u.cd.dephault.blue = dephault.getColorValByChannel(2) * 255;
+          param.u.cd.dephault.alpha = dephault.getColorValByChannel(3) * 255;
+
+          break;
+        }
       }
 
-      case UserParamType_Angle: {
-        double deg = input->defaultVal().getDoubleVal();
-        param.u.ad.dephault = FLOAT2FIX(-(deg * 180.0 / PI) + 90.0);
-        ;
+      param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
 
-        break;
+      // Set the label and visibility
+      for (int type = 0; type < NumUserParamType; type++) {
+        auto index = getIndexForUserParam(userParamIndex, (UserParamType)type);
+        bool visible = type == userParamType;
+
+        ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, visible));
+
+        if (visible) {
+          // Set label
+          auto label = input->label();
+          if (label.empty())
+            label = input->name();
+
+          ERR(AEUtil::setParamName(in_data, params, index, label));
+        }
       }
 
-      case UserParamType_Point2D: {
-        auto x = input->defaultVal().getPointValByIndex(0);
-        auto y = input->defaultVal().getPointValByIndex(1);
-
-        param.u.td.x_dephault = FLOAT2FIX(x * in_data->width);
-        param.u.td.y_dephault = FLOAT2FIX((1.0 - y) * in_data->height);
-        break;
-      }
-
-      case UserParamType_Color: {
-        auto dephault = input->defaultVal();
-
-        param.u.cd.dephault.red = dephault.getColorValByChannel(0) * 255;
-        param.u.cd.dephault.green = dephault.getColorValByChannel(1) * 255;
-        param.u.cd.dephault.blue = dephault.getColorValByChannel(2) * 255;
-        param.u.cd.dephault.alpha = dephault.getColorValByChannel(3) * 255;
-
-        break;
-      }
+      userParamIndex++;
     }
 
-    param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
-
-    // Set the label and visibility
-    for (int type = 0; type < NumUserParamType; type++) {
-      auto index = getIndexForUserParam(userParamIndex, (UserParamType)type);
-      bool visible = type == userParamType;
-
-      ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, visible));
-
-      if (visible) {
-        // Set label
-        auto label = input->label();
-        if (label.empty())
-          label = input->name();
-
-        ERR(AEUtil::setParamName(in_data, params, index, label));
+    // Hide all out-of-range parameters
+    for (; userParamIndex < NumUserParams; userParamIndex++) {
+      for (int userParamType = 0; userParamType < NumUserParamType; userParamType++) {
+        auto index = getIndexForUserParam(userParamIndex, (UserParamType)userParamType);
+        ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, false));
       }
-    }
-
-    userParamIndex++;
-  }
-
-  // Hide all out-of-range parameters
-  for (; userParamIndex < NumUserParams; userParamIndex++) {
-    for (int userParamType = 0; userParamType < NumUserParamType; userParamType++) {
-      auto index = getIndexForUserParam(userParamIndex, (UserParamType)userParamType);
-      ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, false));
     }
   }
 
@@ -957,6 +966,7 @@ PF_Err EffectMain(PF_Cmd cmd,
         auto* seq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(seqH));
 
         seq->showISFOption = true;
+        seq->needsUpdateUserParamsUI = true;
 
         out_data->sequence_data = seqH;
 
@@ -973,6 +983,7 @@ PF_Err EffectMain(PF_Cmd cmd,
         auto flatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(flatSeqH));
 
         flatSeq->showISFOption = unflatSeq->showISFOption;
+        flatSeq->needsUpdateUserParamsUI = unflatSeq->needsUpdateUserParamsUI;
 
         PF_UNLOCK_HANDLE(flatSeqH);
         PF_UNLOCK_HANDLE(in_data->sequence_data);
@@ -990,6 +1001,9 @@ PF_Err EffectMain(PF_Cmd cmd,
         auto unflatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(unflatSeqH));
 
         unflatSeq->showISFOption = flatSeq->showISFOption;
+        // Force redraw the parameter UI because there's no way to distinct the SEQUENCE_RESETUP has called on
+        // re-opening a project or the process of constantly flattening/unflattening seqData during opening the project.
+        unflatSeq->needsUpdateUserParamsUI = true;
 
         PF_UNLOCK_HANDLE(unflatSeqH);
         PF_UNLOCK_HANDLE(in_data->sequence_data);
