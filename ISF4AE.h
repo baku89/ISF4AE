@@ -101,6 +101,7 @@ typedef struct {
 } SequenceData;
 
 typedef struct {
+  std::string name;
   std::string code;
 } ParamArbIsf;
 

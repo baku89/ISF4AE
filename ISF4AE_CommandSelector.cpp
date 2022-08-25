@@ -32,7 +32,7 @@ static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* param
   std::stringstream ss;
 
   ss << "ISF Information" << std::endl;
-  ss << "Name: " << doc.name() << std::endl;
+  ss << "Name: " << isf->name << std::endl;
   ss << "Description: " << doc.description() << std::endl;
   ss << "Credit: " << doc.credit() << std::endl;
 
@@ -646,11 +646,11 @@ static PF_Err UserChangedParam(PF_InData* in_data,
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
           seqData->needsUpdateUserParamsUI = true;
 
-          std::string isfName = getBasename(srcPath);
-          ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isfName));
-
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+          isf->name = getBasename(srcPath);
           isf->code = isfCode;
+
+          ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isf->name));
 
           // Set default values
           auto* desc = getCompiledSceneDesc(globalData, isf->code);

@@ -49,6 +49,7 @@ PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.dispose_func_params.arbH));
 
+  isf->name.clear();
   isf->code.clear();
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.dispose_func_params.arbH);
@@ -83,6 +84,7 @@ PF_Err CopyArb(PF_InData* in_data,
     return PF_Err_OUT_OF_MEMORY;
   }
 
+  dstIsf->name = srcIsf->name;
   dstIsf->code = srcIsf->code;
 
   suites.HandleSuite1()->host_unlock_handle(srcH);
@@ -113,7 +115,7 @@ PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
 
-  bool isEqual = a->code == b->code;
+  bool isEqual = a->name == b->name && a->code == b->code;
 
   PF_ArbCompareResult result = isEqual ? PF_ArbCompare_EQUAL : PF_ArbCompare_NOT_EQUAL;
 
@@ -135,7 +137,10 @@ PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
-  *(extra->u.flat_size_func_params.flat_data_sizePLu) = (A_u_long)(isf->code.size() * sizeof(char));
+
+  A_u_long size = (A_u_long)(isf->name.size() + 1 + isf->code.size()) * sizeof(char);
+
+  *(extra->u.flat_size_func_params.flat_data_sizePLu) = size;
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.flat_size_func_params.arbH);
 
@@ -152,9 +157,17 @@ PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
   AEGP_SuiteHandler suites(in_data->pica_basicP);
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flatten_func_params.arbH));
-  void* dst = extra->u.flatten_func_params.flat_dataPV;
+  char* dst = (char*)extra->u.flatten_func_params.flat_dataPV;
 
-  memcpy(dst, isf->code.c_str(), isf->code.size() * sizeof(char));
+  auto nameSize = isf->name.size();
+  auto codeSize = isf->code.size();
+
+  memcpy(dst, isf->name.c_str(), nameSize * sizeof(char));
+
+  // Insert '\0' as a delimiter to split name and code
+  dst[nameSize] = '\0';
+
+  memcpy(dst + nameSize + 1, isf->code.c_str(), codeSize * sizeof(char));
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.flatten_func_params.arbH);
 
@@ -177,7 +190,16 @@ PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra*
 
   char* src = (char*)extra->u.unflatten_func_params.flat_dataPV;
 
-  isf->code = std::string(src, extra->u.unflatten_func_params.buf_sizeLu);
+  // Find an offset of '\0' to split name and code
+  uint32_t nameSize = 0;
+  for (nameSize = 0;; nameSize++) {
+    if (src[nameSize] == '\0')
+      break;
+  }
+
+  isf->name = std::string(src, nameSize * sizeof(char));
+  isf->code =
+      std::string(src + nameSize + 1, extra->u.unflatten_func_params.buf_sizeLu - (nameSize + 1) * sizeof(char));
 
   suites.HandleSuite1()->host_unlock_handle(arbH);
 

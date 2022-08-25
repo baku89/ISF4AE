@@ -144,21 +144,19 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
+  PF_ParamDef paramIsf;
+  AEFX_CLR_STRUCT(paramIsf);
+  ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale, &paramIsf));
+
+  auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
+
   // Set name of an effect instance as default file name
-  std::string effectName;
-  ERR(AEUtil::getEffectName(globalData->aegpId, in_data, &effectName));
+  std::string effectName = isf->name;
 
   // Then confirm a destination path and save it
   std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs");
 
   if (!err && !dstPath.empty()) {
-    PF_ParamDef paramIsf;
-    AEFX_CLR_STRUCT(paramIsf);
-    ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale,
-                          &paramIsf));
-
-    auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
-
     std::string isfCode = std::string(isf->code);
 
     if (isfCode.empty()) {
@@ -166,9 +164,9 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
     }
 
     SystemUtil::writeTextFile(dstPath, isfCode);
-
-    ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
   }
+
+  ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
