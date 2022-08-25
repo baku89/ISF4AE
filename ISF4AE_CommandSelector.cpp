@@ -491,15 +491,10 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   ERR(AEFX_AcquireSuite(in_data, out_data, kPFPointParamSuite, kPFPointParamSuiteVersion1, "Couldn't load suite.",
                         (void**)&pointSuite));
 
-  PF_WorldSuite2* wsP = nullptr;
-
   auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
-
-  // Setup wsP
-  ERR(AEFX_AcquireSuite(in_data, out_data, kPFWorldSuite, kPFWorldSuiteVersion2, "Couldn't load suite.", (void**)&wsP));
 
   // OpenGL
   if (!err) {
