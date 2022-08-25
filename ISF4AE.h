@@ -43,7 +43,6 @@ typedef unsigned short PixelType;
 /* Parameter defaults */
 
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
-#define ISFCODE_MAX_LEN 8192
 
 enum {
   Param_Input = 0,
@@ -95,7 +94,7 @@ typedef struct {
 } GlobalData;
 
 typedef struct {
-  A_char code[ISFCODE_MAX_LEN];
+  std::string code;
 } ParamArbIsf;
 
 struct ParamInfo {
@@ -108,7 +107,7 @@ struct ParamInfo {
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
-SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code);
+SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short format);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,

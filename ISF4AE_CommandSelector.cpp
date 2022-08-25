@@ -615,93 +615,85 @@ static PF_Err UserChangedParam(PF_InData* in_data,
         std::string isfCode = SystemUtil::readTextFile(srcPath);
 
         if (!isfCode.empty()) {
-          if (isfCode.size() < ISFCODE_MAX_LEN) {
-            params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+          params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
 
-            auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-            PF_STRCPY(isf->code, isfCode.c_str());
+          auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+          isf->code = isfCode;
 
-            // Set default values
-            auto* desc = getCompiledSceneDesc(globalData, isf->code);
+          // Set default values
+          auto* desc = getCompiledSceneDesc(globalData, isf->code);
 
-            int userParamIndex = 0;
+          int userParamIndex = 0;
 
-            for (auto& input : desc->scene->inputs()) {
-              if (!isISFAttrVisibleInECW(input)) {
-                continue;
+          for (auto& input : desc->scene->inputs()) {
+            if (!isISFAttrVisibleInECW(input)) {
+              continue;
+            }
+
+            auto userParamType = getUserParamTypeForISFAttr(input);
+            auto index = getIndexForUserParam(userParamIndex, userParamType);
+            auto& param = *params[index];
+
+            param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+
+            switch (userParamType) {
+              case UserParamType_Bool:
+                param.u.bd.dephault = input->defaultVal().getBoolVal();
+                break;
+
+              case UserParamType_Long: {
+                auto values = input->valArray();
+                auto dephaultVal = input->defaultVal().getLongVal();
+                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+
+                param.u.pd.value = dephaultIndex;
+                break;
               }
 
-              auto userParamType = getUserParamTypeForISFAttr(input);
-              auto index = getIndexForUserParam(userParamIndex, userParamType);
-              auto& param = *params[index];
+              case UserParamType_Float: {
+                double dephault = input->defaultVal().getDoubleVal();
 
-              param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
-
-              switch (userParamType) {
-                case UserParamType_Bool:
-                  param.u.bd.dephault = input->defaultVal().getBoolVal();
-                  break;
-
-                case UserParamType_Long: {
-                  auto values = input->valArray();
-                  auto dephaultVal = input->defaultVal().getLongVal();
-                  A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
-
-                  param.u.pd.value = dephaultIndex;
-                  break;
+                if (input->unit() == VVISF::ISFValUnit_Length) {
+                  dephault *= in_data->width;
+                } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                  dephault *= 100;
                 }
 
-                case UserParamType_Float: {
-                  double dephault = input->defaultVal().getDoubleVal();
-
-                  if (input->unit() == VVISF::ISFValUnit_Length) {
-                    dephault *= in_data->width;
-                  } else if (input->unit() == VVISF::ISFValUnit_Percent) {
-                    dephault *= 100;
-                  }
-
-                  param.u.fs_d.value = dephault;
-                  break;
-                }
-
-                case UserParamType_Angle: {
-                  double rad = input->defaultVal().getDoubleVal();
-                  param.u.ad.value = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
-                  break;
-                }
-
-                case UserParamType_Point2D: {
-                  auto x = input->defaultVal().getPointValByIndex(0);
-                  auto y = input->defaultVal().getPointValByIndex(1);
-
-                  param.u.td.x_value = FLOAT2FIX(x * in_data->width);
-                  param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
-                  break;
-                }
-
-                case UserParamType_Color: {
-                  auto dephault = input->defaultVal();
-
-                  param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
-                  param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
-                  param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
-                  param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
-                  break;
-                }
-
-                default:
-                  break;
+                param.u.fs_d.value = dephault;
+                break;
               }
 
-              userParamIndex++;
-            }  // End of for-each ISF's inputs
-          } else {
-            // In the case that the code is way too long
-            suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
-                                                  "The length of ISF code, %d characters, has to be shorter than %d.",
-                                                  isfCode.size(), ISFCODE_MAX_LEN);
-            out_data->out_flags = PF_OutFlag_DISPLAY_ERROR_MESSAGE;
-          }
+              case UserParamType_Angle: {
+                double rad = input->defaultVal().getDoubleVal();
+                param.u.ad.value = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
+                break;
+              }
+
+              case UserParamType_Point2D: {
+                auto x = input->defaultVal().getPointValByIndex(0);
+                auto y = input->defaultVal().getPointValByIndex(1);
+
+                param.u.td.x_value = FLOAT2FIX(x * in_data->width);
+                param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
+                break;
+              }
+
+              case UserParamType_Color: {
+                auto dephault = input->defaultVal();
+
+                param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
+                param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
+                param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
+                param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+                break;
+              }
+
+              default:
+                break;
+            }
+
+            userParamIndex++;
+          }  // End of for-each ISF's inputs
 
         } else {
           // On failed reading the text file, or simply it's empty

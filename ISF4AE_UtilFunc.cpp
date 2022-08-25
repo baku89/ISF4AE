@@ -61,7 +61,7 @@ bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
-SceneDesc* getCompiledSceneDesc(GlobalData* globalData, A_char* code) {
+SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code) {
   // Compile a shader at here to make sure to display the latest status
   auto& scenes = *globalData->scenes;
 
