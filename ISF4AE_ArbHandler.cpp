@@ -26,7 +26,7 @@ PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH*
   return PF_Err_NONE;
 }
 
-PF_Err NewArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err NewArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.new_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -38,7 +38,7 @@ PF_Err NewArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra
   return err;
 }
 
-PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.dispose_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -58,9 +58,9 @@ PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
   return err;
 }
 
-PF_Err CopyArb(PF_InData* in_data,
-               PF_OutData* out_data,
-               PF_ArbParamsExtra* extra) {  // const PF_ArbitraryH* srcP, PF_ArbitraryH* dstP) {
+static PF_Err CopyArb(PF_InData* in_data,
+                      PF_OutData* out_data,
+                      PF_ArbParamsExtra* extra) {
   if (extra->u.copy_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -93,7 +93,7 @@ PF_Err CopyArb(PF_InData* in_data,
   return err;
 }
 
-PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.copy_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -127,7 +127,7 @@ PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
   return err;
 }
 
-PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.flat_size_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -147,7 +147,7 @@ PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* 
   return err;
 }
 
-PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.flatten_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
@@ -174,7 +174,7 @@ PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
   return err;
 }
 
-PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
+static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.unflatten_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
