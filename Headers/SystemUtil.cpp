@@ -39,7 +39,7 @@ std::string openFileDialog(const std::vector<std::string>& fileTypes) {
 std::string saveFileDialog(const std::string& filename) {
   std::string path;
 
-  NSString* nsFilename = [NSString stringWithCString:filename.c_str() encoding:[NSString defaultCStringEncoding]];
+  NSString* nsFilename = [NSString stringWithCString:filename.c_str() encoding:NSUTF8StringEncoding];
 
   NSSavePanel* panel = [NSSavePanel savePanel];
   [panel setCanCreateDirectories:YES];
