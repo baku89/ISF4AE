@@ -33,19 +33,18 @@ static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* param
  */
 static PF_Err PopDialog(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
   PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  auto* globalData = reinterpret_cast<GlobalData*>(DH(out_data->global_data));
-  auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+  auto globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
-  auto* sceneDesc = getCompiledSceneDesc(globalData, isf->code);
+  seqData->showISFOption = !seqData->showISFOption;
 
-  std::string status = sceneDesc->status;
-  std::string errorLog = sceneDesc->errorLog;
+  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
+  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
 
-  const char* separator = errorLog.length() > 0 ? "\n---\n" : "";
-
-  PF_SPRINTF(out_data->return_msg, "Shader Status: %s%s%s", status.c_str(), separator, errorLog.c_str());
-  out_data->out_flags |= PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
 
   return err;
 }
@@ -156,10 +155,10 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   // Customize the name of the options button
   // Premiere Pro/Elements does not support this suite
   if (in_data->appl_id != 'PrMr') {
-    AEFX_SuiteScoper<PF_EffectUISuite1> effectUISuite =
+    auto effectUISuite =
         AEFX_SuiteScoper<PF_EffectUISuite1>(in_data, kPFEffectUISuite, kPFEffectUISuiteVersion1, out_data);
 
-    ERR(effectUISuite->PF_SetOptionsButtonName(in_data->effect_ref, "Show Error.."));
+    ERR(effectUISuite->PF_SetOptionsButtonName(in_data->effect_ref, "ISF Option.."));
   }
 
   PF_ParamDef def;
@@ -721,9 +720,12 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto* seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
   auto* desc = getCompiledSceneDesc(globalData, isf->code);
+
+  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
 
   // Set the shader status as a label for 'Edit Shader'
   std::string statusLabel = "ISF: " + desc->status;
@@ -871,6 +873,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   }
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
 
   return err;
 }
@@ -945,6 +948,63 @@ PF_Err EffectMain(PF_Cmd cmd,
       case PF_Cmd_ARBITRARY_CALLBACK:
         err = HandleArbitrary(in_data, out_data, params, output, reinterpret_cast<PF_ArbParamsExtra*>(extra));
         break;
+
+      case PF_Cmd_SEQUENCE_SETUP: {
+        FX_LOG("SEQUENCE_SETUP");
+
+        PF_Handle seqH = PF_NEW_HANDLE(sizeof(SequenceData));
+
+        auto* seq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(seqH));
+
+        seq->showISFOption = true;
+
+        out_data->sequence_data = seqH;
+
+        PF_UNLOCK_HANDLE(seqH);
+        break;
+      }
+
+      case PF_Cmd_SEQUENCE_FLATTEN: {
+        FX_LOG("SEQUENCE_FLATTEN");
+
+        auto unflatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(in_data->sequence_data));
+
+        PF_Handle flatSeqH = PF_NEW_HANDLE(sizeof(SequenceData));
+        auto flatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(flatSeqH));
+
+        flatSeq->showISFOption = unflatSeq->showISFOption;
+
+        PF_UNLOCK_HANDLE(flatSeqH);
+        PF_UNLOCK_HANDLE(in_data->sequence_data);
+
+        out_data->sequence_data = flatSeqH;
+        break;
+      }
+
+      case PF_Cmd_SEQUENCE_RESETUP: {
+        FX_LOG("SEQUENCE_RESETUP");
+
+        auto flatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(in_data->sequence_data));
+
+        PF_Handle unflatSeqH = PF_NEW_HANDLE(sizeof(SequenceData));
+        auto unflatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(unflatSeqH));
+
+        unflatSeq->showISFOption = flatSeq->showISFOption;
+
+        PF_UNLOCK_HANDLE(unflatSeqH);
+        PF_UNLOCK_HANDLE(in_data->sequence_data);
+
+        out_data->sequence_data = unflatSeqH;
+
+        break;
+      }
+
+      case PF_Cmd_SEQUENCE_SETDOWN: {
+        FX_LOG("SEQUENCE_SETDOWN");
+
+        PF_DISPOSE_HANDLE(in_data->sequence_data);
+        break;
+      }
 
       case PF_Cmd_SMART_PRE_RENDER:
         err = SmartPreRender(in_data, out_data, reinterpret_cast<PF_PreRenderExtra*>(extra));

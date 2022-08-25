@@ -96,6 +96,10 @@ typedef struct {
 } GlobalData;
 
 typedef struct {
+  A_Boolean showISFOption;
+} SequenceData;
+
+typedef struct {
   std::string code;
 } ParamArbIsf;
 
