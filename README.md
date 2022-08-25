@@ -3,7 +3,7 @@
   <br>
   <h1>ISF4AE - Interactive Shader Format for After Effects</h1>
   <br>
-  <img width="450" src="./README/screenshot.gif" />
+  <img src="./README/screenshot.gif" />
   <br>
   <br>
 </div>
@@ -12,7 +12,7 @@ After Effects plug-in to allow using a GLSL code written in [Interactive Shader 
 
 ---
 
-## Additional ISF specification
+## Additional ISF Specification
 
 Since ISF was originally designed for real-time purposes such as VJing, it has some issues that do not meet After Effects'charasteristics. This section describes how the plug-in interprets ISFs and works with After Effects. The following explanation assumes that you already understand [the specification of ISF](https://github.com/mrRay/ISF_Spec/).
 
@@ -35,7 +35,7 @@ Note that `"event"`, `"audio"`, and `"audioFFT"` are not yet supported currently
 - `"color"`: displayed as a color picker.
 - `"image"`: displayed as a layer reference input.
 
-### ISF Built-in uniforms
+### ISF Built-in Uniforms
 
 Here are how the plug-in determines ISF built-in uniforms' values:
 
@@ -45,14 +45,14 @@ Here are how the plug-in determines ISF built-in uniforms' values:
 | `TIMEDELTA`  | Always set to a value that equals to an expression `thisComp.frameDuration`                                                                                 |
 | `FRAMEINDEX` | Equivalent to `TIME / TIMEDELTA`, or `TIME * (fps)`.                                                                                                        |
 
-### Special uniforms
+### ISF4AE-specific Uniforms
 
 Inputs whose names begin with `i4a_` are reserved by the plug-in. When you define the inputs shown below, the plug-in automatically binds values that would be useful to access the status of the Preview panel from a shader.
 
-| `"NAME"`           | `"TYPE"` | Description                                                                                                                                                                                                                                         |
-| ------------------ | :------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `"i4a_Downsample"` |  `vec2`  | Downsampling factor in Preview panel. For instance, the value is set to `(0.5, 0.5)` in half resolution.                                                                                                                                            |
-| `"i4a_CustomUI"`   |  `bool`  | Set to `true` when the effect requests an image for Custom Comp UI, which is only visible when you click and focus the effect title in the Timeline / Effect Controls panel. The pass returned by a shader will be overlayed onto the result layer. |
+| `"NAME"`           | `"TYPE"` | Description                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | :------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"i4a_Downsample"` |  `vec2`  | Downsampling factor in Preview panel. For instance, the value is set to `(0.5, 0.5)` in half resolution.                                                                                                                                                                                                                                                                        |
+| `"i4a_CustomUI"`   |  `bool`  | Set to `true` when the effect requests an image for [Custom Comp UI](https://ae-plugins.docsforadobe.dev/effect-ui-events/effect-ui-events.html?highlight=custom%20comp%20ui#effect-ui-events), which is only visible when you click and focus the effect title in the Timeline / Effect Controls panel. The pass returned by a shader will be overlayed onto the result layer. |
 
 ---
 
