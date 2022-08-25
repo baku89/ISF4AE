@@ -37,7 +37,7 @@ PF_Err setParamVisibility(AEGP_PluginID aegpId,
                           PF_ParamDef* params[],
                           PF_ParamIndex index,
                           A_Boolean visible) {
-  PF_Err err = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   A_Boolean invisible = !visible;
@@ -62,9 +62,9 @@ PF_Err setParamVisibility(AEGP_PluginID aegpId,
   ERR(suites.DynamicStreamSuite4()->AEGP_SetDynamicStreamFlag(streamH, AEGP_DynStreamFlag_HIDDEN, FALSE, invisible));
 
   if (effectH)
-    ERR(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
+    ERR2(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
   if (streamH)
-    ERR(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
+    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
 
   return err;
 }
@@ -94,9 +94,9 @@ PF_Err setParamName(AEGP_PluginID aegpId,
   ERR(suites.DynamicStreamSuite4()->AEGP_SetStreamName(streamH, utf16Name));
 
   if (effectH)
-    ERR(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
+    ERR2(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
   if (streamH)
-    ERR(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
+    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
 
   return err;
 }
@@ -200,28 +200,33 @@ PF_Err getColorParam(PF_InData* in_data, PF_OutData* out_data, int paramIndex, P
 }
 
 static PF_Err getAEGPEffectStream(AEGP_PluginID aegpId, PF_InData* in_data, AEGP_StreamRefH* effectStreamH) {
-  PF_Err err = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   // https://ae-plugins.docsforadobe.dev/aegps/aegp-suites.html#streamrefs-and-effectrefs
-  AEGP_EffectRefH effectH = NULL;
-  AEGP_StreamRefH isfStreamH;
+  AEGP_EffectRefH effectH = nullptr;
+  AEGP_StreamRefH firstParamH = nullptr;
 
   ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(aegpId, in_data->effect_ref, &effectH));
 
   // Assumes the effect has at least one parameter whose index is 1.
-  ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(aegpId, effectH, 1, &isfStreamH));
+  ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(aegpId, effectH, 1, &firstParamH));
 
-  ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(aegpId, isfStreamH, effectStreamH));
+  ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(aegpId, firstParamH, effectStreamH));
+
+  if (effectH)
+    ERR2(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
+  if (firstParamH)
+    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(firstParamH));
 
   return err;
 }
 
 PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name) {
-  PF_Err err = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  AEGP_StreamRefH effectStreamH;
+  AEGP_StreamRefH effectStreamH = nullptr;
   ERR(getAEGPEffectStream(aegpId, in_data, &effectStreamH));
 
   A_char effectName[AEGP_MAX_ITEM_NAME_SIZE];
@@ -229,14 +234,17 @@ PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name
 
   *name = std::string(effectName);
 
+  if (effectStreamH)
+    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(effectStreamH));
+
   return err;
 }
 
 PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string& name) {
-  PF_Err err = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  AEGP_StreamRefH effectStreamH;
+  AEGP_StreamRefH effectStreamH = nullptr;
   ERR(getAEGPEffectStream(aegpId, in_data, &effectStreamH));
 
   A_UTF16Char* utf16Name;
@@ -247,6 +255,9 @@ PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string
   utf16Name = (A_UTF16Char*)wstr.c_str();
 
   ERR(suites.DynamicStreamSuite4()->AEGP_SetStreamName(effectStreamH, utf16Name));
+
+  if (effectStreamH)
+    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(effectStreamH));
 
   return err;
 }
