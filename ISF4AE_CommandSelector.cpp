@@ -244,8 +244,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
     PF_SPRINTF(name, "Long %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
-    PF_ADD_POPUP("", 4, 0, "Choice 1|Choice 2|Choice 3|Choice 4",
-                 getIndexForUserParam(userParamIndex, UserParamType_Long));
+    PF_ADD_POPUP("", 1, 0, "Choice", getIndexForUserParam(userParamIndex, UserParamType_Long));
 
     PF_SPRINTF(name, "Float %d", userParamIndex);
     AEFX_CLR_STRUCT(def);

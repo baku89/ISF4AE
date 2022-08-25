@@ -58,9 +58,7 @@ static PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   return err;
 }
 
-static PF_Err CopyArb(PF_InData* in_data,
-                      PF_OutData* out_data,
-                      PF_ArbParamsExtra* extra) {
+static PF_Err CopyArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
   if (extra->u.copy_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
