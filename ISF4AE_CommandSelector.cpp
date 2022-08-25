@@ -761,7 +761,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
 
   // Set the shader status as a label for 'Edit Shader'
   std::string statusLabel = "ISF: " + desc->status;
-  AEUtil::setParamName(in_data, params, Param_ISFGroupStart, statusLabel);
+  AEUtil::setParamName(globalData->aegpId, in_data, params, Param_ISFGroupStart, statusLabel);
 
   // Show the time parameters if the current shader is time dependant
   bool isTimeDependant = desc->scene->isTimeDependant();
@@ -889,7 +889,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         if (label.empty())
           label = input->name();
 
-        ERR(AEUtil::setParamName(in_data, params, index, label));
+        ERR(AEUtil::setParamName(globalData->aegpId, in_data, params, index, label));
       }
     }
 

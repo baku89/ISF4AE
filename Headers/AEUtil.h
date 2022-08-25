@@ -20,7 +20,11 @@ PF_Err setParamVisibility(AEGP_PluginID aegpId,
                           PF_ParamIndex index,
                           A_Boolean visible);
 
-PF_Err setParamName(PF_InData* in_data, PF_ParamDef* params[], PF_ParamIndex index, std::string& name);
+PF_Err setParamName(AEGP_PluginID aegpId,
+                    PF_InData* in_data,
+                    PF_ParamDef* params[],
+                    PF_ParamIndex index,
+                    std::string& name);
 
 // Getters for parameters
 PF_Err getPointParam(PF_InData* in_data, PF_OutData* out_data, int paramId, A_FloatPoint* value);
