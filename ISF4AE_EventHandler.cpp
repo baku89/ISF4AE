@@ -6,6 +6,7 @@
 #include <cmath>
 #include <string>
 
+#include "AEUtil.h"
 #include "Debug.h"
 #include "MiscUtil.h"
 
@@ -51,7 +52,7 @@ static DRAWBOT_UTF16Char* convertStringToUTF16Char(std::string line) {
   std::wstring lineWstr = std::wstring(line.begin(), line.end());
   DRAWBOT_UTF16Char* lineUTF16Char = new DRAWBOT_UTF16Char[lineWstr.length()];
 
-  copyConvertStringLiteralIntoUTF16(lineWstr.c_str(), lineUTF16Char);
+  AEUtil::copyConvertStringLiteralIntoUTF16(lineWstr.c_str(), lineUTF16Char);
 
   return lineUTF16Char;
 }

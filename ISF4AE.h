@@ -121,7 +121,6 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
                                                        const void* inCPUBackingPtr,
                                                        const VVGL::Size& inImageSizeInPixels,
                                                        const short bitdepth);
-void copyConvertStringLiteralIntoUTF16(const wchar_t* inputString, A_UTF16Char* destination);
 
 // Implemented in ISF4AE_ArbHandler.cpp
 PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH* dephault);
