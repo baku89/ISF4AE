@@ -1,5 +1,7 @@
 #include "MiscUtil.h"
 
+#include <filesystem>
+
 std::string joinWith(const std::vector<std::string>& texts, const std::string& delimiter) {
   std::stringstream ss;
 
@@ -36,4 +38,9 @@ void setBitFlag(int flag, bool value, int* target) {
   } else {
     *target &= ~flag;
   }
+}
+
+std::string getBasename(const std::string& path) {
+  std::filesystem::path p(path);
+  return p.stem();
 }

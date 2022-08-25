@@ -25,3 +25,5 @@ int findIndex(std::vector<T> vals, T target) {
 }
 
 void setBitFlag(int flag, bool value, int* target);
+
+std::string getBasename(const std::string& path);
