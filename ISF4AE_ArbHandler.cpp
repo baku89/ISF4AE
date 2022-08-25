@@ -16,6 +16,7 @@ PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH*
   }
 
   AEFX_CLR_STRUCT(*isf);
+  isf->name = "Default ISF4AE Shader";
   isf->code = "";
 
   *dephault = arbH;

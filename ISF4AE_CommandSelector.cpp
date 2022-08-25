@@ -123,7 +123,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   std::string resourcePath = AEUtil::getResourcesPath(in_data);
 
   globalData->defaultScene = VVISF::CreateISF4AESceneRef();
-  globalData->defaultScene->useFile(resourcePath + "shaders/default.fs");
+  globalData->defaultScene->useFile(resourcePath + "shaders/Default ISF4AE Shader.fs");
 
   globalData->ae2glScene = VVISF::CreateISF4AESceneRef();
   globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
