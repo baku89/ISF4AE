@@ -190,7 +190,6 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   // Add parameters
   AEFX_CLR_STRUCT(def);
-  def.flags |= PF_ParamFlag_START_COLLAPSED;
   PF_ADD_TOPIC("ISF Option", Param_ISFGroupStart);
 
   // A bidden arbitrary param for storing fragment strings
