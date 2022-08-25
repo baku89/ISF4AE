@@ -23,8 +23,33 @@
 static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg, "%s v%d.%d\r%s", CONFIG_NAME, MAJOR_VERSION,
-                                        MINOR_VERSION, CONFIG_DESCRIPTION);
+  auto globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+
+  auto desc = getCompiledSceneDesc(globalData, isf->code);
+  auto& doc = *desc->scene->doc();
+
+  std::stringstream ss;
+
+  ss << "ISF Information" << std::endl;
+  ss << "Name: " << doc.name() << std::endl;
+  ss << "Description: " << doc.description() << std::endl;
+  ss << "Credit: " << doc.credit() << std::endl;
+
+  ss << std::endl;
+
+  ss << "----------------" << std::endl;
+
+  ss << std::endl;
+
+  ss << "This effect is built with ISF4AE; Interactive Shader Format for After Effects ";
+  ss << "(v" << MAJOR_VERSION << "." << MINOR_VERSION << ")." << std::endl;
+  ss << "All of the source code is published at https://github.com/baku89/ISF4AE." << std::endl;
+
+  PF_STRCPY(out_data->return_msg, ss.str().c_str());
+
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+
   return PF_Err_NONE;
 }
 
