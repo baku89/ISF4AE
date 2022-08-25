@@ -664,7 +664,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
       scene.setBufferForInputNamed(isfImage, "inputImage");
 
       auto outputImage = createRGBATexWithBitdepth(outSize, bitdepth);
-      scene.VVGL::GLScene::renderToBuffer(outputImage);
+      scene.renderToBuffer(outputImage);
       auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
 
       char* glP = nullptr;  // OpenGL
