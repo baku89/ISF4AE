@@ -46,9 +46,11 @@ typedef unsigned short PixelType;
 
 enum {
   Param_Input = 0,
+  Param_ISFGroupStart,
   Param_ISF,
   Param_Edit,
   Param_Save,
+  Param_ISFGroupEnd,
   Param_UseLayerTime,
   Param_Time,
   Param_UserOffset

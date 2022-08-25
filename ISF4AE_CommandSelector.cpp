@@ -166,17 +166,20 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   PF_ParamDef def;
 
   // Add parameters
+  AEFX_CLR_STRUCT(def);
+  def.flags |= PF_ParamFlag_START_COLLAPSED;
+  PF_ADD_TOPIC("ISF Option", Param_ISFGroupStart);
 
   // A bidden arbitrary param for storing fragment strings
   AEFX_CLR_STRUCT(def);
   def.flags = PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE;
   ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
-  PF_ADD_ARBITRARY2("GLSL", 1, 1,  // width, height
+  PF_ADD_ARBITRARY2("ISF", 1, 1,  // width, height
                     0, PF_PUI_NO_ECW_UI | PF_PUI_INVISIBLE, def.u.arb_d.dephault, Param_ISF, ARB_REFCON);
 
   // "Edit Shader" button (also shows a shader compliation status)
   AEFX_CLR_STRUCT(def);
-  PF_ADD_BUTTON("No Shader Loaded",
+  PF_ADD_BUTTON("",
                 "Load Shader",           // BUTTON_NAME
                 PF_PUI_NONE,             // PUI_FLAGS
                 PF_ParamFlag_SUPERVISE,  // PARAM_FLAGS
@@ -189,6 +192,8 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                 PF_PUI_NONE,             // PUI_FLAGS
                 PF_ParamFlag_SUPERVISE,  // PARAM_FLAGS
                 Param_Save);             // ID
+
+  PF_END_TOPIC(Param_ISFGroupEnd);
 
   AEFX_CLR_STRUCT(def);
   PF_ADD_CHECKBOX("Use Layer Time",  // Label
@@ -721,7 +726,8 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   auto* desc = getCompiledSceneDesc(globalData, isf->code);
 
   // Set the shader status as a label for 'Edit Shader'
-  AEUtil::setParamName(in_data, params, Param_Edit, desc->status);
+  std::string statusLabel = "ISF: " + desc->status;
+  AEUtil::setParamName(in_data, params, Param_ISFGroupStart, statusLabel);
 
   // Show the time parameters if the current shader is time dependant
   bool isTimeDependant = desc->scene->isTimeDependant();
