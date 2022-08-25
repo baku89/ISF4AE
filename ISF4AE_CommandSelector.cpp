@@ -621,6 +621,9 @@ static PF_Err UserChangedParam(PF_InData* in_data,
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
           seqData->needsUpdateUserParamsUI = true;
 
+          std::string isfName = getBasename(srcPath);
+          AEUtil::setEffectName(globalData->aegpId, in_data, isfName);
+
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
           isf->code = isfCode;
 
