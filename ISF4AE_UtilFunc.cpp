@@ -1,6 +1,7 @@
 #include "ISF4AE.h"
 
 #include <regex>
+#include <sstream>
 
 #include "AEFX_SuiteHelper.h"
 
@@ -80,6 +81,20 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code)
 
   try {
     scene->useCode(code);
+
+    // Check if the number of inputs does not exceed the maximum
+    if (scene->inputs().size() > NumUserParams) {
+      std::map<std::string, std::string> errDict;
+
+      std::stringstream ss;
+      ss << "The number of inputs (" << scene->inputs().size() << ") exceeds the maximum number of supported inputs ("
+         << NumUserParams << ")";
+
+      errDict["ia4ErrLog"] = ss.str();
+
+      auto err = ISFErr(ISFErrType_ErrorLoading, "Invalid ISF", "", errDict);
+      throw err;
+    }
 
     auto* desc = new SceneDesc();
     desc->scene = scene;
