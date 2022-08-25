@@ -141,10 +141,7 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   // Save the current shader
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  AEFX_SuiteScoper<PF_HandleSuite1> handleSuite =
-      AEFX_SuiteScoper<PF_HandleSuite1>(in_data, kPFHandleSuite, kPFHandleSuiteVersion1, out_data);
-
-  auto* globalData = reinterpret_cast<GlobalData*>(handleSuite->host_lock_handle(in_data->global_data));
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
   // Set name of an effect instance as default file name
   // https://ae-plugins.docsforadobe.dev/aegps/aegp-suites.html#streamrefs-and-effectrefs
@@ -183,7 +180,7 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
     ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
   }
 
-  handleSuite->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return err;
 }

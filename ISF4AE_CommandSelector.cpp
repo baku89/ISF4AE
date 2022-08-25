@@ -65,8 +65,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
       PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS;
 
   // Initialize globalData
-  auto handleSuite = suites.HandleSuite1();
-  PF_Handle globalDataH = handleSuite->host_new_handle(sizeof(GlobalData));
+  PF_Handle globalDataH = suites.HandleSuite1()->host_new_handle(sizeof(GlobalData));
 
   if (!globalDataH) {
     return PF_Err_OUT_OF_MEMORY;
@@ -74,7 +73,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   out_data->global_data = globalDataH;
 
-  GlobalData* globalData = reinterpret_cast<GlobalData*>(handleSuite->host_lock_handle(globalDataH));
+  GlobalData* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(globalDataH));
 
   AEFX_CLR_STRUCT(*globalData);
 
@@ -116,7 +115,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   (*globalData->scenes)[""] = defaultSceneDesc;
 
-  handleSuite->host_unlock_handle(globalDataH);
+  suites.HandleSuite1()->host_unlock_handle(globalDataH);
 
   return err;
 }
@@ -131,8 +130,7 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
   if (in_data->global_data) {
     // Dispose globalData
     // TODO: Find a way not to call destructors explicitly
-    auto globalDataH = suites.HandleSuite1()->host_lock_handle(in_data->global_data);
-    auto* globalData = reinterpret_cast<GlobalData*>(globalDataH);
+    auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
     globalData->context->bind();
 
@@ -142,6 +140,7 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
 
     delete globalData->context;
 
+    suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
   }
   return err;
@@ -285,12 +284,10 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
 static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRenderExtra* extra) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   // Create paramInfo
-  AEFX_SuiteScoper<PF_HandleSuite1> handleSuite =
-      AEFX_SuiteScoper<PF_HandleSuite1>(in_data, kPFHandleSuite, kPFHandleSuiteVersion1, out_data);
-
-  PF_Handle paramInfoH = handleSuite->host_new_handle(sizeof(ParamInfo));
+  PF_Handle paramInfoH = suites.HandleSuite1()->host_new_handle(sizeof(ParamInfo));
 
   if (!paramInfoH) {
     return PF_Err_OUT_OF_MEMORY;
@@ -299,13 +296,12 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   // Set handler
   extra->output->pre_render_data = paramInfoH;
 
-  ParamInfo* paramInfo = reinterpret_cast<ParamInfo*>(handleSuite->host_lock_handle(paramInfoH));
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
 
   if (!paramInfo) {
     return PF_Err_OUT_OF_MEMORY;
   }
-
-  auto* globalData = reinterpret_cast<GlobalData*>(handleSuite->host_lock_handle(in_data->global_data));
 
   PF_ParamDef paramDef;
 
@@ -379,7 +375,8 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
   }
 
-  handleSuite->host_unlock_handle(paramInfoH);
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
   return err;
 }
@@ -395,16 +392,13 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   PF_WorldSuite2* wsP = nullptr;
 
-  // Retrieve paramInfo
-  auto handleSuite = suites.HandleSuite1();
+  auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
 
-  ParamInfo* paramInfo = reinterpret_cast<ParamInfo*>(
-      handleSuite->host_lock_handle(reinterpret_cast<PF_Handle>(extra->input->pre_render_data)));
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+  auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
 
   // Setup wsP
   ERR(AEFX_AcquireSuite(in_data, out_data, kPFWorldSuite, kPFWorldSuiteVersion2, "Couldn't load suite.", (void**)&wsP));
-
-  auto* globalData = reinterpret_cast<GlobalData*>(handleSuite->host_lock_handle(in_data->global_data));
 
   // OpenGL
   if (!err) {
@@ -595,6 +589,10 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   }  // End OpenGL
 
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  suites.HandleSuite1()->host_unlock_handle(paramInfoH);
+  suites.HandleSuite1()->host_dispose_handle(paramInfoH);
+
   ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite, kPFWorldSuiteVersion2, "Couldn't release suite."));
 
   return err;
@@ -712,6 +710,8 @@ static PF_Err UserChangedParam(PF_InData* in_data,
       saveISF(in_data, out_data);
       break;
   }
+
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return PF_Err_NONE;
 }
@@ -869,6 +869,8 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
       ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, index, false));
     }
   }
+
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return err;
 }

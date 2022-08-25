@@ -50,6 +50,7 @@ PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* e
 
   isf->code.clear();
 
+  suites.HandleSuite1()->host_unlock_handle(extra->u.dispose_func_params.arbH);
   suites.HandleSuite1()->host_dispose_handle(extra->u.dispose_func_params.arbH);
 
   return err;
