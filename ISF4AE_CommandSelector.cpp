@@ -170,6 +170,84 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
   return err;
 }
 
+static PF_Err SequenceSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  PF_Handle seqH = suites.HandleSuite1()->host_new_handle(sizeof(SequenceData));
+
+  if (!seqH) {
+    return PF_Err_OUT_OF_MEMORY;
+  }
+
+  auto* seq = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(seqH));
+
+  seq->showISFOption = true;
+
+  out_data->sequence_data = seqH;
+
+  suites.HandleSuite1()->host_unlock_handle(seqH);
+
+  return err;
+}
+
+static PF_Err SequenceFlatten(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  auto unflatSeq = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
+
+  PF_Handle flatSeqH = suites.HandleSuite1()->host_new_handle(sizeof(SequenceData));
+
+  if (!flatSeqH) {
+    return PF_Err_OUT_OF_MEMORY;
+  }
+
+  auto flatSeq = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(flatSeqH));
+
+  flatSeq->showISFOption = unflatSeq->showISFOption;
+
+  suites.HandleSuite1()->host_unlock_handle(flatSeqH);
+  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
+
+  out_data->sequence_data = flatSeqH;
+
+  return err;
+}
+
+static PF_Err SequenceRestart(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  auto flatSeq = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
+
+  PF_Handle unflatSeqH = suites.HandleSuite1()->host_new_handle(sizeof(SequenceData));
+
+  if (!unflatSeqH) {
+    return PF_Err_OUT_OF_MEMORY;
+  }
+
+  auto unflatSeq = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(unflatSeqH));
+
+  unflatSeq->showISFOption = flatSeq->showISFOption;
+
+  suites.HandleSuite1()->host_unlock_handle(unflatSeqH);
+  suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
+
+  out_data->sequence_data = unflatSeqH;
+
+  return err;
+}
+
+static PF_Err SequenceSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  suites.HandleSuite1()->host_dispose_handle(in_data->sequence_data);
+
+  return err;
+}
+
 /**
  * Describe your parameters and register them using PF_ADD_PARAM.
  */
@@ -979,62 +1057,21 @@ PF_Err EffectMain(PF_Cmd cmd,
         err = HandleArbitrary(in_data, out_data, params, output, reinterpret_cast<PF_ArbParamsExtra*>(extra));
         break;
 
-      case PF_Cmd_SEQUENCE_SETUP: {
-        FX_LOG("SEQUENCE_SETUP");
-
-        PF_Handle seqH = PF_NEW_HANDLE(sizeof(SequenceData));
-
-        auto* seq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(seqH));
-
-        seq->showISFOption = true;
-
-        out_data->sequence_data = seqH;
-
-        PF_UNLOCK_HANDLE(seqH);
+      case PF_Cmd_SEQUENCE_SETUP:
+        err = SequenceSetup(in_data, out_data, params, output);
         break;
-      }
 
-      case PF_Cmd_SEQUENCE_FLATTEN: {
-        FX_LOG("SEQUENCE_FLATTEN");
-
-        auto unflatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(in_data->sequence_data));
-
-        PF_Handle flatSeqH = PF_NEW_HANDLE(sizeof(SequenceData));
-        auto flatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(flatSeqH));
-
-        flatSeq->showISFOption = unflatSeq->showISFOption;
-
-        PF_UNLOCK_HANDLE(flatSeqH);
-        PF_UNLOCK_HANDLE(in_data->sequence_data);
-
-        out_data->sequence_data = flatSeqH;
+      case PF_Cmd_SEQUENCE_FLATTEN:
+        err = SequenceFlatten(in_data, out_data, params, output);
         break;
-      }
 
-      case PF_Cmd_SEQUENCE_RESETUP: {
-        FX_LOG("SEQUENCE_RESETUP");
-
-        auto flatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(in_data->sequence_data));
-
-        PF_Handle unflatSeqH = PF_NEW_HANDLE(sizeof(SequenceData));
-        auto unflatSeq = reinterpret_cast<SequenceData*>(PF_LOCK_HANDLE(unflatSeqH));
-
-        unflatSeq->showISFOption = flatSeq->showISFOption;
-
-        PF_UNLOCK_HANDLE(unflatSeqH);
-        PF_UNLOCK_HANDLE(in_data->sequence_data);
-
-        out_data->sequence_data = unflatSeqH;
-
+      case PF_Cmd_SEQUENCE_RESETUP:
+        err = SequenceRestart(in_data, out_data, params, output);
         break;
-      }
 
-      case PF_Cmd_SEQUENCE_SETDOWN: {
-        FX_LOG("SEQUENCE_SETDOWN");
-
-        PF_DISPOSE_HANDLE(in_data->sequence_data);
+      case PF_Cmd_SEQUENCE_SETDOWN:
+        err = SequenceSetdown(in_data, out_data, params, output);
         break;
-      }
 
       case PF_Cmd_SMART_PRE_RENDER:
         err = SmartPreRender(in_data, out_data, reinterpret_cast<PF_PreRenderExtra*>(extra));
