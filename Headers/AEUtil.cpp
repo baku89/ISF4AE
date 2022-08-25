@@ -1,5 +1,7 @@
 #include "AEUtil.h"
 
+#include <codecvt>
+
 #include "AEConfig.h"
 #include "AE_EffectCB.h"
 
@@ -176,6 +178,58 @@ PF_Err getColorParam(PF_InData* in_data, PF_OutData* out_data, int paramIndex, P
   ERR(suites.ColorParamSuite1()->PF_GetFloatingPointColorFromColorDef(in_data->effect_ref, &paramDef, value));
 
   ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
+
+  return err;
+}
+
+static PF_Err getAEGPEffectStream(AEGP_PluginID aegpId, PF_InData* in_data, AEGP_StreamRefH* effectStreamH) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  // https://ae-plugins.docsforadobe.dev/aegps/aegp-suites.html#streamrefs-and-effectrefs
+  AEGP_EffectRefH effectH = NULL;
+  AEGP_StreamRefH isfStreamH;
+
+  ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(aegpId, in_data->effect_ref, &effectH));
+
+  // Assumes the effect has at least one parameter whose index is 1.
+  ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(aegpId, effectH, 1, &isfStreamH));
+
+  ERR(suites.DynamicStreamSuite4()->AEGP_GetNewParentStreamRef(aegpId, isfStreamH, effectStreamH));
+
+  return err;
+}
+
+PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  AEGP_StreamRefH effectStreamH;
+  ERR(getAEGPEffectStream(aegpId, in_data, &effectStreamH));
+
+  A_char effectName[AEGP_MAX_ITEM_NAME_SIZE];
+  ERR(suites.StreamSuite2()->AEGP_GetStreamName(effectStreamH, FALSE, effectName));
+
+  *name = std::string(effectName);
+
+  return err;
+}
+
+PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string& name) {
+  PF_Err err = PF_Err_NONE;
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  AEGP_StreamRefH effectStreamH;
+  ERR(getAEGPEffectStream(aegpId, in_data, &effectStreamH));
+
+  A_UTF16Char* utf16Name;
+
+  std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+  std::u16string wstr = converter.from_bytes(name.c_str());
+
+  utf16Name = (A_UTF16Char*)wstr.c_str();
+
+  ERR(suites.DynamicStreamSuite4()->AEGP_SetStreamName(effectStreamH, utf16Name));
 
   return err;
 }

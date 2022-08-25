@@ -30,4 +30,8 @@ PF_Err getFloatSliderParam(PF_InData* in_data, PF_OutData* out_data, int paramId
 PF_Err getCheckboxParam(PF_InData* in_data, PF_OutData* out_data, int paramId, PF_Boolean* value);
 PF_Err getColorParam(PF_InData* in_data, PF_OutData* out_data, int paramIndex, PF_PixelFloat* value);
 
+// AEGP utils
+PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name);
+PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string& name);
+
 }  // namespace AEUtil
