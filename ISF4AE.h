@@ -97,7 +97,6 @@ typedef struct {
 
 typedef struct {
   bool showISFOption;
-  bool needsUpdateUserParamsUI;
 } SequenceData;
 
 typedef struct {
