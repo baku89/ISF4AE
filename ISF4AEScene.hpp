@@ -3,7 +3,9 @@
 #include <VVISF.hpp>
 #include <map>
 #include <regex>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 
 using namespace VVGL;
 using namespace VVISF;
@@ -22,8 +24,31 @@ class ISF4AEScene : public ISFScene {
   void useCode(const std::string code) {
     auto doc = VVISF::CreateISFDocRefWith(code);
     useDoc(doc);
+
+    // Check if there's a redifinition of inputs with same name.
+    // this should precede the shader compilation since GLSL also raises redifinition error.
+    std::unordered_set<std::string> inputNames;
+    for (auto& input : inputs()) {
+      std::string name = input->name();
+      if (inputNames.find(name) != inputNames.end()) {
+        std::map<std::string, std::string> errDict;
+
+        std::stringstream ss;
+        ss << "Input redifinition: \"" << name << "\".";
+
+        errDict["ia4ErrLog"] = ss.str();
+
+        auto err = ISFErr(ISFErrType_ErrorLoading, "Invalid uniform", "", errDict);
+        throw err;
+      }
+
+      inputNames.insert(name);
+    }
+
+    // Then complie
     compileProgramIfNecessary();
 
+    // Throw GLSL errors
     if (_errDict.size() > 0) {
       auto err = ISFErr(ISFErrType_ErrorCompilingGLSL, "Shader Problem", "", _errDict);
       throw err;
