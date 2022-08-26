@@ -478,15 +478,11 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
-  FX_LOG("SmartPreRender");
-
   return err;
 }
 
 static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRenderExtra* extra) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
-
-  FX_LOG("SmartRender");
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
@@ -495,6 +491,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   globalData->context->bind();
 
   auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
+
   auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
 
   auto bitdepth = extra->input->bitdepth;
@@ -553,6 +550,13 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   // Check-in output pixels
   PF_EffectWorld* outputWorld = nullptr;
   ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
+
+  // Bind special uniforms reserved for ISF4AE
+  VVISF::ISFVal i4aDownsample =
+      VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den,
+                    (float)in_data->downsample_y.num / in_data->downsample_y.den);
+  scene->setValueForInputNamed(i4aDownsample, "i4a_Downsample");
+  scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, false), "i4a_CustomUI");
 
   // Render
   VVGL::GLBufferRef outputImageCPU = nullptr;

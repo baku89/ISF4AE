@@ -269,6 +269,10 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
     PF_ParamIndex userParamIndex = 0;
 
     for (auto input : scene.inputs()) {
+      if (!isISFAttrVisibleInECW(input)) {
+        continue;
+      }
+
       auto isfType = input->type();
       auto& name = input->name();
       auto userParamType = getUserParamTypeForISFAttr(input);
@@ -311,15 +315,10 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         }
         case UserParamType_Point2D: {
           A_FloatPoint point;
-          if (name == "i4a_Downsample") {
-            point.x = (float)in_data->downsample_x.num / in_data->downsample_x.den;
-            point.y = (float)in_data->downsample_y.num / in_data->downsample_y.den;
-          } else {
-            ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
-            // Should be converted to normalized and vertically-flipped coordinate
-            point.x = point.x / outSize.width;
-            point.y = 1.0 - point.y / outSize.height;
-          }
+          ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
+          // Should be converted to normalized and vertically-flipped coordinate
+          point.x = point.x / outSize.width;
+          point.y = 1.0 - point.y / outSize.height;
           val = new VVISF::ISFVal(isfType, point.x, point.y);
           break;
         }
@@ -329,10 +328,6 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
           val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
           break;
         }
-        case UserParamType_Image:
-          // Assumes layer inputs are already bounded by callee, so do nothing.
-          break;
-
         default:
           FX_LOG("Invalid ISFValType.");
           break;
@@ -342,9 +337,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         scene.setValueForInputNamed(*val, input->name());
       }
 
-      if (isISFAttrVisibleInECW(input)) {
-        userParamIndex++;
-      }
+      userParamIndex++;
     }  // End of for each ISF->inputs
 
     // Then, render it!

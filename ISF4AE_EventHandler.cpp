@@ -86,49 +86,58 @@ static PF_Err DrawEvent(PF_InData* in_data,
   auto* globalData = reinterpret_cast<GlobalData*>(DH(out_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
   auto* sceneDesc = getCompiledSceneDesc(globalData, isf->code);
+  auto* scene = sceneDesc->scene.get();
 
-  // Retrieve the app's UI constants
-  DRAWBOT_ColorRGBA foregroundColor, shadowColor, redColor;
-  A_LPoint shadowOffset;
+  // Determine if any Custom Comp UI should be rendered
+  bool doRenderErrorLog = !sceneDesc->errorLog.empty();
+  bool doRenderCustomUI = scene->inputNamed("i4a_CustomUI") != nullptr;
 
-  if (in_data->appl_id != 'PrMr') {
-    // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
-    ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredForegroundColor(&foregroundColor));
-    ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredShadowColor(&shadowColor));
-    ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredShadowOffset(&shadowOffset));
+  bool doRenderAny = doRenderErrorLog || doRenderCustomUI;
 
-  } else {
-    foregroundColor = {0.9f, 0.9f, 0.9f, 1.0f};
-    shadowColor = {0.0, 0.0, 0.0, 0.2};
-    redColor = {0.9f, 0.0, 0.0, 1.0};
-    shadowOffset.x = -1;
-    shadowOffset.y = +1;
-  }
+  if (!err && doRenderAny) {
+    // Retrieve the app's UI constants
+    DRAWBOT_ColorRGBA foregroundColor, shadowColor, redColor;
+    A_LPoint shadowOffset;
+    float strokeWidth, vertexSize;
 
-  redColor = foregroundColor;
-  redColor.green = 0;
-  redColor.blue = 0;
+    if (in_data->appl_id != 'PrMr') {
+      // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
+      ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredForegroundColor(&foregroundColor));
+      ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredShadowColor(&shadowColor));
+      ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredShadowOffset(&shadowOffset));
+      ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredStrokeWidth(&strokeWidth));
+      ERR(suites.EffectCustomUIOverlayThemeSuite1()->PF_GetPreferredVertexSize(&vertexSize));
 
-  // Show error log
-  if (!err && !sceneDesc->errorLog.empty()) {
-    DRAWBOT_SupplierRef supplierRef = NULL;
+    } else {
+      foregroundColor = {0.9f, 0.9f, 0.9f, 1.0f};
+      shadowColor = {0.0, 0.0, 0.0, 0.2};
+      redColor = {0.9f, 0.0, 0.0, 1.0};
+      shadowOffset.x = -1;
+      shadowOffset.y = +1;
+    }
 
-    DRAWBOT_BrushRef redBrushRef = NULL, shadowBrushRef = NULL;
-    DRAWBOT_FontRef fontRef = NULL, largeFontRef = NULL;
+    redColor = foregroundColor;
+    redColor.green = 0;
+    redColor.blue = 0;
+
     float fontSize = 10.0;
     float largeFontScale = 1.5f;
     float padding = 3.0f;
 
-    DRAWBOT_PointF32 origin = {padding, padding};
-
     auto layer2FrameXform = getLayer2FrameXform(in_data, extra);
 
+    // Setup Drawbot objects
+    DRAWBOT_PointF32 origin = {padding, padding};
+    DRAWBOT_SupplierRef supplierRef = NULL;
+    DRAWBOT_BrushRef redBrushRef = NULL, shadowBrushRef = NULL;
+    DRAWBOT_FontRef fontRef = NULL, largeFontRef = NULL;
+
     // Always set the scale to one regardless viewport zoom
-    float zoom = hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
-    layer2FrameXform.mat[0][0] /= zoom;
-    layer2FrameXform.mat[0][1] /= zoom;
-    layer2FrameXform.mat[1][0] /= zoom;
-    layer2FrameXform.mat[1][1] /= zoom;
+    // float zoom = hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
+    // layer2FrameXform.mat[0][0] /= zoom;
+    // layer2FrameXform.mat[0][1] /= zoom;
+    // layer2FrameXform.mat[1][0] /= zoom;
+    // layer2FrameXform.mat[1][1] /= zoom;
 
     ERR(drawbotSuites.drawbot_suiteP->GetSupplier(drawingRef, &supplierRef));
     ERR(drawbotSuites.supplier_suiteP->NewBrush(supplierRef, &redColor, &redBrushRef));
@@ -138,63 +147,105 @@ static PF_Err DrawEvent(PF_InData* in_data,
     ERR(drawbotSuites.supplier_suiteP->NewDefaultFont(supplierRef, fontSize * largeFontScale, &largeFontRef));
 
     // Start Transform
-    ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
-    ERR(drawbotSuites.surface_suiteP->Transform(surfaceRef, &layer2FrameXform));
     {
-      // Print the type of error with larger font
-      origin.y += fontSize * largeFontScale;
+      ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
+      ERR(drawbotSuites.surface_suiteP->Transform(surfaceRef, &layer2FrameXform));
 
-      origin.x += shadowOffset.x;
-      origin.y += shadowOffset.y;
-
-      auto* status = convertStringToUTF16Char(sceneDesc->status);
-      ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, largeFontRef, &status[0], &origin,
-                                                   kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
-
-      origin.x -= shadowOffset.x;
-      origin.y -= shadowOffset.y;
-
-      ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, largeFontRef, &status[0], &origin,
-                                                   kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
-
-      delete[] status;
-
-      origin.y += padding * 2;
-
-      // Print error log for each line
-      for (auto& line : splitWith(sceneDesc->errorLog, "\n")) {
-        origin.y += fontSize + padding;
-
-        auto* lineUTF16Char = convertStringToUTF16Char(line);
+      if (doRenderErrorLog) {
+        // Print the type of error with larger font
+        origin.y += fontSize * largeFontScale;
 
         origin.x += shadowOffset.x;
         origin.y += shadowOffset.y;
 
-        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, fontRef, &lineUTF16Char[0], &origin,
+        auto* status = convertStringToUTF16Char(sceneDesc->status);
+        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, largeFontRef, &status[0], &origin,
                                                      kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
 
         origin.x -= shadowOffset.x;
         origin.y -= shadowOffset.y;
 
-        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, fontRef, &lineUTF16Char[0], &origin,
+        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, largeFontRef, &status[0], &origin,
                                                      kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
 
-        delete[] lineUTF16Char;
-      }
-    }
-    // End Transform
-    ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
+        delete[] status;
+
+        origin.y += padding * 2;
+
+        // Print error log for each line
+        for (auto& line : splitWith(sceneDesc->errorLog, "\n")) {
+          origin.y += fontSize + padding;
+
+          auto* lineUTF16Char = convertStringToUTF16Char(line);
+
+          origin.x += shadowOffset.x;
+          origin.y += shadowOffset.y;
+
+          ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, fontRef, &lineUTF16Char[0], &origin,
+                                                       kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None,
+                                                       0.0f));
+
+          origin.x -= shadowOffset.x;
+          origin.y -= shadowOffset.y;
+
+          ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, fontRef, &lineUTF16Char[0], &origin,
+                                                       kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None,
+                                                       0.0f));
+
+          delete[] lineUTF16Char;
+        }
+      } /* End doRenderErrorLog */
+
+      if (doRenderCustomUI) {
+        VVGL::Size outSize = {in_data->width, in_data->height};
+
+        // Bind special uniforms reserved for ISF4AE
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, 1.0, 1.0), "i4a_Downsample");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, true), "i4a_CustomUI");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, foregroundColor.red, foregroundColor.green,
+                                                   foregroundColor.blue, foregroundColor.alpha),
+                                     "i4a_UIForegroundColor");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, shadowColor.red, shadowColor.green,
+                                                   shadowColor.blue, shadowColor.alpha),
+                                     "i4a_UIShadowColor");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, shadowOffset.x, shadowOffset.y),
+                                     "i4a_UIShadowOffset");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, strokeWidth), "i4a_UIStrokeWidth");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, vertexSize), "i4a_UIVertexSize");
+
+        // Prepare output buffer
+        short bitdepth = 8;
+        VVGL::GLBufferRef overlayImage = nullptr;
+        ERR(renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, outSize, &overlayImage));
+
+        if (overlayImage) {
+          DRAWBOT_ImageRef imageRef = nullptr;
+          drawbotSuites.supplier_suiteP->NewImageFromBuffer(
+              supplierRef, outSize.width, outSize.height, overlayImage->calculateBackingBytesPerRow(),
+              kDRAWBOT_PixelLayout_32ARGB_Straight, overlayImage->cpuBackingPtr, &imageRef);
+
+          // Render
+          float opacity = 1.0f;
+          origin.x = 0;
+          origin.y = 0;
+          ERR(suites.SurfaceSuiteCurrent()->DrawImage(surfaceRef, imageRef, &origin, opacity));
+
+          ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)imageRef));
+        }
+      } /* End doRenderCustomUI */
+      ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
+    } /* End Transform */
 
     // Release drawbot objects
     ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)redBrushRef));
     ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)shadowBrushRef));
     ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)fontRef));
     ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)largeFontRef));
-  }
 
-  AEFX_ReleaseDrawbotSuites(in_data, out_data);
+    AEFX_ReleaseDrawbotSuites(in_data, out_data);
+    extra->evt_out_flags = PF_EO_HANDLED_EVENT;
 
-  extra->evt_out_flags = PF_EO_HANDLED_EVENT;
+  } /* End doRenderSomething */
 
   return err;
 }
