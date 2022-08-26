@@ -15,7 +15,6 @@
 #include <iostream>
 
 #define GL_SILENCE_DEPRECATION
-#define PI 3.14159265358979323846
 
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple
@@ -479,217 +478,106 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
+  FX_LOG("SmartPreRender");
+
   return err;
 }
 
 static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRenderExtra* extra) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
 
+  FX_LOG("SmartRender");
+
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  PF_PointParamSuite1* pointSuite;
-  ERR(AEFX_AcquireSuite(in_data, out_data, kPFPointParamSuite, kPFPointParamSuiteVersion1, "Couldn't load suite.",
-                        (void**)&pointSuite));
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+  globalData->context->bind();
 
   auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
-
-  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
 
-  // OpenGL
-  if (!err) {
-    globalData->context->bind();
+  auto bitdepth = extra->input->bitdepth;
+  auto pixelBytes = bitdepth * 4 / 8;
+  auto& scene = paramInfo->scene;
 
-    auto bitdepth = extra->input->bitdepth;
-    auto pixelBytes = bitdepth * 4 / 8;
-    VVGL::Size& outSize = paramInfo->outSize;
+  // It has to be done by callee to bind all of layer inputs, before calling renderISFToCPUBuffer
+  int userParamIndex = 0;
+  for (auto& input : paramInfo->scene->inputs()) {
+    if (input->type() == VVISF::ISFValType_Image) {
+      auto& name = input->name();
 
-    // In After Effects, 16-bit pixel doesn't use the highest bit, and thus each channel ranges 0x0000 - 0x8000.
-    // So after passing pixel buffer to GPU, it should be scaled by (0xffff / 0x8000) to normalize the luminance to
-    // 0.0-1.0.
-    VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float, bitdepth == 16 ? (65535.0f / 32768.0f) : 1.0f);
-    globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
-    globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
+      const bool isInputImage = name == "inputImage";
+      PF_ParamIndex paramIndex = isInputImage ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
 
-    // Render ISF
-    auto isfImage = createRGBATexWithBitdepth(outSize, bitdepth);
-    {
-      auto& scene = *paramInfo->scene;
+      PF_LayerDef* layerDef = nullptr;
 
-      // Assign time-related variables
-      double fps = in_data->time_scale / in_data->local_time_step;
-      double time = 0;
+      ERR(extra->cb->checkout_layer_pixels(in_data->effect_ref, paramIndex, &layerDef));
 
-      PF_Boolean useLayerTime = false;
-      ERR(AEUtil::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+      if (layerDef != nullptr) {
+        VVGL::Size imageSize(layerDef->width, layerDef->height);
+        VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
+        VVGL::Size& outImageSize = paramInfo->inputImageSizes[userParamIndex];
 
-      if (useLayerTime) {
-        time = (double)in_data->current_time / in_data->time_scale;
-      } else {
-        ERR(AEUtil::getFloatSliderParam(in_data, out_data, Param_Time, &time));
+        VVGL::GLBufferRef inputImageAECPU =
+            createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
+
+        auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
+
+        // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
+        glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, layerDef->origin_x, layerDef->origin_y);
+
+        globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
+        globalData->ae2glScene->setValueForInputNamed(origin, "origin");
+
+        VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
+
+        globalData->ae2glScene->renderToBuffer(inputImage);
+
+        scene->setBufferForInputNamed(inputImage, name);
       }
 
-      scene.setRenderFrameIndex(time * fps);
-      scene.setRenderTimeDelta(1.0 / fps);
-
-      // Assign user-defined parameters
-      PF_ParamIndex userParamIndex = 0;
-
-      for (auto input : scene.inputs()) {
-        auto isfType = input->type();
-        auto& name = input->name();
-        auto userParamType = getUserParamTypeForISFAttr(input);
-        bool isInputImage = name == "inputImage";
-        auto paramIndex = isInputImage ? Param_Input : getIndexForUserParam(userParamIndex, userParamType);
-
-        VVISF::ISFVal* val = nullptr;
-
-        switch (userParamType) {
-          case UserParamType_Bool: {
-            PF_Boolean v = false;
-            ERR(AEUtil::getCheckboxParam(in_data, out_data, paramIndex, &v));
-            val = new VVISF::ISFVal(isfType, v);
-            break;
-          }
-          case UserParamType_Long: {
-            A_long v = 0;
-            ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &v));
-            val = new VVISF::ISFVal(isfType, v - 1);  // current begins from 1
-            break;
-          }
-          case UserParamType_Float: {
-            A_FpLong v = 0.0;
-            ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
-
-            if (input->unit() == VVISF::ISFValUnit_Length) {
-              v /= outSize.width;
-            } else if (input->unit() == VVISF::ISFValUnit_Percent) {
-              v /= 100;
-            }
-
-            val = new VVISF::ISFVal(isfType, v);
-            break;
-          }
-          case UserParamType_Angle: {
-            A_FpLong v = 0.0;
-            AEUtil::getAngleParam(in_data, out_data, paramIndex, &v);
-            v = (-v + 90.0) * (PI / 180.0);
-            val = new VVISF::ISFVal(isfType, v);
-            break;
-          }
-          case UserParamType_Point2D: {
-            A_FloatPoint point;
-            if (name == "i4a_Downsample") {
-              point.x = (float)in_data->downsample_x.num / in_data->downsample_x.den;
-              point.y = (float)in_data->downsample_y.num / in_data->downsample_y.den;
-            } else {
-              ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
-              // Should be converted to normalized and vertically-flipped coordinate
-              point.x = point.x / outSize.width;
-              point.y = 1.0 - point.y / outSize.height;
-            }
-            val = new VVISF::ISFVal(isfType, point.x, point.y);
-            break;
-          }
-          case UserParamType_Color: {
-            PF_PixelFloat color;
-            ERR(AEUtil::getColorParam(in_data, out_data, paramIndex, &color));
-            val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
-            break;
-          }
-          case UserParamType_Image: {
-            PF_LayerDef* imagePixels = nullptr;
-            ERR((extra->cb->checkout_layer_pixels(in_data->effect_ref, paramIndex, &imagePixels)));
-
-            // imagePixels will be staying null when the parameter has set to empty.
-            if (imagePixels != nullptr) {
-              VVGL::Size imageSize(imagePixels->width, imagePixels->height);
-              VVGL::Size bufferSizeInPixel(imagePixels->rowbytes / pixelBytes, imageSize.height);
-              VVGL::Size& outImageSize = paramInfo->inputImageSizes[userParamIndex];
-
-              VVGL::GLBufferRef inputImageAECPU =
-                  createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, imagePixels->data, imageSize, bitdepth);
-
-              auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
-
-              ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, paramIndex));
-
-              // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
-              glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
-              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-              glBindTexture(GL_TEXTURE_2D, 0);
-
-              auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, imagePixels->origin_x, imagePixels->origin_y);
-
-              globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-              globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-
-              VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
-
-              globalData->ae2glScene->renderToBuffer(inputImage);
-
-              scene.setBufferForInputNamed(inputImage, name);
-            }
-
-            break;
-          }
-
-          default:
-            FX_LOG("Invalid ISFValType.");
-            break;
-        }
-
-        if (val != nullptr) {
-          scene.setValueForInputNamed(*val, input->name());
-        }
-
-        if (isISFAttrVisibleInECW(input)) {
-          userParamIndex++;
-        }
-      }  // End of for each ISF->inputs
-
-      // Then, render it!
-      scene.renderToBuffer(isfImage, outSize, time);
+      ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, paramIndex));
     }
 
-    // Download the result of ISF
-    PF_EffectWorld* output_worldP = nullptr;
-    ERR(extra->cb->checkout_output(in_data->effect_ref, &output_worldP));
-
-    if (output_worldP != nullptr && output_worldP->width <= in_data->width &&
-        output_worldP->height <= in_data->height) {
-      auto& scene = *globalData->gl2aeScene;
-
-      scene.setBufferForInputNamed(isfImage, "inputImage");
-
-      auto outputImage = createRGBATexWithBitdepth(outSize, bitdepth);
-      scene.renderToBuffer(outputImage);
-      auto outputImageCPU = globalData->context->downloader->downloadTexToCPU(outputImage);
-
-      char* glP = nullptr;  // OpenGL
-      char* aeP = nullptr;  // AE
-
-      auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
-
-      // Copy per row
-      for (size_t y = 0; y < outSize.height; y++) {
-        glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
-        aeP = (char*)output_worldP->data + y * output_worldP->rowbytes;
-        std::memcpy(aeP, glP, outSize.width * pixelBytes);
-      }
+    if (isISFAttrVisibleInECW(input)) {
+      userParamIndex++;
     }
+  }
 
-    // VVGL: Release any old buffer
-    VVGL::GetGlobalBufferPool()->housekeeping();
+  // Check-in output pixels
+  PF_EffectWorld* outputWorld = nullptr;
+  ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
 
-  }  // End OpenGL
+  // Render
+  VVGL::GLBufferRef outputImageCPU = nullptr;
+  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, &outputImageCPU);
 
-  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+  // Download
+  if (outputWorld != nullptr && outputImageCPU != nullptr && outputWorld->width <= in_data->width &&
+      outputWorld->height <= in_data->height) {
+    char* glP = nullptr;  // Pointer offset for OpenGL buffer
+    char* aeP = nullptr;  // for AE's layerDef
+
+    auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+
+    // Copy per row
+    for (size_t y = 0; y < paramInfo->outSize.height; y++) {
+      glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
+      aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
+      std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
+    }
+  }
+
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
   suites.HandleSuite1()->host_dispose_handle(paramInfoH);
 
-  ERR2(AEFX_ReleaseSuite(in_data, out_data, kPFWorldSuite, kPFWorldSuiteVersion2, "Couldn't release suite."));
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return err;
 }

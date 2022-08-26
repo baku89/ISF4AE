@@ -6,6 +6,7 @@
 #include "AEFX_SuiteHelper.h"
 
 #include "AEUtil.h"
+#include "Debug.h"
 #include "SystemUtil.h"
 
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
@@ -220,4 +221,149 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
     default:
       throw std::invalid_argument("Invalid bitdepth");
   }
+}
+
+/**
+ * Renders ISF scene to CPU buffer. It's used at SmartRender() and DrawEvent(), and assuming image inputs are already
+ * bounded by the callees.
+ */
+PF_Err renderISFToCPUBuffer(PF_InData* in_data,
+                            PF_OutData* out_data,
+                            ISF4AEScene& scene,
+                            short bitdepth,
+                            VVGL::Size& outSize,
+                            VVGL::GLBufferRef* outBuffer) {
+  PF_Err err = PF_Err_NONE;
+
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+  // In After Effects, 16-bit pixel doesn't use the highest bit, and thus each channel ranges 0x0000 - 0x8000.
+  // So after passing pixel buffer to GPU, it should be scaled by (0xffff / 0x8000) to normalize the luminance to
+  // 0.0-1.0.
+  VVISF::ISFVal multiplier16bit(VVISF::ISFValType_Float, bitdepth == 16 ? (65535.0f / 32768.0f) : 1.0f);
+  globalData->ae2glScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
+  globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
+
+  // Render ISF
+  auto isfImage = createRGBATexWithBitdepth(outSize, bitdepth);
+  {
+    // Assign time-related variables
+    double fps = in_data->time_scale / in_data->local_time_step;
+    double time = 0;
+
+    PF_Boolean useLayerTime = false;
+    ERR(AEUtil::getCheckboxParam(in_data, out_data, Param_UseLayerTime, &useLayerTime));
+
+    if (useLayerTime) {
+      time = (double)in_data->current_time / in_data->time_scale;
+    } else {
+      ERR(AEUtil::getFloatSliderParam(in_data, out_data, Param_Time, &time));
+    }
+
+    scene.setRenderFrameIndex(time * fps);
+    scene.setRenderTimeDelta(1.0 / fps);
+
+    // Assign user-defined parameters
+    PF_ParamIndex userParamIndex = 0;
+
+    for (auto input : scene.inputs()) {
+      auto isfType = input->type();
+      auto& name = input->name();
+      auto userParamType = getUserParamTypeForISFAttr(input);
+      auto paramIndex = getIndexForUserParam(userParamIndex, userParamType);
+
+      VVISF::ISFVal* val = nullptr;
+
+      switch (userParamType) {
+        case UserParamType_Bool: {
+          PF_Boolean v = false;
+          ERR(AEUtil::getCheckboxParam(in_data, out_data, paramIndex, &v));
+          val = new VVISF::ISFVal(isfType, v);
+          break;
+        }
+        case UserParamType_Long: {
+          A_long v = 0;
+          ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &v));
+          val = new VVISF::ISFVal(isfType, v - 1);  // current begins from 1
+          break;
+        }
+        case UserParamType_Float: {
+          A_FpLong v = 0.0;
+          ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+
+          if (input->unit() == VVISF::ISFValUnit_Length) {
+            v /= outSize.width;
+          } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+            v /= 100;
+          }
+
+          val = new VVISF::ISFVal(isfType, v);
+          break;
+        }
+        case UserParamType_Angle: {
+          A_FpLong v = 0.0;
+          AEUtil::getAngleParam(in_data, out_data, paramIndex, &v);
+          v = (-v + 90.0) * (PI / 180.0);
+          val = new VVISF::ISFVal(isfType, v);
+          break;
+        }
+        case UserParamType_Point2D: {
+          A_FloatPoint point;
+          if (name == "i4a_Downsample") {
+            point.x = (float)in_data->downsample_x.num / in_data->downsample_x.den;
+            point.y = (float)in_data->downsample_y.num / in_data->downsample_y.den;
+          } else {
+            ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
+            // Should be converted to normalized and vertically-flipped coordinate
+            point.x = point.x / outSize.width;
+            point.y = 1.0 - point.y / outSize.height;
+          }
+          val = new VVISF::ISFVal(isfType, point.x, point.y);
+          break;
+        }
+        case UserParamType_Color: {
+          PF_PixelFloat color;
+          ERR(AEUtil::getColorParam(in_data, out_data, paramIndex, &color));
+          val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
+          break;
+        }
+        case UserParamType_Image:
+          // Assumes layer inputs are already bounded by callee, so do nothing.
+          break;
+
+        default:
+          FX_LOG("Invalid ISFValType.");
+          break;
+      }
+
+      if (val != nullptr) {
+        scene.setValueForInputNamed(*val, input->name());
+      }
+
+      if (isISFAttrVisibleInECW(input)) {
+        userParamIndex++;
+      }
+    }  // End of for each ISF->inputs
+
+    // Then, render it!
+    scene.renderToBuffer(isfImage, outSize, time);
+  }
+
+  // Download the result of ISF
+  auto& gl2aeScene = *globalData->gl2aeScene;
+
+  gl2aeScene.setBufferForInputNamed(isfImage, "inputImage");
+
+  auto outputImage = createRGBATexWithBitdepth(outSize, bitdepth);
+  gl2aeScene.renderToBuffer(outputImage);
+
+  (*outBuffer) = globalData->context->downloader->downloadTexToCPU(outputImage);
+
+  // Release resources
+  VVGL::GetGlobalBufferPool()->housekeeping();
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+
+  return err;
 }

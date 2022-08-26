@@ -40,10 +40,11 @@ typedef unsigned short PixelType;
 #include "ISF4AEScene.hpp"
 #include "OGL.h"
 
-/* Parameter defaults */
-
+// Magic numbers
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
+#define PI 3.14159265358979323846
 
+// Parameter indices
 enum {
   Param_Input = 0,
   Param_ISFGroupStart,
@@ -121,6 +122,12 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
                                                        const void* inCPUBackingPtr,
                                                        const VVGL::Size& inImageSizeInPixels,
                                                        const short bitdepth);
+PF_Err renderISFToCPUBuffer(PF_InData* in_data,
+                            PF_OutData* out_data,
+                            ISF4AEScene& scene,
+                            short bitdepth,
+                            VVGL::Size& outSize,
+                            VVGL::GLBufferRef* outBuffer);
 
 // Implemented in ISF4AE_ArbHandler.cpp
 PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH* dephault);
