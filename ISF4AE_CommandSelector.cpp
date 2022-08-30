@@ -536,6 +536,13 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
         globalData->ae2glScene->renderToBuffer(inputImage);
 
+        // Though ISF specs does not specify the wrap mode of texture, set it to CLAMP_TO_EDGE to match with online ISF
+        // editor's behavior.
+        glBindTexture(GL_TEXTURE_2D, inputImage->name);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         scene->setBufferForInputNamed(inputImage, name);
       }
 
