@@ -272,10 +272,10 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   // A bidden arbitrary param for storing fragment strings
   AEFX_CLR_STRUCT(def);
-  def.flags = PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE;
   ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
   PF_ADD_ARBITRARY2("ISF", 1, 1,  // width, height
-                    0, PF_PUI_NO_ECW_UI | PF_PUI_INVISIBLE, def.u.arb_d.dephault, Param_ISF, ARB_REFCON);
+                    0, PF_PUI_NO_ECW_UI | PF_PUI_INVISIBLE | PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE,
+                    def.u.arb_d.dephault, Param_ISF, ARB_REFCON);
 
   // "Edit Shader" button (also shows a shader compliation status)
   AEFX_CLR_STRUCT(def);
