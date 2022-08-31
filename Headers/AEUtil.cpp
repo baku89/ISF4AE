@@ -74,29 +74,40 @@ PF_Err setParamName(AEGP_PluginID aegpId,
                     PF_ParamDef* params[],
                     PF_ParamIndex index,
                     std::string& name) {
-  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE;  //, err2 = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  AEGP_EffectRefH effectH = nullptr;
-  AEGP_StreamRefH streamH = nullptr;
+  // AEGP_EffectRefH effectH = nullptr;
+  // AEGP_StreamRefH streamH = nullptr;
 
-  ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(aegpId, in_data->effect_ref, &effectH));
-  ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(aegpId, effectH, index, &streamH));
+  // ERR(suites.PFInterfaceSuite1()->AEGP_GetNewEffectForEffect(aegpId, in_data->effect_ref, &effectH));
+  // ERR(suites.StreamSuite5()->AEGP_GetNewEffectStreamByIndex(aegpId, effectH, index, &streamH));
 
-  A_UTF16Char* utf16Name;
+  // A_UTF16Char* utf16Name;
 
-  std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-  std::u16string wstr = converter.from_bytes(name.c_str());
+  // std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+  // std::u16string wstr = converter.from_bytes(name.c_str());
 
-  utf16Name = (A_UTF16Char*)wstr.c_str();
+  // utf16Name = (A_UTF16Char*)wstr.c_str();
 
-  ERR(suites.DynamicStreamSuite4()->AEGP_SetStreamName(streamH, utf16Name));
+  // TODO: Support unicode string. Using AEGP's SetStreamName pushes unnnecessary unco stack, so temporarily make it
+  // support only ASCII characters.
+  PF_ParamDef newParam;
 
-  if (effectH)
-    ERR2(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
-  if (streamH)
-    ERR2(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
+  AEFX_CLR_STRUCT(newParam);
+  newParam = *params[index];
+
+  PF_STRCPY(newParam.name, name.c_str());
+
+  ERR(suites.ParamUtilsSuite3()->PF_UpdateParamUI(in_data->effect_ref, index, &newParam));
+
+  // ERR(suites.DynamicStreamSuite4()->AEGP_SetStreamName(streamH, utf16Name));
+
+  // if (effectH)
+  //   ERR2(suites.EffectSuite4()->AEGP_DisposeEffect(effectH));
+  // if (streamH)
+  //   ERR2(suites.StreamSuite5()->AEGP_DisposeStream(streamH));
 
   return err;
 }
