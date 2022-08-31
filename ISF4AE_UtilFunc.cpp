@@ -275,7 +275,6 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
       }
 
       auto isfType = input->type();
-      auto& name = input->name();
       auto userParamType = getUserParamTypeForISFAttr(input);
       auto paramIndex = getIndexForUserParam(userParamIndex, userParamType);
 
