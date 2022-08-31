@@ -567,7 +567,8 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   // Render
   VVGL::GLBufferRef outputImageCPU = nullptr;
-  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, &outputImageCPU);
+  VVGL::Size pointScale = {1.0, 1.0};
+  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, pointScale, &outputImageCPU);
 
   // Download
   if (outputWorld != nullptr && outputImageCPU != nullptr && outputWorld->width <= in_data->width &&

@@ -232,6 +232,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
                             ISF4AEScene& scene,
                             short bitdepth,
                             VVGL::Size& outSize,
+                            VVGL::Size& pointScale,
                             VVGL::GLBufferRef* outBuffer) {
   PF_Err err = PF_Err_NONE;
 
@@ -316,6 +317,11 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         case UserParamType_Point2D: {
           A_FloatPoint point;
           ERR(AEUtil::getPointParam(in_data, out_data, paramIndex, &point));
+          // Since the above getter returns a coordinate considering downsampling, it requries to be compensated
+          // inversely to render an image for Custom Comp UI
+          point.x *= pointScale.width;
+          point.y *= pointScale.height;
+
           // Should be converted to normalized and vertically-flipped coordinate
           point.x = point.x / outSize.width;
           point.y = 1.0 - point.y / outSize.height;

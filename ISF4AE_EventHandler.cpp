@@ -131,13 +131,19 @@ static PF_Err DrawEvent(PF_InData* in_data,
     DRAWBOT_SupplierRef supplierRef = NULL;
     DRAWBOT_BrushRef redBrushRef = NULL, shadowBrushRef = NULL;
     DRAWBOT_FontRef fontRef = NULL, largeFontRef = NULL;
+    DRAWBOT_Rect32 clipRect;
 
     // Always set the scale to one regardless viewport zoom
-    // float zoom = hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
-    // layer2FrameXform.mat[0][0] /= zoom;
-    // layer2FrameXform.mat[0][1] /= zoom;
-    // layer2FrameXform.mat[1][0] /= zoom;
-    // layer2FrameXform.mat[1][1] /= zoom;
+    double zoom = hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
+    layer2FrameXform.mat[0][0] /= zoom;
+    layer2FrameXform.mat[0][1] /= zoom;
+    layer2FrameXform.mat[1][0] /= zoom;
+    layer2FrameXform.mat[1][1] /= zoom;
+
+    clipRect.top = 0;
+    clipRect.left = 0;
+    clipRect.width = in_data->width * zoom;
+    clipRect.height = in_data->height * zoom;
 
     ERR(drawbotSuites.drawbot_suiteP->GetSupplier(drawingRef, &supplierRef));
     ERR(drawbotSuites.supplier_suiteP->NewBrush(supplierRef, &redColor, &redBrushRef));
@@ -148,8 +154,13 @@ static PF_Err DrawEvent(PF_InData* in_data,
 
     // Start Transform
     {
+      // Apply a transform
       ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
       ERR(drawbotSuites.surface_suiteP->Transform(surfaceRef, &layer2FrameXform));
+
+      // Apply a clip
+      ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
+      suites.SurfaceSuiteCurrent()->Clip(surfaceRef, supplierRef, &clipRect);
 
       if (doRenderErrorLog) {
         // Print the type of error with larger font
@@ -197,10 +208,10 @@ static PF_Err DrawEvent(PF_InData* in_data,
       } /* End doRenderErrorLog */
 
       if (doRenderCustomUI) {
-        VVGL::Size outSize = {in_data->width, in_data->height};
+        VVGL::Size outSize = {clipRect.width, clipRect.height};
 
         // Bind special uniforms reserved for ISF4AE
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, 1.0, 1.0), "i4a_Downsample");
+        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, zoom, zoom), "i4a_Downsample");
         scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, true), "i4a_CustomUI");
         scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, foregroundColor.red, foregroundColor.green,
                                                    foregroundColor.blue, foregroundColor.alpha),
@@ -216,7 +227,11 @@ static PF_Err DrawEvent(PF_InData* in_data,
         // Prepare output buffer
         short bitdepth = 8;
         VVGL::GLBufferRef overlayImage = nullptr;
-        ERR(renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, outSize, &overlayImage));
+        VVGL::Size pointScale;
+        pointScale.width = zoom * (double)in_data->downsample_x.den / in_data->downsample_x.num;
+        pointScale.height = zoom * (double)in_data->downsample_y.den / in_data->downsample_y.num;
+
+        ERR(renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, outSize, pointScale, &overlayImage));
 
         if (overlayImage) {
           DRAWBOT_ImageRef imageRef = nullptr;
@@ -233,6 +248,8 @@ static PF_Err DrawEvent(PF_InData* in_data,
           ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)imageRef));
         }
       } /* End doRenderCustomUI */
+      // Pop clipping & transofrm stacks
+      ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
       ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
     } /* End Transform */
 

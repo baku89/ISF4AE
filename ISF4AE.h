@@ -127,6 +127,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
                             ISF4AEScene& scene,
                             short bitdepth,
                             VVGL::Size& outSize,
+                            VVGL::Size& pointScale,
                             VVGL::GLBufferRef* outBuffer);
 
 // Implemented in ISF4AE_ArbHandler.cpp
