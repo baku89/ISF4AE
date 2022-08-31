@@ -333,6 +333,9 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
           val = new VVISF::ISFVal(isfType, color.red, color.green, color.blue, color.alpha);
           break;
         }
+        case UserParamType_Image:
+          // Assumes the image has already bounded
+          break;
         default:
           FX_LOG("Invalid ISFValType.");
           break;
