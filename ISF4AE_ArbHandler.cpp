@@ -92,7 +92,7 @@ static PF_Err CopyArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtr
 }
 
 static PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
-  if (extra->u.copy_func_params.refconPV != ARB_REFCON) {
+  if (extra->u.compare_func_params.refconPV != ARB_REFCON) {
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
 
