@@ -81,12 +81,13 @@ This plug-in has been published under an MIT License. See the included [LICENSE 
 
 ## Similar Projects
 
-- [PixelsWorld](https://aescripts.com/pixelsworld/): Scripting environment that supports Lua, GLSL, and shadertoy.com.
+- [PixelsWorld](https://aescripts.com/pixelsworld/): Scripting environment supporting Lua, GLSL, and shadertoy.com.
 - [Pixel Blender Accelator](https://aescripts.com/pixel-bender-accelerator/): A plug-in to run [Pixel Blender](https://en.wikipedia.org/wiki/Adobe_Pixel_Bender), a shader format supported in Adobe products previously, in modern versions of AE.
 - [AE-GLSL](https://github.com/cryo9/AE-GLSL): Working-in-progress repository by [cryo9](https://github.com/cryo9), which hinted me how to interoperate OpenGL and After Effects SDK.
+- [AE_tl_math](https://github.com/crazylafo/AE_tl_math): an plug-in project which allows users to write math expression for each pixels, or GLSL shaders. It also bundles a nice pane to edit and update code in realtime.
 
 ## Acknowledgments
 
-- [mizt](https://github.com/mizt), [0b5vr](https://0b5vr.com): They gave me many advices for handling AESDK/OpenGL.
-
+- [mizt](https://github.com/mizt): One of the visual artists having an ability to buidl a plug-in for After Effects. We've traded lots of tips on AESDK.
+- [0b5vr](https://0b5vr.com): He also gave me many advices for handling OpenGL.
 - [Patricio Gonzalez Vivo](https://github.com/patriciogonzalezvivo): One of my reason for being hooked on shaders is his cool project [The Book of Shaders](http://thebookofshaders.com). This plug-in once aimed to support the format of [its editor](http://editor.thebookofshaders.com/).
