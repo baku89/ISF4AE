@@ -83,10 +83,9 @@ static PF_Err DrawEvent(PF_InData* in_data,
 
   ERR(suites.DrawbotSuiteCurrent()->GetSurface(drawingRef, &surfaceRef));
 
-  auto* globalData = reinterpret_cast<GlobalData*>(DH(out_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-  auto* sceneDesc = getCompiledSceneDesc(globalData, isf->code);
-  auto* scene = sceneDesc->scene.get();
+  auto sceneDesc = isf->desc;
+  auto scene = sceneDesc->scene;
 
   // Determine if any Custom Comp UI should be rendered
   bool doRenderErrorLog = !sceneDesc->errorLog.empty();

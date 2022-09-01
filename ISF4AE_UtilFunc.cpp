@@ -64,17 +64,17 @@ bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
-SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code) {
+std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code) {
   if (code.empty()) {
-    return globalData->notLoadedSceneDesc.get();
+    return globalData->notLoadedSceneDesc;
   }
 
   // Compile a shader at here to make sure to display the latest status
   auto& scenes = *globalData->scenes;
 
-  if (scenes.find(code) != scenes.end()) {
+  if (scenes.has(code)) {
     // Use cache
-    return scenes[code];
+    return scenes.get(code);
   }
 
   // Compile new shader if not exists
@@ -83,6 +83,8 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code)
   auto scene = VVISF::CreateISF4AESceneRef();
   scene->setThrowExceptions(true);
   scene->setManualTime(true);
+
+  auto desc = std::make_shared<SceneDesc>();
 
   try {
     scene->useCode(code);
@@ -101,15 +103,11 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code)
       throw err;
     }
 
-    auto* desc = new SceneDesc();
     desc->scene = scene;
     desc->status = "Compiled Successfully";
 
-    scenes[code] = desc;
-
   } catch (VVISF::ISFErr isfErr) {
     // On Failed, format and save the risen error.
-    auto* desc = new SceneDesc();
     desc->scene = globalData->defaultScene;
     desc->status = isfErr.getTypeString();
     desc->errorLog = "";
@@ -142,18 +140,16 @@ SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code)
       }
     }
 
-    scenes[code] = desc;
-
   } catch (...) {
     auto* desc = new SceneDesc();
     desc->scene = globalData->defaultScene;
     desc->status = "Unknown Error";
     desc->errorLog = "";
-
-    scenes[code] = desc;
   }
 
-  return scenes[code];
+  scenes.set(code, desc);
+
+  return desc;
 }
 
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
@@ -161,8 +157,6 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
 
   // Save the current shader
   AEGP_SuiteHandler suites(in_data->pica_basicP);
-
-  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
   PF_ParamDef paramIsf;
   AEFX_CLR_STRUCT(paramIsf);
@@ -177,15 +171,12 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs");
 
   if (!err && !dstPath.empty()) {
-    auto* desc = getCompiledSceneDesc(globalData, isf->code);
-    std::string isfCode = desc->scene->getFragCode();
+    std::string isfCode = isf->desc->scene->getFragCode();
 
     SystemUtil::writeTextFile(dstPath, isfCode);
   }
 
   ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
-
-  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return err;
 }

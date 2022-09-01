@@ -23,10 +23,9 @@
 static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
-  auto globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
 
-  auto desc = getCompiledSceneDesc(globalData, isf->code);
+  auto desc = isf->desc;
   auto& doc = *desc->scene->doc();
 
   std::stringstream ss;
@@ -47,8 +46,6 @@ static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* param
   ss << "All of the source code is published at https://github.com/baku89/ISF4AE." << std::endl;
 
   PF_STRCPY(out_data->return_msg, ss.str().c_str());
-
-  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return PF_Err_NONE;
 }
@@ -131,7 +128,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRef();
   globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
 
-  globalData->scenes = new std::unordered_map<std::string, SceneDesc*>();
+  globalData->scenes = new WeakMap<std::string, SceneDesc>();
 
   auto notLoadedSceneDesc = std::make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
@@ -160,10 +157,6 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     globalData->gl2aeScene = nullptr;
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
-
-    for (auto& it : *globalData->scenes) {
-      delete it.second;
-    }
 
     delete globalData->scenes;
 
@@ -401,7 +394,6 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   // Set handler
   extra->output->pre_render_data = paramInfoH;
 
-  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
 
   if (!paramInfo) {
@@ -419,7 +411,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     auto* isf = reinterpret_cast<ParamArbIsf*>(*paramDef.u.arb_d.value);
 
     if (isf) {
-      auto desc = getCompiledSceneDesc(globalData, isf->code);
+      auto desc = isf->desc;
 
       paramInfo->scene = desc->scene.get();
     }
@@ -480,7 +472,6 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
   }
 
-  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
   return err;
@@ -623,12 +614,12 @@ static PF_Err UserChangedParam(PF_InData* in_data,
 
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
           isf->name = getBasename(srcPath);
-          isf->code = isfCode;
+          isf->desc = getCompiledSceneDesc(globalData, isfCode);
 
           ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isf->name));
 
           // Set default values
-          auto* desc = getCompiledSceneDesc(globalData, isf->code);
+          auto desc = isf->desc;
 
           int userParamIndex = 0;
 
@@ -728,7 +719,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   auto* seqData = reinterpret_cast<SequenceData*>(suites.HandleSuite1()->host_lock_handle(in_data->sequence_data));
 
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-  auto* desc = getCompiledSceneDesc(globalData, isf->code);
+  auto desc = isf->desc;
 
   // Toggle the visibility of ISF options
   ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));

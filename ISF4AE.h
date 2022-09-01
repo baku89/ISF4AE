@@ -39,6 +39,7 @@ typedef unsigned short PixelType;
 
 #include "ISF4AEScene.hpp"
 #include "OGL.h"
+#include "WeakMap.hpp"
 
 // Magic numbers
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
@@ -94,7 +95,7 @@ struct GlobalData {
   OGL::GlobalContext* context;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   std::shared_ptr<SceneDesc> notLoadedSceneDesc;
-  std::unordered_map<std::string, SceneDesc*>* scenes;
+  WeakMap<std::string, SceneDesc>* scenes;
 };
 
 struct SequenceData {
@@ -103,7 +104,7 @@ struct SequenceData {
 
 struct ParamArbIsf {
   std::string name;
-  std::string code;
+  std::shared_ptr<SceneDesc> desc;
 };
 
 struct ParamInfo {
@@ -116,7 +117,7 @@ struct ParamInfo {
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
-SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
+std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short format);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,

@@ -9,6 +9,7 @@ PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH*
     return PF_Err_OUT_OF_MEMORY;
   }
 
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(arbH));
 
   if (!isf) {
@@ -17,11 +18,12 @@ PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH*
 
   AEFX_CLR_STRUCT(*isf);
   isf->name = "Default ISF4AE Shader";
-  isf->code = "";
+  isf->desc = globalData->notLoadedSceneDesc;
 
   *dephault = arbH;
 
   suites.HandleSuite1()->host_unlock_handle(arbH);
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return PF_Err_NONE;
 }
@@ -50,7 +52,7 @@ static PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.dispose_func_params.arbH));
 
   isf->name.clear();
-  isf->code.clear();
+  isf->desc = nullptr;
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.dispose_func_params.arbH);
   suites.HandleSuite1()->host_dispose_handle(extra->u.dispose_func_params.arbH);
@@ -83,7 +85,7 @@ static PF_Err CopyArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtr
   }
 
   dstIsf->name = srcIsf->name;
-  dstIsf->code = srcIsf->code;
+  dstIsf->desc = srcIsf->desc;
 
   suites.HandleSuite1()->host_unlock_handle(srcH);
   suites.HandleSuite1()->host_unlock_handle(dstH);
@@ -113,7 +115,7 @@ static PF_Err CompareArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
     return PF_Err_INTERNAL_STRUCT_DAMAGED;
   }
 
-  bool isEqual = a->name == b->name && a->code == b->code;
+  bool isEqual = a->name == b->name && a->desc.get() == b->desc.get();
 
   PF_ArbCompareResult result = isEqual ? PF_ArbCompare_EQUAL : PF_ArbCompare_NOT_EQUAL;
 
@@ -136,7 +138,8 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
 
-  A_u_long size = (A_u_long)(isf->name.size() + 1 + isf->code.size()) * sizeof(char);
+  std::string code = isf->desc->scene->getFragCode();
+  A_u_long size = (A_u_long)(isf->name.size() + 1 + code.size()) * sizeof(char);
 
   *(extra->u.flat_size_func_params.flat_data_sizePLu) = size;
 
@@ -157,15 +160,16 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flatten_func_params.arbH));
   char* dst = (char*)extra->u.flatten_func_params.flat_dataPV;
 
+  std::string code = isf->desc->scene->getFragCode();
   auto nameSize = isf->name.size();
-  auto codeSize = isf->code.size();
+  auto codeSize = code.size();
 
   memcpy(dst, isf->name.c_str(), nameSize * sizeof(char));
 
   // Insert '\0' as a delimiter to split name and code
   dst[nameSize] = '\0';
 
-  memcpy(dst + nameSize + 1, isf->code.c_str(), codeSize * sizeof(char));
+  memcpy(dst + nameSize + 1, code.c_str(), codeSize * sizeof(char));
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.flatten_func_params.arbH);
 
@@ -184,6 +188,7 @@ static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParam
   PF_Handle arbH = *extra->u.unflatten_func_params.arbPH;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(arbH));
 
   char* src = (char*)extra->u.unflatten_func_params.flat_dataPV;
@@ -196,10 +201,12 @@ static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParam
   }
 
   isf->name = std::string(src, nameSize * sizeof(char));
-  isf->code =
+  auto code =
       std::string(src + nameSize + 1, extra->u.unflatten_func_params.buf_sizeLu - (nameSize + 1) * sizeof(char));
+  isf->desc = getCompiledSceneDesc(globalData, code);
 
   suites.HandleSuite1()->host_unlock_handle(arbH);
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
   return err;
 }
