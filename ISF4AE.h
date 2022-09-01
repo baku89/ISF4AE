@@ -83,27 +83,27 @@ static const uint32_t NumUserParams = 16;
 
 static const uint32_t NumParams = Param_UserOffset + NumUserParams * NumUserParamType;
 
-typedef struct {
+struct SceneDesc {
   VVISF::ISF4AESceneRef scene;
   std::string status;
   std::string errorLog;
-} SceneDesc;
+};
 
-typedef struct {
+struct GlobalData {
   AEGP_PluginID aegpId;
   OGL::GlobalContext* context;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   std::unordered_map<std::string, SceneDesc*>* scenes;
-} GlobalData;
+};
 
-typedef struct {
+struct SequenceData {
   bool showISFOption;
-} SequenceData;
+};
 
-typedef struct {
+struct ParamArbIsf {
   std::string name;
   std::string code;
-} ParamArbIsf;
+};
 
 struct ParamInfo {
   VVISF::ISF4AEScene* scene;
