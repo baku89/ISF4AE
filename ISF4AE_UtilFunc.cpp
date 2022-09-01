@@ -290,7 +290,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
           ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
 
           if (input->unit() == VVISF::ISFValUnit_Length) {
-            v /= outSize.width;
+            v /= in_data->width;
           } else if (input->unit() == VVISF::ISFValUnit_Percent) {
             v /= 100;
           }
