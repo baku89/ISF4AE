@@ -133,11 +133,11 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   globalData->scenes = new std::unordered_map<std::string, SceneDesc*>();
 
-  auto defaultSceneDesc = new SceneDesc();
-  defaultSceneDesc->status = "Not Loaded";
-  defaultSceneDesc->scene = globalData->defaultScene;
+  auto notLoadedSceneDesc = std::make_shared<SceneDesc>();
+  notLoadedSceneDesc->status = "Not Loaded";
+  notLoadedSceneDesc->scene = globalData->defaultScene;
 
-  (*globalData->scenes)[""] = defaultSceneDesc;
+  globalData->notLoadedSceneDesc = notLoadedSceneDesc;
 
   suites.HandleSuite1()->host_unlock_handle(globalDataH);
 

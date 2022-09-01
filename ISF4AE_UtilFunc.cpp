@@ -65,6 +65,10 @@ bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
  * It will be called at UpdateParameterUI and PreRender.
  */
 SceneDesc* getCompiledSceneDesc(GlobalData* globalData, const std::string& code) {
+  if (code.empty()) {
+    return globalData->notLoadedSceneDesc.get();
+  }
+
   // Compile a shader at here to make sure to display the latest status
   auto& scenes = *globalData->scenes;
 
@@ -173,11 +177,8 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs");
 
   if (!err && !dstPath.empty()) {
-    std::string isfCode = std::string(isf->code);
-
-    if (isfCode.empty()) {
-      isfCode = globalData->defaultScene->getFragCode();
-    }
+    auto* desc = getCompiledSceneDesc(globalData, isf->code);
+    std::string isfCode = desc->scene->getFragCode();
 
     SystemUtil::writeTextFile(dstPath, isfCode);
   }

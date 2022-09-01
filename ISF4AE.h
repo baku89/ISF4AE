@@ -93,6 +93,7 @@ struct GlobalData {
   AEGP_PluginID aegpId;
   OGL::GlobalContext* context;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
+  std::shared_ptr<SceneDesc> notLoadedSceneDesc;
   std::unordered_map<std::string, SceneDesc*>* scenes;
 };
 
