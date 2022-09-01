@@ -3,7 +3,6 @@
 #include <adobesdk/DrawbotSuite.h>
 #include "AEFX_SuiteHelper.h"
 
-#include <cmath>
 #include <string>
 
 #include "AEUtil.h"
@@ -133,7 +132,7 @@ static PF_Err DrawEvent(PF_InData* in_data,
     DRAWBOT_Rect32 clipRect;
 
     // Always set the scale to one regardless viewport zoom
-    double zoom = hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
+    double zoom = suites.ANSICallbacksSuite1()->hypot(layer2FrameXform.mat[0][0], layer2FrameXform.mat[0][1]);
     layer2FrameXform.mat[0][0] /= zoom;
     layer2FrameXform.mat[0][1] /= zoom;
     layer2FrameXform.mat[1][0] /= zoom;
