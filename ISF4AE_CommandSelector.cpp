@@ -156,10 +156,15 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     // TODO: Find a way not to call destructors explicitly
     auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
-    globalData->context->bind();
+    globalData->defaultScene = nullptr;
+    globalData->gl2aeScene = nullptr;
+    globalData->ae2glScene = nullptr;
+    globalData->notLoadedSceneDesc = nullptr;
 
-    globalData->defaultScene.reset();
-    globalData->gl2aeScene.reset();
+    for (auto& it : *globalData->scenes) {
+      delete it.second;
+    }
+
     delete globalData->scenes;
 
     delete globalData->context;
