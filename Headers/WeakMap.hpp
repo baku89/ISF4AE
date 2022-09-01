@@ -11,14 +11,14 @@ using namespace std;
 template <class K, class V>
 class WeakMap {
  private:
-  unordered_map<K, weak_ptr<V>> _map;
+  unordered_map<K, shared_ptr<V>> _map;
 
  public:
   shared_ptr<V> get(const K& key) {
     if (!has(key)) {
       return nullptr;
     }
-    return _map[key].lock();
+    return _map[key];
   };
 
   bool has(const K& key) {
@@ -26,10 +26,10 @@ class WeakMap {
       return false;
     }
 
-    weak_ptr<V> value = _map[key];
+    // weak_ptr<V> value = _map[key];
 
-    return !value.expired();
+    return true;  //! value.expired();
   };
 
-  void set(const K& key, const shared_ptr<V>& value) { _map[key] = weak_ptr<V>(value); };
+  void set(const K& key, const shared_ptr<V>& value) { _map[key] = value; };
 };
