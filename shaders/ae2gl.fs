@@ -9,7 +9,8 @@
         },
         {
             "NAME": "multiplier16bit",
-            "TYPE": "float"
+            "TYPE": "float",
+            "DEFAULT": 1
         },
         {
             "NAME": "origin",
