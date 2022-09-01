@@ -567,19 +567,16 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, pointScale, &outputImageCPU);
 
   // Download
-  if (outputWorld != nullptr && outputImageCPU != nullptr && outputWorld->width <= in_data->width &&
-      outputWorld->height <= in_data->height) {
-    char* glP = nullptr;  // Pointer offset for OpenGL buffer
-    char* aeP = nullptr;  // for AE's layerDef
+  char* glP = nullptr;  // Pointer offset for OpenGL buffer
+  char* aeP = nullptr;  // for AE's layerDef
 
-    auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+  auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
 
-    // Copy per row
-    for (size_t y = 0; y < paramInfo->outSize.height; y++) {
-      glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
-      aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
-      std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
-    }
+  // Copy per row
+  for (size_t y = 0; y < paramInfo->outSize.height; y++) {
+    glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
+    aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
+    std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
   }
 
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
