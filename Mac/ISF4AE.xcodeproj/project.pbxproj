@@ -204,12 +204,6 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 1340;
-				TargetAttributes = {
-					C4E618CB095A3CE80012CA3F = {
-						DevelopmentTeam = R2Q2UKL8B4;
-						ProvisioningStyle = Automatic;
-					};
-				};
 			};
 			buildConfigurationList = C4E6187F095A3C800012CA3F /* Build configuration list for PBXProject "ISF4AE" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -337,7 +331,6 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -376,7 +369,7 @@
 				INSTALL_PATH = "";
 				LD_RUNPATH_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DVVGL_SDK_MAC";
 				PLUGIN_DIR = "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/ISF4AE";
 				PRODUCT_BUNDLE_IDENTIFIER = "";
@@ -391,13 +384,9 @@
 		C4E618CF095A3CE90012CA3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = R2Q2UKL8B4;
 				INFOPLIST_FILE = "ISF4AE.plugin-Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = com.baku89.ISF4AE;
 				PRODUCT_NAME = ISF4AE;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
