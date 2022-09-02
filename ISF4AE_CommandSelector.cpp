@@ -44,7 +44,7 @@ static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* param
   ss << std::endl;
 
   ss << "This effect is built with ISF4AE; Interactive Shader Format for After Effects ";
-  ss << "(v" << MAJOR_VERSION << "." << MINOR_VERSION << ")." << std::endl;
+  ss << "(v" << MAJOR_VERSION << "." << MINOR_VERSION << "." << BUG_VERSION << ")." << std::endl;
   ss << "All of the source code is published at https://github.com/baku89/ISF4AE." << std::endl;
 
   PF_STRCPY(out_data->return_msg, ss.str().c_str());
