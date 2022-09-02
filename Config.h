@@ -22,6 +22,6 @@
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 1
-#define BUG_VERSION 0
+#define BUG_VERSION 1
 #define STAGE_VERSION PF_Stage_DEVELOP
-#define BUILD_VERSION 1
+#define BUILD_VERSION 0
