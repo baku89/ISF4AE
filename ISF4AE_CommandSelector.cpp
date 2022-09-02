@@ -426,48 +426,35 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   // Checkout all image parameters
   PF_CheckoutResult inResult;
 
-  PF_RenderRequest req = extra->input->output_request;
-  req.rect.left = -100000;
-  req.rect.top = -100000;
-  req.rect.right = 100000;
-  req.rect.bottom = 100000;
-  req.preserve_rgb_of_zero_alpha = true;
-
-  {
-    // Make sure to checkout inputImage
-    ERR(extra->cb->checkout_layer(in_data->effect_ref,
-                                  // A parameter index of layer to checkout
-                                  Param_Input,
-                                  // Unique index for retriving pixels in Cmd_SmartRender
-                                  // -- just use paramIndex itself.
-                                  Param_Input, &req, in_data->current_time, in_data->time_step, in_data->time_scale,
-                                  &inResult));
-  }
-
   int userParamIndex = 0;
+
+  PF_RenderRequest req = extra->input->output_request;
+  req.rect.left = 0;
+  req.rect.top = 0;
+  req.rect.right = 10000;
+  req.rect.bottom = 10000;
+  req.preserve_rgb_of_zero_alpha = true;
 
   for (auto input : paramInfo->scene->inputs()) {
     UserParamType userParamType = getUserParamTypeForISFAttr(input);
 
     if (userParamType == UserParamType_Image) {
-      if (input->isFilterInputImage()) {
-        // Because the checkout for inputImage should be already done, just skip it.
-        continue;
+      PF_ParamIndex paramIndex =
+          input->isFilterInputImage() ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
+
+      (extra->cb->checkout_layer(in_data->effect_ref,
+                                 // A parameter index of layer to checkout
+                                 paramIndex,
+                                 // Unique index for retriving pixels in Cmd_SmartRender
+                                 // -- just use paramIndex itself.
+                                 paramIndex, &req, in_data->current_time, in_data->time_step, in_data->time_scale,
+                                 &inResult));
+
+      if (!input->isFilterInputImage()) {
+        VVGL::Size& size = paramInfo->inputImageSizes[userParamIndex];
+        size.width = inResult.ref_width * in_data->downsample_x.num / in_data->downsample_x.den;
+        size.height = inResult.ref_height * in_data->downsample_y.num / in_data->downsample_y.den;
       }
-
-      PF_ParamIndex paramIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
-
-      ERR(extra->cb->checkout_layer(in_data->effect_ref,
-                                    // A parameter index of layer to checkout
-                                    paramIndex,
-                                    // Unique index for retriving pixels in Cmd_SmartRender
-                                    // -- just use paramIndex itself.
-                                    paramIndex, &req, in_data->current_time, in_data->time_step, in_data->time_scale,
-                                    &inResult));
-
-      VVGL::Size& size = paramInfo->inputImageSizes[userParamIndex];
-      size.width = inResult.ref_width * in_data->downsample_x.num / in_data->downsample_x.den;
-      size.height = inResult.ref_height * in_data->downsample_y.num / in_data->downsample_y.den;
     }
 
     if (isISFAttrVisibleInECW(input)) {
