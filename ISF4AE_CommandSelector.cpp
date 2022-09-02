@@ -820,7 +820,6 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
           rad = PI / 2.0;
         }
         param.u.ad.dephault = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
-        ;
 
         break;
       }
