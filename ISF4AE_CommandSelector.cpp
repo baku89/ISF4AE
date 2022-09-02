@@ -15,6 +15,8 @@
 #include <iostream>
 
 #define GL_SILENCE_DEPRECATION
+#define MIN_SAFE_FLOAT -1000000
+#define MAX_SAFE_FLOAT +1000000
 
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple
@@ -300,13 +302,14 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                   PF_ParamFlag_SUPERVISE | PF_ParamFlag_CANNOT_TIME_VARY, Param_UseLayerTime);
 
   AEFX_CLR_STRUCT(def);
-  PF_ADD_FLOAT_SLIDERX("Time", -1000000, 1000000,     // Valid range
-                       0, 10,                         // Slider range
-                       0,                             // Default
-                       1,                             // Precision
-                       PF_ValueDisplayFlag_NONE,      // Display
-                       PF_ParamFlag_COLLAPSE_TWIRLY,  // Flags
-                       Param_Time);                   // ID
+  PF_ADD_FLOAT_SLIDERX("Time",                          // Label
+                       MIN_SAFE_FLOAT, MAX_SAFE_FLOAT,  // Valid range
+                       0, 10,                           // Slider range
+                       0,                               // Default
+                       1,                               // Precision
+                       PF_ValueDisplayFlag_NONE,        // Display
+                       PF_ParamFlag_COLLAPSE_TWIRLY,    // Flags
+                       Param_Time);                     // ID
 
   // Add all possible user params
   A_char name[32];
@@ -324,17 +327,18 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
     PF_SPRINTF(name, "Float %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    PF_ADD_FLOAT_SLIDERX(name, -1000000, 1000000,  // Valid range
-                         0, 1,                     // Slider range
-                         0,                        // Default
-                         1,                        // Precision
+    PF_ADD_FLOAT_SLIDERX(name,                            // Temp label
+                         MIN_SAFE_FLOAT, MAX_SAFE_FLOAT,  // Valid range
+                         0, 1,                            // Slider range
+                         0,                               // Default
+                         1,                               // Precision
                          PF_ValueDisplayFlag_NONE, PF_ParamFlag_COLLAPSE_TWIRLY,
                          getIndexForUserParam(userParamIndex, UserParamType_Float));
 
     PF_SPRINTF(name, "Angle %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    def.u.ad.valid_min = -1000000;
-    def.u.ad.valid_max = +1000000;
+    def.u.ad.valid_min = PF_Fixed_MINVAL;
+    def.u.ad.valid_max = PF_Fixed_MAXVAL;
     def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
     PF_ADD_ANGLE(name, 0, getIndexForUserParam(userParamIndex, UserParamType_Angle));
 
@@ -793,6 +797,8 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         auto dephault = input->defaultVal().getDoubleVal();
         auto min = input->minVal().getDoubleVal();
         auto max = input->maxVal().getDoubleVal();
+        auto clampMin = input->clampMin();
+        auto clampMax = input->clampMax();
         PF_ValueDisplayFlags displayFlags = PF_ValueDisplayFlag_NONE;
 
         if (input->unit() == VVISF::ISFValUnit_Length) {
@@ -809,6 +815,8 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         param.u.fs_d.dephault = dephault;
         param.u.fs_d.slider_min = min;
         param.u.fs_d.slider_max = max;
+        param.u.fs_d.valid_min = clampMin ? min : MIN_SAFE_FLOAT;
+        param.u.fs_d.valid_max = clampMax ? max : MAX_SAFE_FLOAT;
         param.u.fs_d.display_flags = displayFlags;
 
         break;
