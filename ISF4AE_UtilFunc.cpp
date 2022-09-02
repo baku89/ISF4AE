@@ -226,13 +226,22 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
   auto bitdepth = extra->input->bitdepth;
   auto pixelBytes = bitdepth * 4 / 8;
 
-  PF_LayerDef* layerDef;
+  PF_LayerDef* layerDef = nullptr;
 
-  extra->cb->checkout_layer_pixels(effectRef, checkoutIndex, &layerDef);
+  ERR(extra->cb->checkout_layer_pixels(effectRef, checkoutIndex, &layerDef));
 
   if (layerDef != nullptr) {
+    // Stores the actual buffer size of images which has just done checkout-- affected by downsamples and cropping.
     VVGL::Size imageSize(layerDef->width, layerDef->height);
+
     VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
+
+    if (imageSize.width > outImageSize.width || imageSize.height > outImageSize.height) {
+      // I dunno why, but this case seems to occur without any exception when AE tries to generate thumanil for project
+      // pane.
+      FX_LOG("the size of image being done checkout exceeds the original dimension.");
+      return err;
+    }
 
     VVGL::GLBufferRef imageAECPU =
         createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
@@ -332,9 +341,10 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
           break;
         }
         case UserParamType_Long: {
-          A_long v = 0;
-          ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &v));
-          val = new VVISF::ISFVal(isfType, v - 1);  // current begins from 1
+          A_long index = 0;
+          ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &index));
+          auto v = input->valArray()[index - 1];  // Index of popup UI begins from 1
+          val = new VVISF::ISFVal(isfType, v);
           break;
         }
         case UserParamType_Float: {
@@ -386,7 +396,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
       }
 
       if (val != nullptr) {
-        scene.setValueForInputNamed(*val, input->name());
+        input->setCurrentVal(*val);
       }
 
       userParamIndex++;

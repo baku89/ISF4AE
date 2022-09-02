@@ -526,10 +526,6 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
     }
   }
 
-  // Check-in output pixels
-  PF_EffectWorld* outputWorld = nullptr;
-  ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
-
   // Bind special uniforms reserved for ISF4AE
   VVISF::ISFVal i4aDownsample =
       VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den,
@@ -542,17 +538,25 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   VVGL::Size pointScale = {1.0, 1.0};
   renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, pointScale, &outputImageCPU);
 
-  // Download
-  char* glP = nullptr;  // Pointer offset for OpenGL buffer
-  char* aeP = nullptr;  // for AE's layerDef
+  // Check-in output pixels
+  PF_EffectWorld* outputWorld = nullptr;
+  ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
 
-  auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+  if (outputWorld) {
+    // Download
+    char* glP = nullptr;  // Pointer offset for OpenGL buffer
+    char* aeP = nullptr;  // for AE's layerDef
 
-  // Copy per row
-  for (size_t y = 0; y < paramInfo->outSize.height; y++) {
-    glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
-    aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
-    std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
+    auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+
+    // Copy per row
+    for (size_t y = 0; y < paramInfo->outSize.height; y++) {
+      glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
+      aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
+      std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
+    }
+  } else {
+    FX_LOG("Cannot checkout outputWorld");
   }
 
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
