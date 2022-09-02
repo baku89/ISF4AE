@@ -322,8 +322,8 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
     PF_SPRINTF(name, "Long %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
-    PF_ADD_POPUP("", 1, 0, "Choice", getIndexForUserParam(userParamIndex, UserParamType_Long));
+    PF_ADD_POPUPX(name, 5, 1, "1|2|3|4|5", PF_ParamFlag_COLLAPSE_TWIRLY,
+                  getIndexForUserParam(userParamIndex, UserParamType_Long));
 
     PF_SPRINTF(name, "Float %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -628,7 +628,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
               case UserParamType_Long: {
                 auto values = input->valArray();
                 auto dephaultVal = input->defaultVal().getLongVal();
-                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal) + 1);
 
                 param.u.pd.value = dephaultIndex;
                 break;
@@ -771,7 +771,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         param.u.pd.u.namesptr = names;
 
         auto dephaultVal = input->defaultVal().getLongVal();
-        A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal));
+        A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal) + 1);
 
         param.u.pd.dephault = dephaultIndex;
 
