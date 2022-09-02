@@ -124,6 +124,12 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
                                                        const void* inCPUBackingPtr,
                                                        const VVGL::Size& inImageSizeInPixels,
                                                        const short bitdepth);
+PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
+                                    PF_ProgPtr effectRef,
+                                    PF_SmartRenderExtra* extra,
+                                    A_long checkoutIndex,
+                                    const VVGL::Size outImageSize,
+                                    VVGL::GLBufferRef& outImage);
 PF_Err renderISFToCPUBuffer(PF_InData* in_data,
                             PF_OutData* out_data,
                             ISF4AEScene& scene,

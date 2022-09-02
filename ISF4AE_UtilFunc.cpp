@@ -215,6 +215,58 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
   }
 }
 
+PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
+                                    PF_ProgPtr effectRef,
+                                    PF_SmartRenderExtra* extra,
+                                    A_long checkoutIndex,
+                                    const VVGL::Size outImageSize,
+                                    VVGL::GLBufferRef& outImage) {
+  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+
+  auto bitdepth = extra->input->bitdepth;
+  auto pixelBytes = bitdepth * 4 / 8;
+
+  PF_LayerDef* layerDef;
+
+  extra->cb->checkout_layer_pixels(effectRef, checkoutIndex, &layerDef);
+
+  if (layerDef != nullptr) {
+    VVGL::Size imageSize(layerDef->width, layerDef->height);
+    VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
+
+    VVGL::GLBufferRef imageAECPU =
+        createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
+
+    auto imageAE = globalData->context->uploader->uploadCPUToTex(imageAECPU);
+
+    // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
+    glBindTexture(GL_TEXTURE_2D, imageAE->name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, layerDef->origin_x, layerDef->origin_y);
+
+    globalData->ae2glScene->setBufferForInputNamed(imageAE, "inputImage");
+    globalData->ae2glScene->setValueForInputNamed(origin, "origin");
+
+    outImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
+
+    globalData->ae2glScene->renderToBuffer(outImage);
+
+    // Though ISF specs does not specify the wrap mode of texture, set it to CLAMP_TO_EDGE to match with online ISF
+    // editor's behavior.
+    glBindTexture(GL_TEXTURE_2D, outImage->name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
+
+  ERR2(extra->cb->checkin_layer_pixels(effectRef, checkoutIndex));
+
+  return err;
+}
+
 /**
  * Renders ISF scene to CPU buffer. It's used at SmartRender() and DrawEvent(), and assuming image inputs are already
  * bounded by the callees.

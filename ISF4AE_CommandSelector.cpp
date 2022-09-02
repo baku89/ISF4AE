@@ -424,24 +424,38 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   }
 
   // Checkout all image parameters
-  int userParamIndex = 0;
   PF_CheckoutResult inResult;
+
+  PF_RenderRequest req = extra->input->output_request;
+  req.rect.left = -100000;
+  req.rect.top = -100000;
+  req.rect.right = 100000;
+  req.rect.bottom = 100000;
+  req.preserve_rgb_of_zero_alpha = true;
+
+  {
+    // Make sure to checkout inputImage
+    ERR(extra->cb->checkout_layer(in_data->effect_ref,
+                                  // A parameter index of layer to checkout
+                                  Param_Input,
+                                  // Unique index for retriving pixels in Cmd_SmartRender
+                                  // -- just use paramIndex itself.
+                                  Param_Input, &req, in_data->current_time, in_data->time_step, in_data->time_scale,
+                                  &inResult));
+  }
+
+  int userParamIndex = 0;
 
   for (auto input : paramInfo->scene->inputs()) {
     UserParamType userParamType = getUserParamTypeForISFAttr(input);
 
     if (userParamType == UserParamType_Image) {
-      bool isInputImage = input->name() == "inputImage";
+      if (input->isFilterInputImage()) {
+        // Because the checkout for inputImage should be already done, just skip it.
+        continue;
+      }
 
-      PF_ParamIndex paramIndex = isInputImage ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
-
-      PF_RenderRequest req = extra->input->output_request;
-
-      req.rect.left = -100000;
-      req.rect.top = -100000;
-      req.rect.right = 100000;
-      req.rect.bottom = 100000;
-      req.preserve_rgb_of_zero_alpha = true;
+      PF_ParamIndex paramIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
 
       ERR(extra->cb->checkout_layer(in_data->effect_ref,
                                     // A parameter index of layer to checkout
@@ -482,7 +496,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 }
 
 static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRenderExtra* extra) {
-  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
@@ -502,51 +516,22 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   int userParamIndex = 0;
   for (auto& input : paramInfo->scene->inputs()) {
     if (input->type() == VVISF::ISFValType_Image) {
-      auto& name = input->name();
+      PF_ParamIndex checkoutIndex;
+      VVGL::Size layerSize;
 
-      const bool isInputImage = name == "inputImage";
-      PF_ParamIndex paramIndex = isInputImage ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
-
-      PF_LayerDef* layerDef = nullptr;
-
-      ERR(extra->cb->checkout_layer_pixels(in_data->effect_ref, paramIndex, &layerDef));
-
-      if (layerDef != nullptr) {
-        VVGL::Size imageSize(layerDef->width, layerDef->height);
-        VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
-        VVGL::Size& outImageSize = paramInfo->inputImageSizes[userParamIndex];
-
-        VVGL::GLBufferRef inputImageAECPU =
-            createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
-
-        auto inputImageAE = globalData->context->uploader->uploadCPUToTex(inputImageAECPU);
-
-        // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
-        glBindTexture(GL_TEXTURE_2D, inputImageAE->name);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, layerDef->origin_x, layerDef->origin_y);
-
-        globalData->ae2glScene->setBufferForInputNamed(inputImageAE, "inputImage");
-        globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-
-        VVGL::GLBufferRef inputImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
-
-        globalData->ae2glScene->renderToBuffer(inputImage);
-
-        // Though ISF specs does not specify the wrap mode of texture, set it to CLAMP_TO_EDGE to match with online ISF
-        // editor's behavior.
-        glBindTexture(GL_TEXTURE_2D, inputImage->name);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        scene->setBufferForInputNamed(inputImage, name);
+      if (input->isFilterInputImage()) {
+        checkoutIndex = Param_Input;
+        layerSize = paramInfo->outSize;
+      } else {
+        checkoutIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
+        layerSize = paramInfo->inputImageSizes[userParamIndex];
       }
 
-      ERR2(extra->cb->checkin_layer_pixels(in_data->effect_ref, paramIndex));
+      VVGL::GLBufferRef image;
+
+      ERR(uploadCPUBufferInSmartRender(globalData, in_data->effect_ref, extra, checkoutIndex, layerSize, image));
+
+      input->setCurrentImageBuffer(image);
     }
 
     if (isISFAttrVisibleInECW(input)) {
