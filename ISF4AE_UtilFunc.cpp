@@ -24,6 +24,7 @@ UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
     case VVISF::ISFValType_Float:
       switch (input->unit()) {
         case VVISF::ISFValUnit_Angle:
+        case VVISF::ISFValUnit_Direction:
           return UserParamType_Angle;
         default:
           return UserParamType_Float;
@@ -40,6 +41,23 @@ UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
 
     default:
       return UserParamType_Unsupported;
+  }
+}
+
+PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input) {
+  auto unit = input->unit();
+  double rad = input->defaultVal().getDoubleVal();
+  // If both min/max aren't specified, VVISF automatically set them to 0 and 1 respectively,
+  // and sets the default to their median value, 0.5. But 0.5 is not a nice round number in radians,
+  // so tries to set 0 degrees (in AE's rotery knobs UI) in such a case.
+  if (rad == 0.5f) {
+    rad = unit == VVISF::ISFValUnit_Direction ? (PI / 2.0) : 0.0;
+  }
+
+  if (unit == VVISF::ISFValUnit_Direction) {
+    return FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
+  } else {  // (unit == ISFValUnit_Angle)
+    return FLOAT2FIX(-(rad * 180.0 / PI));
   }
 }
 
@@ -363,7 +381,11 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         case UserParamType_Angle: {
           A_FpLong v = 0.0;
           AEUtil::getAngleParam(in_data, out_data, paramIndex, &v);
-          v = (-v + 90.0) * (PI / 180.0);
+          if (input->unit() == VVISF::ISFValUnit_Direction) {
+            v = (-v + 90.0) * (PI / 180.0);
+          } else {  // unit == VVISF::ISFValUnit_Angle
+            v = -v * (PI / 180.0);
+          }
           val = new VVISF::ISFVal(isfType, v);
           break;
         }
