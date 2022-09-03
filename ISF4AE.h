@@ -116,6 +116,7 @@ struct ParamInfo {
 // Implemented in ISF4AE_UtilFunc.cpp
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
+PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
 std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);

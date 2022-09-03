@@ -638,17 +638,9 @@ static PF_Err UserChangedParam(PF_InData* in_data,
                 break;
               }
 
-              case UserParamType_Angle: {
-                double rad = input->defaultVal().getDoubleVal();
-                // If both min/max aren't specified, VVISF automatically set them to 0 and 1 respectively,
-                // and sets the default to their median value, 0.5. But 0.5 is not a nice round number in radians,
-                // so tries to set 0 degrees (in AE's rotery knobs UI) in such a case.
-                if (rad == 0.5f) {
-                  rad = PI / 2.0;
-                }
-                param.u.ad.value = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
+              case UserParamType_Angle:
+                param.u.ad.value = getDefaultForAngleInput(input);
                 break;
-              }
 
               case UserParamType_Point2D: {
                 auto x = input->defaultVal().getPointValByIndex(0);
@@ -798,15 +790,9 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         break;
       }
 
-      case UserParamType_Angle: {
-        double rad = input->defaultVal().getDoubleVal();
-        if (rad == 0.5f) {
-          rad = PI / 2.0;
-        }
-        param.u.ad.dephault = FLOAT2FIX(-(rad * 180.0 / PI) + 90.0);
-
+      case UserParamType_Angle:
+        param.u.ad.dephault = getDefaultForAngleInput(input);
         break;
-      }
 
       case UserParamType_Point2D: {
         auto x = input->defaultVal().getPointValByIndex(0);
