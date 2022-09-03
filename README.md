@@ -30,7 +30,8 @@ Note that `"event"`, `"audio"`, and `"audioFFT"` are not yet supported currently
   - `"default"`: just a scalar; the value will be passed as it is.
   - `"length"`: represents a length in px. It is also displayed as a slider, but the value will be mapped from 0...<layer's width> to 0...1 when it is passed to a shader.
   - `"percent"`: displayed with "%" suffix. The value will be bounded as a uniform with divided by 100. For example, 50% in the Effect Controls panel will be passed as 0.5 to the shader.
-  - `"angle"`: displayed as an angle input, and the range of value will be mapped so that radians in OpenGL coordinate (Y-up right-handed) fit with a direction that the rotary knob UI is pointing. The internal conversion from AE to GLSL is equivalent to the following formula: `radians(90 - value)`.
+  - `"direction"`: displayed as an angle input, and the range of value will be mapped so that radians in OpenGL coordinate (Y-up right-handed) match with a direction that the rotary knob UI is pointing. The internal conversion from AE to GLSL is equivalent to the following formula: `radians(90 - value)`. It would be suitable for representing absolute angle that should be consistent visually between the knob UI and images.
+  - `"angle"`: like above, it is displayed as an angle input literally, but uses a conversion formula `radians(-value)` instead. It would be suitable for representing relative angle changes -- hue offset of HSL adjustment, for instance.
 - `"point2D"`: represents a position in px. It will be mapped to OpenGL's normalized coordinate; (0, 0) at the bottom-left corner, (1, 1) at the top-right corner of the layer.
 - `"color"`: displayed as a color picker.
 - `"image"`: displayed as a layer reference input.
