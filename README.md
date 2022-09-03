@@ -36,6 +36,10 @@ Note that `"event"`, `"audio"`, and `"audioFFT"` are not yet supported currently
 - `"color"`: displayed as a color picker.
 - `"image"`: displayed as a layer reference input.
 
+### Other Addotional Properties for Inputs
+
+"MIN" and "MAX" only affects the range of slider UI in the Effect Controls panel and user can still set the value out of the range. To constrain the value within the range forcely, you can use the plug-in's custom properties `"CLAMP_MIN"` and `"CLAMP_MAX"` in boolean value.
+
 ### ISF Built-in Uniforms
 
 Here are how the plug-in determines ISF built-in uniforms' values:
