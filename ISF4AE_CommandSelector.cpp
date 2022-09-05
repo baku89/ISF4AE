@@ -590,6 +590,25 @@ static PF_Err UserChangedParam(PF_InData* in_data,
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
 
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+
+          u_int32_t userParamIndex = 0;
+
+          // Backup old params' values
+          auto oldScene = isf->desc->scene;
+          PF_ParamDefUnion oldParamValues[NumUserParams];
+          for (int i = 0; i < NumUserParams; i++) {
+            AEFX_CLR_STRUCT(oldParamValues[i]);
+          }
+          for (auto& oldInput : oldScene->inputs()) {
+            if (!isISFAttrVisibleInECW(oldInput)) {
+              continue;
+            }
+            UserParamType userParamType = getUserParamTypeForISFAttr(oldInput);
+            PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
+            oldParamValues[userParamIndex] = params[index]->u;
+            userParamIndex++;
+          }
+
           isf->name = getBasename(srcPath);
           isf->desc = getCompiledSceneDesc(globalData, isfCode);
 
@@ -598,7 +617,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
           // Set default values
           auto desc = isf->desc;
 
-          int userParamIndex = 0;
+          userParamIndex = 0;
 
           for (auto& input : desc->scene->inputs()) {
             if (!isISFAttrVisibleInECW(input)) {
@@ -609,29 +628,61 @@ static PF_Err UserChangedParam(PF_InData* in_data,
             auto index = getIndexForUserParam(userParamIndex, userParamType);
             auto& param = *params[index];
 
+            auto oldInput = oldScene->inputNamed(input->name());
+            PF_ParamDefUnion* oldValue = nullptr;
+            if (oldInput && oldInput->type() == input->type()) {
+              // When the old scene has an input with same name and type
+              auto idx = 0;
+              for (auto& oi : oldScene->inputs()) {
+                if (!isISFAttrVisibleInECW(oi)) {
+                  continue;
+                }
+                if (oldInput == oi) {
+                  oldValue = &oldParamValues[idx];
+                  break;
+                }
+
+                idx++;
+              }
+            }
+
             param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
 
             switch (userParamType) {
               case UserParamType_Bool:
-                param.u.bd.dephault = input->defaultVal().getBoolVal();
+                if (oldValue) {
+                  param.u.bd.value = oldValue->bd.value;
+                } else {
+                  param.u.bd.value = input->defaultVal().getBoolVal();
+                }
                 break;
 
               case UserParamType_Long: {
+                A_long dephault = 1;
                 auto values = input->valArray();
-                auto dephaultVal = input->defaultVal().getLongVal();
-                A_long dephaultIndex = mmax(1, findIndex(values, dephaultVal) + 1);
-
-                param.u.pd.value = dephaultIndex;
+                if (oldValue) {
+                  dephault = oldValue->pd.value;
+                } else {
+                  auto dephaultIsfVal = input->defaultVal().getLongVal();
+                  dephault = mmax(1, findIndex(values, dephaultIsfVal) + 1);
+                }
+                param.u.pd.value = dephault;
                 break;
               }
 
               case UserParamType_Float: {
-                double dephault = input->defaultVal().getDoubleVal();
+                double dephault = 0.0;
 
-                if (input->unit() == VVISF::ISFValUnit_Length) {
-                  dephault *= in_data->width;
-                } else if (input->unit() == VVISF::ISFValUnit_Percent) {
-                  dephault *= 100;
+                if (oldValue) {
+                  dephault = oldValue->fs_d.value;
+                } else {
+                  dephault = input->defaultVal().getDoubleVal();
+
+                  if (input->unit() == VVISF::ISFValUnit_Length) {
+                    dephault *= in_data->width;
+                  } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                    dephault *= 100;
+                  }
                 }
 
                 param.u.fs_d.value = dephault;
@@ -639,27 +690,46 @@ static PF_Err UserChangedParam(PF_InData* in_data,
               }
 
               case UserParamType_Angle:
-                param.u.ad.value = getDefaultForAngleInput(input);
+                if (oldValue) {
+                  param.u.ad.value = oldValue->ad.value;
+                } else {
+                  param.u.ad.value = getDefaultForAngleInput(input);
+                }
                 break;
 
               case UserParamType_Point2D: {
-                auto x = input->defaultVal().getPointValByIndex(0);
-                auto y = input->defaultVal().getPointValByIndex(1);
+                if (oldValue) {
+                  param.u.td.x_value = oldValue->td.x_value;
+                  param.u.td.y_value = oldValue->td.y_value;
+                } else {
+                  auto x = input->defaultVal().getPointValByIndex(0);
+                  auto y = input->defaultVal().getPointValByIndex(1);
 
-                param.u.td.x_value = FLOAT2FIX(x * in_data->width);
-                param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
+                  param.u.td.x_value = FLOAT2FIX(x * in_data->width);
+                  param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
+                }
                 break;
               }
 
               case UserParamType_Color: {
-                auto dephault = input->defaultVal();
+                if (oldValue) {
+                  param.u.cd.value = oldValue->cd.value;
+                } else {
+                  auto dephault = input->defaultVal();
 
-                param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
-                param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
-                param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
-                param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+                  param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
+                  param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
+                  param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
+                  param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+                }
                 break;
               }
+
+              case UserParamType_Image:
+                if (oldValue) {
+                  param.u.ld = oldValue->ld;
+                }
+                break;
 
               default:
                 break;
