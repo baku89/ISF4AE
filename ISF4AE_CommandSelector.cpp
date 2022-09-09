@@ -579,10 +579,17 @@ static PF_Err UserChangedParam(PF_InData* in_data,
       // Load a shader
       std::vector<std::string> fileTypes = {"fs", "txt", "frag", "glsl"};
 
-      std::string srcPath = SystemUtil::openFileDialog(fileTypes);
+      std::string isfDirectory = "";
+      ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
+                                          &isfDirectory));
 
-      if (!srcPath.empty()) {
+      std::string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
+
+      if (!err && !srcPath.empty()) {
         std::string isfCode = SystemUtil::readTextFile(srcPath);
+
+        isfDirectory = getDirname(srcPath);
+        ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
 
         if (!isfCode.empty()) {
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;

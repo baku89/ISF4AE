@@ -47,6 +47,10 @@ typedef unsigned short PixelType;
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
 #define PI 3.14159265358979323846
 
+#ifdef AE_OS_MAC
+#define DEFAULT_ISF_DIRECTORY "/Library/Graphics/ISF"
+#endif
+
 // Parameter indices
 enum {
   Param_Input = 0,

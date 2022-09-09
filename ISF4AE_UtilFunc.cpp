@@ -182,16 +182,23 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
 
   auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
 
+  std::string isfDirectory = "";
+  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
+                                      &isfDirectory));
+
   // Set name of an effect instance as default file name
   std::string effectName = isf->name;
 
   // Then confirm a destination path and save it
-  std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs");
+  std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs", isfDirectory, "Save ISF File");
 
   if (!err && !dstPath.empty()) {
     std::string isfCode = isf->desc->scene->getFragCode();
 
     SystemUtil::writeTextFile(dstPath, isfCode);
+
+    isfDirectory = getDirname(dstPath);
+    ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
   }
 
   ERR2(PF_CHECKIN_PARAM(in_data, &paramIsf));
