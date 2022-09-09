@@ -44,3 +44,8 @@ std::string getBasename(const std::string& path) {
   std::filesystem::path p(path);
   return p.stem();
 }
+
+std::string getDirname(const std::string& path) {
+  std::filesystem::path p(path);
+  return p.parent_path().string();
+}
