@@ -8,7 +8,9 @@
 
 namespace SystemUtil {
 
-std::string openFileDialog(const std::vector<std::string>& fileTypes) {
+std::string openFileDialog(const std::vector<std::string>& fileTypes,
+                           const std::string& directory,
+                           const std::string& title) {
   std::string path;
 
   id nsFileTypes = [NSMutableArray new];
@@ -19,6 +21,9 @@ std::string openFileDialog(const std::vector<std::string>& fileTypes) {
   }
 
   NSOpenPanel* panel = [NSOpenPanel openPanel];
+
+  [panel setMessage:[NSString stringWithUTF8String:title.c_str()]];
+  [panel setDirectoryURL:[NSURL fileURLWithPath:[NSString stringWithUTF8String:directory.c_str()]]];
   [panel setAllowsMultipleSelection:NO];
   [panel setCanChooseDirectories:NO];
   [panel setCanChooseFiles:YES];
@@ -36,12 +41,14 @@ std::string openFileDialog(const std::vector<std::string>& fileTypes) {
   return path;
 }
 
-std::string saveFileDialog(const std::string& filename) {
+std::string saveFileDialog(const std::string& filename, const std::string& directory, const std::string& title) {
   std::string path;
 
   NSString* nsFilename = [NSString stringWithCString:filename.c_str() encoding:NSUTF8StringEncoding];
 
   NSSavePanel* panel = [NSSavePanel savePanel];
+  [panel setMessage:[NSString stringWithUTF8String:title.c_str()]];
+  [panel setDirectoryURL:[NSURL fileURLWithPath:[NSString stringWithUTF8String:directory.c_str()]]];
   [panel setCanCreateDirectories:YES];
   [panel setNameFieldStringValue:nsFilename];
   [panel setFloatingPanel:YES];
