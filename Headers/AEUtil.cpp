@@ -296,4 +296,43 @@ void copyConvertStringLiteralIntoUTF16(const wchar_t* inputString, A_UTF16Char* 
 #endif
 }
 
+PF_Err getStringPersistentData(PF_InData* in_data,
+                               const A_char* sectionKey,
+                               const A_char* valueKey,
+                               const std::string& defaultValue,
+                               std::string* value) {
+  PF_Err err = PF_Err_NONE;
+
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  AEGP_PersistentBlobH blobH;
+  ERR(suites.PersistentDataSuite4()->AEGP_GetApplicationBlob(AEGP_PersistentType_MACHINE_SPECIFIC, &blobH));
+
+  char charStr[1024];
+  A_u_long charSize = 0;
+
+  ERR(suites.PersistentDataSuite4()->AEGP_GetString(blobH, sectionKey, valueKey, defaultValue.c_str(), 1024, charStr,
+                                                    &charSize));
+
+  (*value) = std::string(charStr, charSize);
+
+  return err;
+}
+
+PF_Err setStringPersistentData(PF_InData* in_data,
+                               const A_char* sectionKey,
+                               const A_char* valueKey,
+                               const std::string& value) {
+  PF_Err err = PF_Err_NONE;
+
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  AEGP_PersistentBlobH blobH;
+  ERR(suites.PersistentDataSuite4()->AEGP_GetApplicationBlob(AEGP_PersistentType_MACHINE_SPECIFIC, &blobH));
+
+  ERR(suites.PersistentDataSuite3()->AEGP_SetString(blobH, sectionKey, valueKey, value.c_str()));
+
+  return err;
+}
+
 }  // namespace AEUtil

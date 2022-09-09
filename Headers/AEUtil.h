@@ -38,6 +38,16 @@ PF_Err getColorParam(PF_InData* in_data, PF_OutData* out_data, int paramIndex, P
 PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name);
 PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string& name);
 
+PF_Err getStringPersistentData(PF_InData* in_data,
+                               const A_char* sectionKey,
+                               const A_char* valueKey,
+                               const std::string& defaultValue,
+                               std::string* value);
+PF_Err setStringPersistentData(PF_InData* in_data,
+                               const A_char* sectionKey,
+                               const A_char* valueKey,
+                               const std::string& value);
+
 // Other AE-specific utils
 void copyConvertStringLiteralIntoUTF16(const wchar_t* inputString, A_UTF16Char* destination);
 
