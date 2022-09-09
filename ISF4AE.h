@@ -41,6 +41,8 @@ typedef unsigned short PixelType;
 #include "OGL.h"
 #include "WeakMap.hpp"
 
+#include "Config.h"
+
 // Magic numbers
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
 #define PI 3.14159265358979323846

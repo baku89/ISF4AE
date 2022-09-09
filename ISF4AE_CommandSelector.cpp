@@ -3,8 +3,6 @@
 #include "AEFX_SuiteHelper.h"
 #include "Smart_Utils.h"
 
-#include "Config.h"
-
 #include "AEUtil.h"
 #include "SystemUtil.h"
 
