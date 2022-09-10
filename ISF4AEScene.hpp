@@ -96,8 +96,8 @@ class ISF4AEScene : public ISFScene {
 
 using ISF4AESceneRef = std::shared_ptr<ISF4AEScene>;
 
-inline ISF4AESceneRef CreateISF4AESceneRef() {
-  return std::make_shared<ISF4AEScene>();
+inline ISF4AESceneRef CreateISF4AESceneRefUsing(const VVGL::GLContextRef& inCtx) {
+  return std::make_shared<ISF4AEScene>(inCtx);
 }
 
 }  // namespace VVISF

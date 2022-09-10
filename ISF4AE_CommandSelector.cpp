@@ -104,28 +104,27 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   }
 
   // Initialize global OpenGL context
-  globalData->context = new OGL::GlobalContext();
-  if (!globalData->context->initialized) {
-    return PF_Err_OUT_OF_MEMORY;
-  }
+  globalData->context = VVGL::CreateNewGLContextRef(NULL, CreateCompatibilityGLPixelFormat());
+  VVGL::CreateGlobalBufferPool(globalData->context->newContextSharingMe());
+
+  globalData->downloader = VVGL::CreateGLTexToCPUCopierRefUsing(globalData->context->newContextSharingMe());
+  globalData->uploader = VVGL::CreateGLCPUToTexCopierRefUsing(globalData->context->newContextSharingMe());
 
   FX_LOG("OpenGL Version:       " << glGetString(GL_VERSION));
   FX_LOG("OpenGL Vendor:        " << glGetString(GL_VENDOR));
   FX_LOG("OpenGL Renderer:      " << glGetString(GL_RENDERER));
   FX_LOG("OpenGL GLSL Versions: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-  globalData->context->bind();
-
   // Setup GL objects
   std::string resourcePath = AEUtil::getResourcesPath(in_data);
 
-  globalData->defaultScene = VVISF::CreateISF4AESceneRef();
+  globalData->defaultScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->defaultScene->useFile(resourcePath + "shaders/Default ISF4AE Shader.fs");
 
-  globalData->ae2glScene = VVISF::CreateISF4AESceneRef();
+  globalData->ae2glScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
 
-  globalData->gl2aeScene = VVISF::CreateISF4AESceneRef();
+  globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
 
   globalData->scenes = new WeakMap<std::string, SceneDesc>();
@@ -153,14 +152,15 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     // TODO: Find a way not to call destructors explicitly
     auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
+    globalData->context = nullptr;
+    globalData->uploader = nullptr;
+    globalData->downloader = nullptr;
     globalData->defaultScene = nullptr;
     globalData->gl2aeScene = nullptr;
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
 
     delete globalData->scenes;
-
-    delete globalData->context;
 
     suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
@@ -487,7 +487,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
-  globalData->context->bind();
+  globalData->context->makeCurrentIfNotCurrent();
 
   auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
 

@@ -96,9 +96,7 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const st
   }
 
   // Compile new shader if not exists
-  globalData->context->bind();
-
-  auto scene = VVISF::CreateISF4AESceneRef();
+  auto scene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   scene->setThrowExceptions(true);
   scene->setManualTime(true);
 
@@ -206,14 +204,18 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   return err;
 }
 
-VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short bitdepth) {
+VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLContextRef context, short bitdepth) {
+  context->makeCurrentIfNotCurrent();
+
+  VVGL::GLBufferPoolRef bp = VVGL::GetGlobalBufferPool();
+
   switch (bitdepth) {
     case 8:
-      return VVGL::CreateRGBATex(size);
+      return VVGL::CreateRGBATex(size, true, bp);
     case 16:
-      return VVGL::CreateRGBAShortTex(size);
+      return VVGL::CreateRGBAShortTex(size, true, bp);
     case 32:
-      return VVGL::CreateRGBAFloatTex(size);
+      return VVGL::CreateRGBAFloatTex(size, true, bp);
     default:
       throw std::invalid_argument("Invalid bitdepth");
   }
@@ -271,7 +273,7 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
     VVGL::GLBufferRef imageAECPU =
         createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
 
-    auto imageAE = globalData->context->uploader->uploadCPUToTex(imageAECPU);
+    auto imageAE = globalData->uploader->uploadCPUToTex(imageAECPU);
 
     // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
     glBindTexture(GL_TEXTURE_2D, imageAE->name);
@@ -284,7 +286,7 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
     globalData->ae2glScene->setBufferForInputNamed(imageAE, "inputImage");
     globalData->ae2glScene->setValueForInputNamed(origin, "origin");
 
-    outImage = createRGBATexWithBitdepth(outImageSize, bitdepth);
+    outImage = createRGBATexWithBitdepth(outImageSize, globalData->context, bitdepth);
 
     globalData->ae2glScene->renderToBuffer(outImage);
 
@@ -326,7 +328,7 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
   globalData->gl2aeScene->setValueForInputNamed(multiplier16bit, "multiplier16bit");
 
   // Render ISF
-  auto isfImage = createRGBATexWithBitdepth(outSize, bitdepth);
+  auto isfImage = createRGBATexWithBitdepth(outSize, globalData->context, bitdepth);
   {
     // Assign time-related variables
     double fps = in_data->time_scale / in_data->local_time_step;
@@ -440,10 +442,10 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
 
   gl2aeScene.setBufferForInputNamed(isfImage, "inputImage");
 
-  auto outputImage = createRGBATexWithBitdepth(outSize, bitdepth);
+  auto outputImage = createRGBATexWithBitdepth(outSize, globalData->context, bitdepth);
   gl2aeScene.renderToBuffer(outputImage);
 
-  (*outBuffer) = globalData->context->downloader->downloadTexToCPU(outputImage);
+  (*outBuffer) = globalData->downloader->downloadTexToCPU(outputImage);
 
   // Release resources
   VVGL::GetGlobalBufferPool()->housekeeping();

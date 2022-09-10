@@ -38,7 +38,6 @@ typedef unsigned short PixelType;
 #include <VVISF.hpp>
 
 #include "ISF4AEScene.hpp"
-#include "OGL.h"
 #include "WeakMap.hpp"
 
 #include "Config.h"
@@ -98,7 +97,9 @@ struct SceneDesc {
 
 struct GlobalData {
   AEGP_PluginID aegpId;
-  OGL::GlobalContext* context;
+  VVGL::GLContextRef context;
+  VVGL::GLCPUToTexCopierRef uploader;
+  VVGL::GLTexToCPUCopierRef downloader;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   std::shared_ptr<SceneDesc> notLoadedSceneDesc;
   WeakMap<std::string, SceneDesc>* scenes;
@@ -126,7 +127,7 @@ PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
 std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
-VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, short format);
+VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLContextRef context, short bitdepth);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,
                                                        const void* inCPUBackingPtr,
                                                        const VVGL::Size& inImageSizeInPixels,
