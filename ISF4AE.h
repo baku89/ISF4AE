@@ -135,7 +135,9 @@ PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
-std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code);
+std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
+                                                const std::string& fsCode,
+                                                const std::string& vsCode);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLContextRef context, short bitdepth);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,

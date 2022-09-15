@@ -138,9 +138,15 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
 
-  std::string code = isf->desc->scene->getFragCode();
+  std::string fsCode = isf->desc->scene->getFragCode();
+  std::string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
 
-  A_u_long size = (A_u_long)(sizeof(ParamArbIsfFlatV1) + (isf->name.size() + code.size()) * sizeof(char));
+  if (vsCode == VVISF::ISFVertPassthru_GL2) {
+    vsCode = "";
+  }
+
+  A_u_long size =
+      (A_u_long)(sizeof(ParamArbIsfFlatV1) + (isf->name.size() + fsCode.size() + vsCode.size()) * sizeof(char));
 
   *(extra->u.flat_size_func_params.flat_data_sizePLu) = size;
 
@@ -162,18 +168,26 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   ParamArbIsfFlatV1* dstHeader = (ParamArbIsfFlatV1*)extra->u.flatten_func_params.flat_dataPV;
   char* dstPV = (char*)extra->u.flatten_func_params.flat_dataPV;
 
-  std::string code = isf->desc->scene->getFragCode();
+  std::string fsCode = isf->desc->scene->getFragCode();
+  std::string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
+
+  if (vsCode == VVISF::ISFVertPassthru_GL2) {
+    vsCode = "";
+  }
+
   A_u_long nameSize = (A_u_long)isf->name.size();
-  A_u_long codeSize = (A_u_long)code.size();
+  A_u_long fsCodeSize = (A_u_long)fsCode.size();
+  A_u_long vsCodeSize = (A_u_long)vsCode.size();
 
   dstHeader->magicNumber = ARB_ISF_MAGIC_NUMBER;
   dstHeader->version = 1;
   dstHeader->offsetName = sizeof(ParamArbIsfFlatV1);
   dstHeader->offsetFragCode = dstHeader->offsetName + nameSize;
-  dstHeader->offsetVertCode = dstHeader->offsetFragCode + codeSize;
+  dstHeader->offsetVertCode = dstHeader->offsetFragCode + fsCodeSize;
 
   memcpy(dstPV + dstHeader->offsetName, isf->name.c_str(), nameSize * sizeof(char));
-  memcpy(dstPV + dstHeader->offsetFragCode, code.c_str(), codeSize * sizeof(char));
+  memcpy(dstPV + dstHeader->offsetFragCode, fsCode.c_str(), fsCodeSize * sizeof(char));
+  memcpy(dstPV + dstHeader->offsetVertCode, vsCode.c_str(), vsCodeSize * sizeof(char));
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.flatten_func_params.arbH);
 
@@ -188,10 +202,10 @@ static void UnflattenArbV0(GlobalData* globalData, char* flatData, A_u_long bufS
       break;
   }
 
-  auto code = std::string(flatData + nameSize + 1, bufSize - (nameSize + 1) * sizeof(char));
+  auto fsCode = std::string(flatData + nameSize + 1, bufSize - (nameSize + 1) * sizeof(char));
 
   isf->name = std::string(flatData, nameSize * sizeof(char));
-  isf->desc = getCompiledSceneDesc(globalData, code);
+  isf->desc = getCompiledSceneDesc(globalData, fsCode, "");
 }
 
 static void UnflattenArbV1(GlobalData* globalData, char* flatData, A_u_long bufSize, ParamArbIsf* isf) {
@@ -200,9 +214,11 @@ static void UnflattenArbV1(GlobalData* globalData, char* flatData, A_u_long bufS
   isf->name = std::string(flatData + flatHeader->offsetName, flatHeader->offsetFragCode - flatHeader->offsetName);
 
   auto fsCode =
-      std::string(flatData + flatHeader->offsetFragCode, flatHeader->offsetVertCode - flatHeader->offsetVertCode);
+      std::string(flatData + flatHeader->offsetFragCode, flatHeader->offsetVertCode - flatHeader->offsetFragCode);
 
-  isf->desc = getCompiledSceneDesc(globalData, fsCode);
+  auto vsCode = std::string(flatData + flatHeader->offsetVertCode, bufSize - flatHeader->offsetVertCode);
+
+  isf->desc = getCompiledSceneDesc(globalData, fsCode, vsCode);
 }
 
 static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
