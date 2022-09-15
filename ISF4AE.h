@@ -114,6 +114,16 @@ struct ParamArbIsf {
   std::shared_ptr<SceneDesc> desc;
 };
 
+#define ARB_ISF_MAGIC_NUMBER 0x01
+
+struct ParamArbIsfFlatV1 {
+  A_u_char magicNumber;  // Always should be set to ARB_ISF_MAGIC_NUMBER
+  A_u_long version;
+  A_u_long offsetName;
+  A_u_long offsetFragCode;
+  A_u_long offsetVertCode;
+};
+
 struct ParamInfo {
   VVISF::ISF4AEScene* scene;
   VVGL::Size outSize;

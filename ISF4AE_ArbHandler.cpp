@@ -139,7 +139,8 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
 
   std::string code = isf->desc->scene->getFragCode();
-  A_u_long size = (A_u_long)(isf->name.size() + 1 + code.size()) * sizeof(char);
+
+  A_u_long size = (A_u_long)(sizeof(ParamArbIsfFlatV1) + (isf->name.size() + code.size()) * sizeof(char));
 
   *(extra->u.flat_size_func_params.flat_data_sizePLu) = size;
 
@@ -158,22 +159,50 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   AEGP_SuiteHandler suites(in_data->pica_basicP);
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flatten_func_params.arbH));
-  char* dst = (char*)extra->u.flatten_func_params.flat_dataPV;
+  ParamArbIsfFlatV1* dstHeader = (ParamArbIsfFlatV1*)extra->u.flatten_func_params.flat_dataPV;
+  char* dstPV = (char*)extra->u.flatten_func_params.flat_dataPV;
 
   std::string code = isf->desc->scene->getFragCode();
-  auto nameSize = isf->name.size();
-  auto codeSize = code.size();
+  A_u_long nameSize = (A_u_long)isf->name.size();
+  A_u_long codeSize = (A_u_long)code.size();
 
-  memcpy(dst, isf->name.c_str(), nameSize * sizeof(char));
+  dstHeader->magicNumber = ARB_ISF_MAGIC_NUMBER;
+  dstHeader->version = 1;
+  dstHeader->offsetName = sizeof(ParamArbIsfFlatV1);
+  dstHeader->offsetFragCode = dstHeader->offsetName + nameSize;
+  dstHeader->offsetVertCode = dstHeader->offsetFragCode + codeSize;
 
-  // Insert '\0' as a delimiter to split name and code
-  dst[nameSize] = '\0';
-
-  memcpy(dst + nameSize + 1, code.c_str(), codeSize * sizeof(char));
+  memcpy(dstPV + dstHeader->offsetName, isf->name.c_str(), nameSize * sizeof(char));
+  memcpy(dstPV + dstHeader->offsetFragCode, code.c_str(), codeSize * sizeof(char));
 
   suites.HandleSuite1()->host_unlock_handle(extra->u.flatten_func_params.arbH);
 
   return err;
+}
+
+static void UnflattenArbV0(GlobalData* globalData, char* flatData, A_u_long bufSize, ParamArbIsf* isf) {
+  // Find an offset of '\0' to split name and code
+  uint32_t nameSize = 0;
+  for (nameSize = 0;; nameSize++) {
+    if (flatData[nameSize] == '\0')
+      break;
+  }
+
+  auto code = std::string(flatData + nameSize + 1, bufSize - (nameSize + 1) * sizeof(char));
+
+  isf->name = std::string(flatData, nameSize * sizeof(char));
+  isf->desc = getCompiledSceneDesc(globalData, code);
+}
+
+static void UnflattenArbV1(GlobalData* globalData, char* flatData, A_u_long bufSize, ParamArbIsf* isf) {
+  ParamArbIsfFlatV1* flatHeader = reinterpret_cast<ParamArbIsfFlatV1*>(flatData);
+
+  isf->name = std::string(flatData + flatHeader->offsetName, flatHeader->offsetFragCode - flatHeader->offsetName);
+
+  auto fsCode =
+      std::string(flatData + flatHeader->offsetFragCode, flatHeader->offsetVertCode - flatHeader->offsetVertCode);
+
+  isf->desc = getCompiledSceneDesc(globalData, fsCode);
 }
 
 static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsExtra* extra) {
@@ -191,19 +220,14 @@ static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParam
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
   auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(arbH));
 
-  char* src = (char*)extra->u.unflatten_func_params.flat_dataPV;
+  char* flatData = (char*)extra->u.unflatten_func_params.flat_dataPV;
 
-  // Find an offset of '\0' to split name and code
-  uint32_t nameSize = 0;
-  for (nameSize = 0;; nameSize++) {
-    if (src[nameSize] == '\0')
-      break;
+  if (flatData[0] != ARB_ISF_MAGIC_NUMBER) {
+    // Means version 0
+    UnflattenArbV0(globalData, flatData, extra->u.unflatten_func_params.buf_sizeLu, isf);
+  } else {
+    UnflattenArbV1(globalData, flatData, extra->u.unflatten_func_params.buf_sizeLu, isf);
   }
-
-  isf->name = std::string(src, nameSize * sizeof(char));
-  auto code =
-      std::string(src + nameSize + 1, extra->u.unflatten_func_params.buf_sizeLu - (nameSize + 1) * sizeof(char));
-  isf->desc = getCompiledSceneDesc(globalData, code);
 
   suites.HandleSuite1()->host_unlock_handle(arbH);
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
