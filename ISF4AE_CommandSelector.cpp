@@ -915,8 +915,13 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
       if (visible) {
         // Set label
         auto label = input->label();
-        if (label.empty())
+        if (label.empty()) {
           label = input->name();
+        }
+
+        if (seqData->showISFOption) {
+          label += " (" + std::to_string(index) + ")";
+        }
 
         ERR(AEUtil::setParamName(globalData->aegpId, in_data, params, index, label));
       }
