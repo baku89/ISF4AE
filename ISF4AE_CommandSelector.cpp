@@ -119,13 +119,15 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   std::string resourcePath = AEUtil::getResourcesPath(in_data);
 
   globalData->defaultScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
-  globalData->defaultScene->useFile(resourcePath + "shaders/Default ISF4AE Shader.fs");
+
+  globalData->defaultScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/Default ISF4AE Shader.fs"), "");
 
   globalData->ae2glScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
+  globalData->ae2glScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/ae2gl.fs"), "");
   globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
 
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
-  globalData->gl2aeScene->useFile(resourcePath + "shaders/gl2ae.fs");
+  globalData->gl2aeScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/gl2ae.fs"), "");
 
   globalData->scenes = new WeakMap<std::string, SceneDesc>();
 
