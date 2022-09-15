@@ -586,12 +586,12 @@ static PF_Err UserChangedParam(PF_InData* in_data,
       std::string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
 
       if (!err && !srcPath.empty()) {
-        std::string isfCode = SystemUtil::readTextFile(srcPath);
+        std::string fsCode = SystemUtil::readTextFile(srcPath);
 
         isfDirectory = getDirname(srcPath);
         ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
 
-        if (!isfCode.empty()) {
+        if (!fsCode.empty()) {
           params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
 
           auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
@@ -614,8 +614,18 @@ static PF_Err UserChangedParam(PF_InData* in_data,
             userParamIndex++;
           }
 
+          // Load the optional vertex shader (same algorithm with ISFDoc.cpp:80)
+          std::string noExtPath = VVGL::StringByDeletingExtension(srcPath);
+          std::string vsCode = "";
+
+          vsCode = SystemUtil::readTextFile(noExtPath + ".vs");
+
+          if (vsCode.empty()) {
+            vsCode = SystemUtil::readTextFile(noExtPath + ".vert");
+          }
+
           isf->name = getBasename(srcPath);
-          isf->desc = getCompiledSceneDesc(globalData, isfCode);
+          isf->desc = getCompiledSceneDesc(globalData, fsCode, vsCode);
 
           ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isf->name));
 

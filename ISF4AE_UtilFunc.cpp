@@ -82,17 +82,21 @@ bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
-std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const std::string& code) {
-  if (code.empty()) {
+std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
+                                                const std::string& fsCode,
+                                                const std::string& vsCode) {
+  if (fsCode.empty()) {
     return globalData->notLoadedSceneDesc;
   }
+
+  std::string key = fsCode + "__ISF_VERTEX__" + vsCode;
 
   // Compile a shader at here to make sure to display the latest status
   auto& scenes = *globalData->scenes;
 
-  if (scenes.has(code)) {
+  if (scenes.has(key)) {
     // Use cache
-    return scenes.get(code);
+    return scenes.get(key);
   }
 
   // Compile new shader if not exists
@@ -103,7 +107,16 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const st
   auto desc = std::make_shared<SceneDesc>();
 
   try {
-    scene->useCode(code);
+    scene->useCode(fsCode, vsCode);
+
+    auto errDict = scene->errDict();
+    if (errDict.size() > 0) {
+      throw ISFErr(ISFErrType_ErrorCompilingGLSL, "Linking Error", "", errDict);
+    }
+
+    if (scene->program() == 0) {
+      throw ISFErr(ISFErrType_Unknown, "Unknown Error", "", std::map<std::string, std::string>());
+    }
 
     // Check if the number of inputs does not exceed the maximum
     if (scene->inputs().size() > NumUserParams) {
@@ -163,7 +176,7 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const st
     desc->errorLog = "";
   }
 
-  scenes.set(code, desc);
+  scenes.set(key, desc);
 
   return desc;
 }
@@ -191,9 +204,15 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs", isfDirectory, "Save ISF File");
 
   if (!err && !dstPath.empty()) {
-    std::string isfCode = isf->desc->scene->getFragCode();
+    std::string fsCode = isf->desc->scene->getFragCode();
 
-    SystemUtil::writeTextFile(dstPath, isfCode);
+    SystemUtil::writeTextFile(dstPath, fsCode);
+
+    auto& vsCode = *isf->desc->scene->doc()->vertShaderSource();
+    if (!vsCode.empty()) {
+      auto noExtPath = VVGL::StringByDeletingExtension(dstPath);
+      SystemUtil::writeTextFile(noExtPath + ".vs", vsCode);
+    }
 
     isfDirectory = getDirname(dstPath);
     ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));

@@ -21,8 +21,13 @@ class ISF4AEScene : public ISFScene {
 
   ISF4AEScene(const GLContextRef& inCtx) : ISFScene(inCtx) { _setUpRenderPrepCallback(); }
 
-  void useCode(const std::string code) {
-    auto doc = VVISF::CreateISFDocRefWith(code);
+  void useCode(const std::string& fsCode, const std::string& vsCode) {
+    ISFDocRef doc = nullptr;
+    if (vsCode.empty()) {
+      doc = CreateISFDocRefWith(fsCode);
+    } else {
+      doc = CreateISFDocRefWith(fsCode, "/", vsCode);
+    }
     useDoc(doc);
 
     // Check if there's a redifinition of inputs with same name.
