@@ -2,8 +2,8 @@
 
 #include <filesystem>
 
-std::string joinWith(const std::vector<std::string>& texts, const std::string& delimiter) {
-  std::stringstream ss;
+string joinWith(const vector<string>& texts, const string& delimiter) {
+  stringstream ss;
 
   for (int i = 0; i < texts.size(); i++) {
     ss << texts[i];
@@ -16,12 +16,12 @@ std::string joinWith(const std::vector<std::string>& texts, const std::string& d
   return ss.str();
 }
 
-std::vector<std::string> splitWith(std::string s, std::string delimiter) {
+vector<string> splitWith(string s, string delimiter) {
   size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-  std::string token;
-  std::vector<std::string> res;
+  string token;
+  vector<string> res;
 
-  while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+  while ((pos_end = s.find(delimiter, pos_start)) != string::npos) {
     token = s.substr(pos_start, pos_end - pos_start);
     pos_start = pos_end + delim_len;
     res.push_back(token);
@@ -40,12 +40,12 @@ void setBitFlag(int flag, bool value, int* target) {
   }
 }
 
-std::string getBasename(const std::string& path) {
-  std::filesystem::path p(path);
+string getBasename(const string& path) {
+  filesystem::path p(path);
   return p.stem();
 }
 
-std::string getDirname(const std::string& path) {
-  std::filesystem::path p(path);
+string getDirname(const string& path) {
+  filesystem::path p(path);
   return p.parent_path().string();
 }

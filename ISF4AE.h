@@ -42,6 +42,8 @@ typedef unsigned short PixelType;
 
 #include "Config.h"
 
+using namespace std;
+
 // Magic numbers
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
 #define PI 3.14159265358979323846
@@ -91,8 +93,8 @@ static const uint32_t NumParams = Param_UserOffset + NumUserParams * NumUserPara
 
 struct SceneDesc {
   VVISF::ISF4AESceneRef scene;
-  std::string status;
-  std::string errorLog;
+  string status;
+  string errorLog;
 };
 
 struct GlobalData {
@@ -101,8 +103,8 @@ struct GlobalData {
   VVGL::GLCPUToTexCopierRef uploader;
   VVGL::GLTexToCPUCopierRef downloader;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
-  std::shared_ptr<SceneDesc> notLoadedSceneDesc;
-  WeakMap<std::string, SceneDesc>* scenes;
+  shared_ptr<SceneDesc> notLoadedSceneDesc;
+  WeakMap<string, SceneDesc>* scenes;
 };
 
 struct SequenceData {
@@ -110,8 +112,8 @@ struct SequenceData {
 };
 
 struct ParamArbIsf {
-  std::string name;
-  std::shared_ptr<SceneDesc> desc;
+  string name;
+  shared_ptr<SceneDesc> desc;
 };
 
 #define ARB_ISF_MAGIC_NUMBER 0x01
@@ -135,9 +137,7 @@ PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
-std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
-                                                const std::string& fsCode,
-                                                const std::string& vsCode);
+shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string& fsCode, const string& vsCode);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLContextRef context, short bitdepth);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,

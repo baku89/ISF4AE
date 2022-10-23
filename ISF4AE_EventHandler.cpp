@@ -48,13 +48,13 @@ static DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* 
   return xform;
 }
 
-static std::unique_ptr<DRAWBOT_UTF16Char[]> convertStringToUTF16Char(std::string str) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  std::wstring wstr = converter.from_bytes(str);
+static unique_ptr<DRAWBOT_UTF16Char[]> convertStringToUTF16Char(string str) {
+  wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
+  wstring wstr = converter.from_bytes(str);
 
-  size_t length = std::wcslen(wstr.c_str());
+  size_t length = wcslen(wstr.c_str());
 
-  std::unique_ptr<DRAWBOT_UTF16Char[]> utf16char(new DRAWBOT_UTF16Char[length]);
+  unique_ptr<DRAWBOT_UTF16Char[]> utf16char(new DRAWBOT_UTF16Char[length]);
 
   AEUtil::copyConvertStringLiteralIntoUTF16(wstr.c_str(), utf16char.get());
 

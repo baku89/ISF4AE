@@ -28,22 +28,22 @@ static PF_Err About(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* param
   auto desc = isf->desc;
   auto& doc = *desc->scene->doc();
 
-  std::stringstream ss;
+  stringstream ss;
 
-  ss << "ISF Information" << std::endl;
-  ss << "Name: " << isf->name << std::endl;
-  ss << "Description: " << doc.description() << std::endl;
-  ss << "Credit: " << doc.credit() << std::endl;
+  ss << "ISF Information" << endl;
+  ss << "Name: " << isf->name << endl;
+  ss << "Description: " << doc.description() << endl;
+  ss << "Credit: " << doc.credit() << endl;
 
-  ss << std::endl;
+  ss << endl;
 
-  ss << "----------------" << std::endl;
+  ss << "----------------" << endl;
 
-  ss << std::endl;
+  ss << endl;
 
   ss << "This effect is built with ISF4AE; Interactive Shader Format for After Effects ";
-  ss << "(v" << MAJOR_VERSION << "." << MINOR_VERSION << "." << BUG_VERSION << ")." << std::endl;
-  ss << "All of the source code is published at https://github.com/baku89/ISF4AE." << std::endl;
+  ss << "(v" << MAJOR_VERSION << "." << MINOR_VERSION << "." << BUG_VERSION << ")." << endl;
+  ss << "All of the source code is published at https://github.com/baku89/ISF4AE." << endl;
 
   PF_STRCPY(out_data->return_msg, ss.str().c_str());
 
@@ -116,7 +116,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   FX_LOG("OpenGL GLSL Versions: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // Setup GL objects
-  std::string resourcePath = AEUtil::getResourcesPath(in_data);
+  string resourcePath = AEUtil::getResourcesPath(in_data);
 
   globalData->defaultScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
 
@@ -129,9 +129,9 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->gl2aeScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/gl2ae.fs"), "");
 
-  globalData->scenes = new WeakMap<std::string, SceneDesc>();
+  globalData->scenes = new WeakMap<string, SceneDesc>();
 
-  auto notLoadedSceneDesc = std::make_shared<SceneDesc>();
+  auto notLoadedSceneDesc = make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
   notLoadedSceneDesc->scene = globalData->defaultScene;
 
@@ -466,8 +466,8 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   if (!err) {
     // Set the output region to an entire layer multiplied by downsample, regardless of input's mask.
     PF_Rect outputRect = {
-        0, 0, (A_long)std::ceil((double)in_data->width * in_data->downsample_x.num / in_data->downsample_x.den),
-        (A_long)std::ceil((double)in_data->height * in_data->downsample_y.num / in_data->downsample_y.den)};
+        0, 0, (A_long)ceil((double)in_data->width * in_data->downsample_x.num / in_data->downsample_x.den),
+        (A_long)ceil((double)in_data->height * in_data->downsample_y.num / in_data->downsample_y.den)};
 
     UnionLRect(&outputRect, &extra->output->result_rect);
     UnionLRect(&outputRect, &extra->output->max_result_rect);
@@ -553,7 +553,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
     for (size_t y = 0; y < paramInfo->outSize.height; y++) {
       glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
       aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
-      std::memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
+      memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
     }
   } else {
     FX_LOG("Cannot checkout outputWorld");
@@ -579,16 +579,16 @@ static PF_Err UserChangedParam(PF_InData* in_data,
   switch (which_hit->param_index) {
     case Param_Edit: {
       // Load a shader
-      std::vector<std::string> fileTypes = {"fs", "txt", "frag", "glsl"};
+      vector<string> fileTypes = {"fs", "txt", "frag", "glsl"};
 
-      std::string isfDirectory = "";
+      string isfDirectory = "";
       ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
                                           &isfDirectory));
 
-      std::string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
+      string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
 
       if (!err && !srcPath.empty()) {
-        std::string fsCode = SystemUtil::readTextFile(srcPath);
+        string fsCode = SystemUtil::readTextFile(srcPath);
 
         isfDirectory = getDirname(srcPath);
         ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
@@ -617,8 +617,8 @@ static PF_Err UserChangedParam(PF_InData* in_data,
           }
 
           // Load the optional vertex shader (same algorithm with ISFDoc.cpp:80)
-          std::string noExtPath = VVGL::StringByDeletingExtension(srcPath);
-          std::string vsCode = "";
+          string noExtPath = VVGL::StringByDeletingExtension(srcPath);
+          string vsCode = "";
 
           vsCode = SystemUtil::readTextFile(noExtPath + ".vs");
 
@@ -788,7 +788,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
 
   // Set the shader status as a label for 'Edit Shader'
-  std::string statusLabel = "ISF: " + desc->status;
+  string statusLabel = "ISF: " + desc->status;
   AEUtil::setParamName(globalData->aegpId, in_data, params, Param_ISFGroupStart, statusLabel);
 
   // Show the time parameters if the current shader is time dependant
@@ -922,7 +922,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         }
 
         if (seqData->showISFOption) {
-          label += " (" + std::to_string(index) + ")";
+          label += " (" + to_string(index) + ")";
         }
 
         ERR(AEUtil::setParamName(globalData->aegpId, in_data, params, index, label));

@@ -82,14 +82,12 @@ bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input) {
  * Compile a shader and store to pool that maps code string to OGL::Program.
  * It will be called at UpdateParameterUI and PreRender.
  */
-std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
-                                                const std::string& fsCode,
-                                                const std::string& vsCode) {
+shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string& fsCode, const string& vsCode) {
   if (fsCode.empty()) {
     return globalData->notLoadedSceneDesc;
   }
 
-  std::string key = fsCode + "__ISF_VERTEX__" + vsCode;
+  string key = fsCode + "__ISF_VERTEX__" + vsCode;
 
   // Compile a shader at here to make sure to display the latest status
   auto& scenes = *globalData->scenes;
@@ -104,7 +102,7 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
   scene->setThrowExceptions(true);
   scene->setManualTime(true);
 
-  auto desc = std::make_shared<SceneDesc>();
+  auto desc = make_shared<SceneDesc>();
 
   try {
     scene->useCode(fsCode, vsCode);
@@ -115,14 +113,14 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
     }
 
     if (scene->program() == 0) {
-      throw ISFErr(ISFErrType_Unknown, "Unknown Error", "", std::map<std::string, std::string>());
+      throw ISFErr(ISFErrType_Unknown, "Unknown Error", "", map<string, string>());
     }
 
     // Check if the number of inputs does not exceed the maximum
     if (scene->inputs().size() > NumUserParams) {
-      std::map<std::string, std::string> errDict;
+      map<string, string> errDict;
 
-      std::stringstream ss;
+      stringstream ss;
       ss << "The number of inputs (" << scene->inputs().size() << ") exceeds the maximum number of supported inputs ("
          << NumUserParams << ")";
 
@@ -149,17 +147,17 @@ std::shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData,
 
       if (err.first == "fragErrLog" || err.first == "vertErrLog") {
         // Omit the text "ERROR: 0:"
-        auto log = std::regex_replace(err.second, std::regex("ERROR: 0:"), "Line ");
+        auto log = regex_replace(err.second, regex("ERROR: 0:"), "Line ");
 
         desc->errorLog += log + "\n";
 
       } else if (err.first == "jsonErrLog") {
-        std::string str = err.second;
-        std::smatch m;
-        std::regex re(R"(\[.+\] parse error at line ([0-9]+).+?: (.+); last read.*)");
-        if (std::regex_match(str, m, re)) {
-          std::string line = m[1].str();
-          std::string msg = m[2].str();
+        string str = err.second;
+        smatch m;
+        regex re(R"(\[.+\] parse error at line ([0-9]+).+?: (.+); last read.*)");
+        if (regex_match(str, m, re)) {
+          string line = m[1].str();
+          string msg = m[2].str();
           desc->errorLog += "Line " + line + ": " + msg + "\n";
         } else {
           desc->errorLog += err.second;
@@ -193,18 +191,18 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
 
   auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
 
-  std::string isfDirectory = "";
+  string isfDirectory = "";
   ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
                                       &isfDirectory));
 
   // Set name of an effect instance as default file name
-  std::string effectName = isf->name;
+  string effectName = isf->name;
 
   // Then confirm a destination path and save it
-  std::string dstPath = SystemUtil::saveFileDialog(effectName + ".fs", isfDirectory, "Save ISF File");
+  string dstPath = SystemUtil::saveFileDialog(effectName + ".fs", isfDirectory, "Save ISF File");
 
   if (!err && !dstPath.empty()) {
-    std::string fsCode = isf->desc->scene->getFragCode();
+    string fsCode = isf->desc->scene->getFragCode();
 
     SystemUtil::writeTextFile(dstPath, fsCode);
 
@@ -236,7 +234,7 @@ VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLCont
     case 32:
       return VVGL::CreateRGBAFloatTex(size, true, bp);
     default:
-      throw std::invalid_argument("Invalid bitdepth");
+      throw invalid_argument("Invalid bitdepth");
   }
 }
 
@@ -257,7 +255,7 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
                                                  NULL);
 
     default:
-      throw std::invalid_argument("Invalid bitdepth");
+      throw invalid_argument("Invalid bitdepth");
   }
 }
 

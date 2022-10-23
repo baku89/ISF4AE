@@ -138,8 +138,8 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
   auto* isf =
       reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
 
-  std::string fsCode = isf->desc->scene->getFragCode();
-  std::string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
+  string fsCode = isf->desc->scene->getFragCode();
+  string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
 
   if (vsCode == VVISF::ISFVertPassthru_GL2) {
     vsCode = "";
@@ -168,8 +168,8 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   ParamArbIsfFlatV1* dstHeader = (ParamArbIsfFlatV1*)extra->u.flatten_func_params.flat_dataPV;
   char* dstPV = (char*)extra->u.flatten_func_params.flat_dataPV;
 
-  std::string fsCode = isf->desc->scene->getFragCode();
-  std::string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
+  string fsCode = isf->desc->scene->getFragCode();
+  string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
 
   if (vsCode == VVISF::ISFVertPassthru_GL2) {
     vsCode = "";
@@ -202,21 +202,20 @@ static void UnflattenArbV0(GlobalData* globalData, char* flatData, A_u_long bufS
       break;
   }
 
-  auto fsCode = std::string(flatData + nameSize + 1, bufSize - (nameSize + 1) * sizeof(char));
+  auto fsCode = string(flatData + nameSize + 1, bufSize - (nameSize + 1) * sizeof(char));
 
-  isf->name = std::string(flatData, nameSize * sizeof(char));
+  isf->name = string(flatData, nameSize * sizeof(char));
   isf->desc = getCompiledSceneDesc(globalData, fsCode, "");
 }
 
 static void UnflattenArbV1(GlobalData* globalData, char* flatData, A_u_long bufSize, ParamArbIsf* isf) {
   ParamArbIsfFlatV1* flatHeader = reinterpret_cast<ParamArbIsfFlatV1*>(flatData);
 
-  isf->name = std::string(flatData + flatHeader->offsetName, flatHeader->offsetFragCode - flatHeader->offsetName);
+  isf->name = string(flatData + flatHeader->offsetName, flatHeader->offsetFragCode - flatHeader->offsetName);
 
-  auto fsCode =
-      std::string(flatData + flatHeader->offsetFragCode, flatHeader->offsetVertCode - flatHeader->offsetFragCode);
+  auto fsCode = string(flatData + flatHeader->offsetFragCode, flatHeader->offsetVertCode - flatHeader->offsetFragCode);
 
-  auto vsCode = std::string(flatData + flatHeader->offsetVertCode, bufSize - flatHeader->offsetVertCode);
+  auto vsCode = string(flatData + flatHeader->offsetVertCode, bufSize - flatHeader->offsetVertCode);
 
   isf->desc = getCompiledSceneDesc(globalData, fsCode, vsCode);
 }

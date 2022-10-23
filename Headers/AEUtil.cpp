@@ -7,14 +7,14 @@
 
 namespace AEUtil {
 
-std::string getResourcesPath(PF_InData* in_data) {
+string getResourcesPath(PF_InData* in_data) {
   // initialize and compile the shader objects
   A_UTF16Char pluginFolderPath[AEFX_MAX_PATH];
   PF_GET_PLATFORM_DATA(PF_PlatData_EXE_FILE_PATH_W, &pluginFolderPath);
 
 #ifdef AE_OS_WIN
-  std::string resourcePath = get_string_from_wcs((wchar_t*)pluginFolderPath);
-  std::string::size_type pos;
+  string resourcePath = get_string_from_wcs((wchar_t*)pluginFolderPath);
+  string::size_type pos;
   // delete the plugin name
   pos = resourcePath.rfind("\\", resourcePath.length());
   resourcePath = resourcePath.substr(0, pos) + "\\";
@@ -26,7 +26,7 @@ std::string getResourcesPath(PF_InData* in_data) {
     ++length;
   }
   NSString* newStr = [[NSString alloc] initWithCharacters:pluginFolderPath length:length];
-  std::string resourcePath([newStr UTF8String]);
+  string resourcePath([newStr UTF8String]);
   resourcePath += "/Contents/Resources/";
 #endif
   return resourcePath;
@@ -73,7 +73,7 @@ PF_Err setParamName(AEGP_PluginID aegpId,
                     PF_InData* in_data,
                     PF_ParamDef* params[],
                     PF_ParamIndex index,
-                    std::string& name) {
+                    string& name) {
   PF_Err err = PF_Err_NONE;  //, err2 = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
@@ -86,8 +86,8 @@ PF_Err setParamName(AEGP_PluginID aegpId,
 
   // A_UTF16Char* utf16Name;
 
-  // std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-  // std::u16string wstr = converter.from_bytes(name.c_str());
+  // wstring_convert<codecvt_utf8<char16_t>, char16_t> converter;
+  // u16string wstr = converter.from_bytes(name.c_str());
 
   // utf16Name = (A_UTF16Char*)wstr.c_str();
 
@@ -233,7 +233,7 @@ static PF_Err getAEGPEffectStream(AEGP_PluginID aegpId, PF_InData* in_data, AEGP
   return err;
 }
 
-PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name) {
+PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, string* name) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
@@ -243,7 +243,7 @@ PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name
   A_char effectName[AEGP_MAX_ITEM_NAME_SIZE];
   ERR(suites.StreamSuite2()->AEGP_GetStreamName(effectStreamH, FALSE, effectName));
 
-  *name = std::string(effectName);
+  *name = string(effectName);
 
   if (effectStreamH)
     ERR2(suites.StreamSuite5()->AEGP_DisposeStream(effectStreamH));
@@ -251,7 +251,7 @@ PF_Err getEffectName(AEGP_PluginID aegpId, PF_InData* in_data, std::string* name
   return err;
 }
 
-PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string& name) {
+PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const string& name) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
@@ -260,8 +260,8 @@ PF_Err setEffectName(AEGP_PluginID aegpId, PF_InData* in_data, const std::string
 
   A_UTF16Char* utf16Name;
 
-  std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-  std::u16string wstr = converter.from_bytes(name.c_str());
+  wstring_convert<codecvt_utf8<char16_t>, char16_t> converter;
+  u16string wstr = converter.from_bytes(name.c_str());
 
   utf16Name = (A_UTF16Char*)wstr.c_str();
 
@@ -299,8 +299,8 @@ void copyConvertStringLiteralIntoUTF16(const wchar_t* inputString, A_UTF16Char* 
 PF_Err getStringPersistentData(PF_InData* in_data,
                                const A_char* sectionKey,
                                const A_char* valueKey,
-                               const std::string& defaultValue,
-                               std::string* value) {
+                               const string& defaultValue,
+                               string* value) {
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
@@ -314,7 +314,7 @@ PF_Err getStringPersistentData(PF_InData* in_data,
   ERR(suites.PersistentDataSuite4()->AEGP_GetString(blobH, sectionKey, valueKey, defaultValue.c_str(), 1024, charStr,
                                                     &charSize));
 
-  (*value) = std::string(charStr, charSize);
+  (*value) = string(charStr, charSize);
 
   return err;
 }
@@ -322,7 +322,7 @@ PF_Err getStringPersistentData(PF_InData* in_data,
 PF_Err setStringPersistentData(PF_InData* in_data,
                                const A_char* sectionKey,
                                const A_char* valueKey,
-                               const std::string& value) {
+                               const string& value) {
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);

@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_set>
 
+using namespace std;
 using namespace VVGL;
 using namespace VVISF;
 
@@ -21,7 +22,7 @@ class ISF4AEScene : public ISFScene {
 
   ISF4AEScene(const GLContextRef& inCtx) : ISFScene(inCtx) { _setUpRenderPrepCallback(); }
 
-  void useCode(const std::string& fsCode, const std::string& vsCode) {
+  void useCode(const string& fsCode, const string& vsCode) {
     ISFDocRef doc = nullptr;
     if (vsCode.empty()) {
       doc = CreateISFDocRefWith(fsCode);
@@ -32,13 +33,13 @@ class ISF4AEScene : public ISFScene {
 
     // Check if there's a redifinition of inputs with same name.
     // this should precede the shader compilation since GLSL also raises redifinition error.
-    std::unordered_set<std::string> inputNames;
+    unordered_set<string> inputNames;
     for (auto& input : inputs()) {
-      std::string name = input->name();
+      string name = input->name();
       if (inputNames.find(name) != inputNames.end()) {
-        std::map<std::string, std::string> errDict;
+        map<string, string> errDict;
 
-        std::stringstream ss;
+        stringstream ss;
         ss << "Input redifinition: \"" << name << "\".";
 
         errDict["ia4ErrLog"] = ss.str();
@@ -64,7 +65,7 @@ class ISF4AEScene : public ISFScene {
 
     attr = inputNamed("i4a_Downsample");
     if (attr && attr->type() != ISFValType_Point2D) {
-      std::map<std::string, std::string> errDict;
+      map<string, string> errDict;
 
       errDict["ia4ErrLog"] = R"(The type of uniform i4a_Downsample has to be "point2D")";
 
@@ -73,18 +74,18 @@ class ISF4AEScene : public ISFScene {
     }
   }
 
-  std::map<std::string, std::string> errDict() { return _errDict; }
+  map<string, string> errDict() { return _errDict; }
 
   bool isTimeDependant() {
-    std::string& fs = *doc()->fragShaderSource();
+    string& fs = *doc()->fragShaderSource();
 
     // TODO: Regex below is quite makeshift and should be refactored.
-    std::regex re("TIME|TIMEDELTA|FRAMEINDEX|DATE");
+    regex re("TIME|TIMEDELTA|FRAMEINDEX|DATE");
 
-    return std::regex_search(fs, re);
+    return regex_search(fs, re);
   }
 
-  std::string getFragCode() {
+  string getFragCode() {
     auto doc = this->doc();
 
     return *doc->jsonSourceString() + *doc->fragShaderSource();
@@ -99,10 +100,10 @@ class ISF4AEScene : public ISFScene {
   }
 };
 
-using ISF4AESceneRef = std::shared_ptr<ISF4AEScene>;
+using ISF4AESceneRef = shared_ptr<ISF4AEScene>;
 
 inline ISF4AESceneRef CreateISF4AESceneRefUsing(const VVGL::GLContextRef& inCtx) {
-  return std::make_shared<ISF4AEScene>(inCtx);
+  return make_shared<ISF4AEScene>(inCtx);
 }
 
 }  // namespace VVISF

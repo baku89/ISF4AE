@@ -8,10 +8,8 @@
 
 namespace SystemUtil {
 
-std::string openFileDialog(const std::vector<std::string>& fileTypes,
-                           const std::string& directory,
-                           const std::string& title) {
-  std::string path;
+string openFileDialog(const vector<string>& fileTypes, const string& directory, const string& title) {
+  string path;
 
   id nsFileTypes = [NSMutableArray new];
 
@@ -35,14 +33,14 @@ std::string openFileDialog(const std::vector<std::string>& fileTypes,
     NSString* nsPath = [panel URLs][0].absoluteString;
     nsPath = [nsPath stringByRemovingPercentEncoding];
     nsPath = [nsPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
-    path = std::string([nsPath UTF8String]);
+    path = string([nsPath UTF8String]);
   }
 
   return path;
 }
 
-std::string saveFileDialog(const std::string& filename, const std::string& directory, const std::string& title) {
-  std::string path;
+string saveFileDialog(const string& filename, const string& directory, const string& title) {
+  string path;
 
   NSString* nsFilename = [NSString stringWithCString:filename.c_str() encoding:NSUTF8StringEncoding];
 
@@ -58,21 +56,21 @@ std::string saveFileDialog(const std::string& filename, const std::string& direc
     NSString* nsPath = [panel URL].absoluteString;
     nsPath = [nsPath stringByRemovingPercentEncoding];
     nsPath = [nsPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
-    path = std::string([nsPath UTF8String]);
+    path = string([nsPath UTF8String]);
   }
 
   return path;
 }
 
-std::string readTextFile(const std::string& path) {
-  std::string text;
-  std::ifstream file;
+string readTextFile(const string& path) {
+  string text;
+  ifstream file;
 
   // ensure ifstream objects can throw exceptions:
-  file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   try {
-    std::stringstream stream;
+    stringstream stream;
 
     file.open(path);
 
@@ -89,11 +87,11 @@ std::string readTextFile(const std::string& path) {
   return text;
 }
 
-bool writeTextFile(const std::string& path, const std::string& text) {
-  std::ofstream file;
+bool writeTextFile(const string& path, const string& text) {
+  ofstream file;
 
   // ensure ifstream objects can throw exceptions:
-  file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   try {
     file.open(path);

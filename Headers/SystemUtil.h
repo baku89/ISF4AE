@@ -3,16 +3,14 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 namespace SystemUtil {
 
-std::string openFileDialog(const std::vector<std::string>& fileTypes,
-                           const std::string& directory = "",
-                           const std::string& title = "");
-std::string saveFileDialog(const std::string& filename,
-                           const std::string& directory = "",
-                           const std::string& title = "");
+string openFileDialog(const vector<string>& fileTypes, const string& directory = "", const string& title = "");
+string saveFileDialog(const string& filename, const string& directory = "", const string& title = "");
 
-std::string readTextFile(const std::string& path);
-bool writeTextFile(const std::string& path, const std::string& text);
+string readTextFile(const string& path);
+bool writeTextFile(const string& path, const string& text);
 
 };  // namespace SystemUtil
