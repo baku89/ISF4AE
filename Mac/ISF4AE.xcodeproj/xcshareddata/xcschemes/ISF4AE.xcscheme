@@ -43,7 +43,7 @@
       <PathRunnable
          runnableDebuggingMode = "0"
          BundleIdentifier = "com.adobe.AfterEffects"
-         FilePath = "/Applications/Adobe After Effects 2022/Adobe After Effects 2022.app">
+         FilePath = "/Applications/Adobe After Effects 2023/Adobe After Effects 2023.app">
       </PathRunnable>
    </LaunchAction>
    <ProfileAction
@@ -52,6 +52,10 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <PathRunnable
+         runnableDebuggingMode = "0"
+         FilePath = "/Applications/Adobe After Effects 2023/Adobe After Effects 2023.app">
+      </PathRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
