@@ -11,6 +11,7 @@
 
 #include <VVGL.hpp>
 #include <iostream>
+#include <mutex>
 
 #define GL_SILENCE_DEPRECATION
 #define MIN_SAFE_FLOAT -1000000
@@ -990,6 +991,13 @@ PF_Err EffectMain(PF_Cmd cmd,
                   PF_LayerDef* output,
                   void* extra) {
   PF_Err err = PF_Err_NONE;
+  
+  /**
+   * TODO: To make the plugin thread-safe forcebly, I applied a mutex lock to the whole main function.
+   * Yet this should be not a smart way and spoils the advantage of Multi-Frame Rendering.
+   */
+  static recursive_mutex commandSelectorLock;
+	lock_guard<recursive_mutex> lock(commandSelectorLock);
 
   try {
     switch (cmd) {
