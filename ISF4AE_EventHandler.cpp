@@ -3,6 +3,7 @@
 #include <adobesdk/DrawbotSuite.h>
 #include "AEFX_SuiteHelper.h"
 
+#include <codecvt>
 #include <string>
 
 #include "AEUtil.h"
@@ -47,13 +48,17 @@ static DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* 
   return xform;
 }
 
-static DRAWBOT_UTF16Char* convertStringToUTF16Char(std::string line) {
-  std::wstring lineWstr = std::wstring(line.begin(), line.end());
-  DRAWBOT_UTF16Char* lineUTF16Char = new DRAWBOT_UTF16Char[lineWstr.length()];
+static std::unique_ptr<DRAWBOT_UTF16Char[]> convertStringToUTF16Char(std::string str) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  std::wstring wstr = converter.from_bytes(str);
 
-  AEUtil::copyConvertStringLiteralIntoUTF16(lineWstr.c_str(), lineUTF16Char);
+  size_t length = std::wcslen(wstr.c_str());
 
-  return lineUTF16Char;
+  std::unique_ptr<DRAWBOT_UTF16Char[]> utf16char(new DRAWBOT_UTF16Char[length]);
+
+  AEUtil::copyConvertStringLiteralIntoUTF16(wstr.c_str(), utf16char.get());
+
+  return utf16char;
 }
 
 static PF_Err DrawEvent(PF_InData* in_data,
@@ -152,13 +157,15 @@ static PF_Err DrawEvent(PF_InData* in_data,
 
     // Start Transform
     {
+      auto* surface = suites.SurfaceSuiteCurrent();
+
       // Apply a transform
       ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
       ERR(drawbotSuites.surface_suiteP->Transform(surfaceRef, &layer2FrameXform));
 
       // Apply a clip
       ERR(drawbotSuites.surface_suiteP->PushStateStack(surfaceRef));
-      suites.SurfaceSuiteCurrent()->Clip(surfaceRef, supplierRef, &clipRect);
+      surface->Clip(surfaceRef, supplierRef, &clipRect);
 
       if (doRenderErrorLog) {
         // Print the type of error with larger font
@@ -167,17 +174,15 @@ static PF_Err DrawEvent(PF_InData* in_data,
         origin.x += shadowOffset.x;
         origin.y += shadowOffset.y;
 
-        auto* status = convertStringToUTF16Char(sceneDesc->status);
-        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, largeFontRef, &status[0], &origin,
-                                                     kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
+        auto status = convertStringToUTF16Char(sceneDesc->status);
+        ERR(surface->DrawString(surfaceRef, shadowBrushRef, largeFontRef, status.get(), &origin,
+                                kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
 
         origin.x -= shadowOffset.x;
         origin.y -= shadowOffset.y;
 
-        ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, largeFontRef, &status[0], &origin,
-                                                     kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
-
-        delete[] status;
+        ERR(surface->DrawString(surfaceRef, redBrushRef, largeFontRef, status.get(), &origin,
+                                kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
 
         origin.y += padding * 2;
 
@@ -185,23 +190,19 @@ static PF_Err DrawEvent(PF_InData* in_data,
         for (auto& line : splitWith(sceneDesc->errorLog, "\n")) {
           origin.y += fontSize + padding;
 
-          auto* lineUTF16Char = convertStringToUTF16Char(line);
+          auto lineUTF16Char = convertStringToUTF16Char(line);
 
           origin.x += shadowOffset.x;
           origin.y += shadowOffset.y;
 
-          ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, shadowBrushRef, fontRef, &lineUTF16Char[0], &origin,
-                                                       kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None,
-                                                       0.0f));
+          ERR(surface->DrawString(surfaceRef, shadowBrushRef, fontRef, lineUTF16Char.get(), &origin,
+                                  kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
 
           origin.x -= shadowOffset.x;
           origin.y -= shadowOffset.y;
 
-          ERR(suites.SurfaceSuiteCurrent()->DrawString(surfaceRef, redBrushRef, fontRef, &lineUTF16Char[0], &origin,
-                                                       kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None,
-                                                       0.0f));
-
-          delete[] lineUTF16Char;
+          ERR(surface->DrawString(surfaceRef, redBrushRef, fontRef, lineUTF16Char.get(), &origin,
+                                  kDRAWBOT_TextAlignment_Left, kDRAWBOT_TextTruncation_None, 0.0f));
         }
       } /* End doRenderErrorLog */
 
@@ -241,11 +242,12 @@ static PF_Err DrawEvent(PF_InData* in_data,
           float opacity = 1.0f;
           origin.x = 0;
           origin.y = 0;
-          ERR(suites.SurfaceSuiteCurrent()->DrawImage(surfaceRef, imageRef, &origin, opacity));
+          ERR(surface->DrawImage(surfaceRef, imageRef, &origin, opacity));
 
           ERR(drawbotSuites.supplier_suiteP->ReleaseObject((DRAWBOT_ObjectRef)imageRef));
         }
       } /* End doRenderCustomUI */
+
       // Pop clipping & transofrm stacks
       ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
       ERR(drawbotSuites.surface_suiteP->PopStateStack(surfaceRef));
