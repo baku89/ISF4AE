@@ -10,6 +10,12 @@
 
 After Effects plug-in to allow using a GLSL code written in [Interactive Shader Format](https://isf.video/) as an effect. **In short, it's an effect to build effects by yourself** -- without struggling with complicated C++ SDK.
 
+### Supported Environments
+
+I have confirmed that the plugin works on the environments shown below. Yet it sould work in greather than CC 2022 on any macOS basically.
+
+ - CC 2023 on macOS Monterey (Apple Silicon, Intel)
+
 ---
 
 ## Additional ISF Specification
