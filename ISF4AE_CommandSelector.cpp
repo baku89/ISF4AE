@@ -634,6 +634,7 @@ static PF_Err UserChangedParam(PF_InData* in_data,
 
           // Set default values
           auto desc = isf->desc;
+          bool isTransition = desc->scene->doc()->type() == VVISF::ISFFileType_Transition;
 
           userParamIndex = 0;
 
@@ -696,10 +697,16 @@ static PF_Err UserChangedParam(PF_InData* in_data,
                 } else {
                   dephault = input->defaultVal().getDoubleVal();
 
-                  if (input->unit() == VVISF::ISFValUnit_Length) {
+                  auto unit = input->unit();
+
+                  if (unit == VVISF::ISFValUnit_Length) {
                     dephault *= in_data->width;
-                  } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+                  } else if (unit == VVISF::ISFValUnit_Percent) {
                     dephault *= 100;
+                  }
+
+                  if (isTransition && input->name() == "progress") {
+                    dephault = 0;
                   }
                 }
 
@@ -783,6 +790,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
 
   auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
   auto desc = isf->desc;
+  bool isTransition = desc->scene->doc()->type() == VVISF::ISFFileType_Transition;
 
   // Toggle the visibility of ISF options
   ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
@@ -868,6 +876,15 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
           displayFlags |= PF_ValueDisplayFlag_PERCENT;
         }
 
+        if (isTransition && input->name() == "progress") {
+          dephault = 0;
+          min = 0;
+          max = 100;
+          clampMin = true;
+          clampMax = true;
+          displayFlags |= PF_ValueDisplayFlag_PERCENT;
+        }
+
         param.u.fs_d.dephault = dephault;
         param.u.fs_d.slider_min = min;
         param.u.fs_d.slider_max = max;
@@ -902,6 +919,16 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         break;
       }
 
+      case UserParamType_Image: {
+        if (isTransition && input->name() == "startImage") {
+          param.u.ld.dephault = PF_LayerDefault_MYSELF;
+        } else {
+          param.u.ld.dephault = PF_LayerDefault_NONE;
+        }
+
+        break;
+      }
+
       default:
         break;
     }
@@ -918,6 +945,19 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
       if (visible) {
         // Set label
         auto label = input->label();
+
+        if (label.empty() && isTransition) {
+          // Set a default label for transition-type ISF.
+          auto name = input->name();
+          if (name == "startImage") {
+            label = "Start Image";
+          } else if (name == "endImage") {
+            label = "End Image";
+          } else if (name == "progress") {
+            label = "Progress";
+          }
+        }
+
         if (label.empty()) {
           label = input->name();
         }
@@ -991,13 +1031,13 @@ PF_Err EffectMain(PF_Cmd cmd,
                   PF_LayerDef* output,
                   void* extra) {
   PF_Err err = PF_Err_NONE;
-  
+
   /**
    * TODO: To make the plugin thread-safe forcebly, I applied a mutex lock to the whole main function.
    * Yet this should be not a smart way and spoils the advantage of Multi-Frame Rendering.
    */
   static recursive_mutex commandSelectorLock;
-	lock_guard<recursive_mutex> lock(commandSelectorLock);
+  lock_guard<recursive_mutex> lock(commandSelectorLock);
 
   try {
     switch (cmd) {

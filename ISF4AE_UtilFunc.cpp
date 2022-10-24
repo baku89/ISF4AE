@@ -395,9 +395,15 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
           A_FpLong v = 0.0;
           ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
 
-          if (input->unit() == VVISF::ISFValUnit_Length) {
+          VVISF::ISFValUnit unit = input->unit();
+
+          if (scene.doc()->type() == VVISF::ISFFileType_Transition && input->name() == "progress") {
+            unit = VVISF::ISFValUnit_Percent;
+          }
+
+          if (unit == VVISF::ISFValUnit_Length) {
             v /= in_data->width;
-          } else if (input->unit() == VVISF::ISFValUnit_Percent) {
+          } else if (unit == VVISF::ISFValUnit_Percent) {
             v /= 100;
           }
 
