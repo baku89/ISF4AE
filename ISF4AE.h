@@ -104,7 +104,7 @@ struct GlobalData {
   VVGL::GLTexToCPUCopierRef downloader;
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   shared_ptr<SceneDesc> notLoadedSceneDesc;
-  WeakMap<string, SceneDesc>* scenes;
+  shared_ptr<WeakMap<string, SceneDesc>> scenes;
 };
 
 struct SequenceData {
