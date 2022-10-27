@@ -63,8 +63,7 @@ static PF_Err PopDialog(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* p
 
   seqData->showISFOption = !seqData->showISFOption;
 
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
+  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISF, seqData->showISFOption));
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
   suites.HandleSuite1()->host_unlock_handle(in_data->sequence_data);
@@ -267,39 +266,22 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   PF_ParamDef def;
 
   // Add parameters
-  AEFX_CLR_STRUCT(def);
-  PF_ADD_TOPIC("ISF Option", Param_ISFGroupStart);
 
-  // A bidden arbitrary param for storing fragment strings
+  // An arbitrary param for storing fragment strings
   AEFX_CLR_STRUCT(def);
   ERR(CreateDefaultArb(in_data, out_data, &def.u.arb_d.dephault));
-  PF_ADD_ARBITRARY2("ISF", 1, 1,  // width, height
-                    PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE, PF_PUI_NO_ECW_UI | PF_PUI_INVISIBLE,
-                    def.u.arb_d.dephault, Param_ISF, ARB_REFCON);
+  PF_ADD_ARBITRARY2("ISF",                                                   // name
+                    1, BUTTON_HEIGHT,                                        // width, height
+                    PF_ParamFlag_CANNOT_TIME_VARY | PF_ParamFlag_SUPERVISE,  // Param flags
+                    PF_PUI_CONTROL | PF_PUI_DONT_ERASE_CONTROL,              // ECU flags
+                    def.u.arb_d.dephault, ParamID::ISF, ARB_REFCON);
 
-  // "Edit Shader" button (also shows a shader compliation status)
-  AEFX_CLR_STRUCT(def);
-  PF_ADD_BUTTON("",
-                "Load Shader",           // BUTTON_NAME
-                PF_PUI_NONE,             // PUI_FLAGS
-                PF_ParamFlag_SUPERVISE,  // PARAM_FLAGS
-                Param_Edit);             // ID
-
-  // "Save Shader" button
-  AEFX_CLR_STRUCT(def);
-  PF_ADD_BUTTON("",
-                "Save Shader",           // BUTTON_NAME
-                PF_PUI_NONE,             // PUI_FLAGS
-                PF_ParamFlag_SUPERVISE,  // PARAM_FLAGS
-                Param_Save);             // ID
-
-  PF_END_TOPIC(Param_ISFGroupEnd);
-
+  // Parameters for Time-dependent filter
   AEFX_CLR_STRUCT(def);
   PF_ADD_CHECKBOX("Use Layer Time",  // Label
                   "",                // A description right to the checkbox
                   FALSE,             // Default
-                  PF_ParamFlag_SUPERVISE | PF_ParamFlag_CANNOT_TIME_VARY, Param_UseLayerTime);
+                  PF_ParamFlag_SUPERVISE | PF_ParamFlag_CANNOT_TIME_VARY, ParamID::UseLayerTime);
 
   AEFX_CLR_STRUCT(def);
   PF_ADD_FLOAT_SLIDERX("Time",                          // Label
@@ -309,7 +291,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                        1,                               // Precision
                        PF_ValueDisplayFlag_NONE,        // Display
                        PF_ParamFlag_COLLAPSE_TWIRLY,    // Flags
-                       Param_Time);                     // ID
+                       ParamID::Time);                  // ID
 
   // Add all possible user params
   A_char name[32];
@@ -318,12 +300,12 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
     PF_SPRINTF(name, "Bool %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     PF_ADD_CHECKBOX(name, "", FALSE, PF_ParamFlag_COLLAPSE_TWIRLY,
-                    getIndexForUserParam(userParamIndex, UserParamType_Bool));
+                    getIdForUserParam(userParamIndex, UserParamType_Bool));
 
     PF_SPRINTF(name, "Long %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     PF_ADD_POPUPX(name, 5, 1, "1|2|3|4|5", PF_ParamFlag_COLLAPSE_TWIRLY,
-                  getIndexForUserParam(userParamIndex, UserParamType_Long));
+                  getIdForUserParam(userParamIndex, UserParamType_Long));
 
     PF_SPRINTF(name, "Float %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -333,14 +315,14 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                          0,                               // Default
                          1,                               // Precision
                          PF_ValueDisplayFlag_NONE, PF_ParamFlag_COLLAPSE_TWIRLY,
-                         getIndexForUserParam(userParamIndex, UserParamType_Float));
+                         getIdForUserParam(userParamIndex, UserParamType_Float));
 
     PF_SPRINTF(name, "Angle %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     def.u.ad.valid_min = PF_Fixed_MINVAL;
     def.u.ad.valid_max = PF_Fixed_MAXVAL;
     def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
-    PF_ADD_ANGLE(name, 0, getIndexForUserParam(userParamIndex, UserParamType_Angle));
+    PF_ADD_ANGLE(name, 0, getIdForUserParam(userParamIndex, UserParamType_Angle));
 
     PF_SPRINTF(name, "Point2D %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -349,16 +331,16 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                  // at a center of layer, with specifying in percentage
                  50L, 50L,
                  // restrict_bounds
-                 0, getIndexForUserParam(userParamIndex, UserParamType_Point2D));
+                 0, getIdForUserParam(userParamIndex, UserParamType_Point2D));
 
     PF_SPRINTF(name, "Color %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
     def.flags |= PF_ParamFlag_COLLAPSE_TWIRLY;
-    PF_ADD_COLOR(name, 1, 1, 1, getIndexForUserParam(userParamIndex, UserParamType_Color));
+    PF_ADD_COLOR(name, 1, 1, 1, getIdForUserParam(userParamIndex, UserParamType_Color));
 
     PF_SPRINTF(name, "Image %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    PF_ADD_LAYER(name, PF_LayerDefault_NONE, getIndexForUserParam(userParamIndex, UserParamType_Image));
+    PF_ADD_LAYER(name, PF_LayerDefault_NONE, getIdForUserParam(userParamIndex, UserParamType_Image));
   }
 
   if (!err) {
@@ -367,7 +349,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
     AEFX_CLR_STRUCT(ci);
 
-    ci.events = PF_CustomEFlag_LAYER | PF_CustomEFlag_COMP;
+    ci.events = PF_CustomEFlag_LAYER | PF_CustomEFlag_COMP | PF_CustomEFlag_EFFECT;
     ci.comp_ui_width = ci.comp_ui_height = 0;
     ci.layer_ui_width = ci.layer_ui_height = 0;
     ci.preview_ui_width = ci.preview_ui_height = 0;
@@ -567,219 +549,6 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   return err;
 }
 
-static PF_Err UserChangedParam(PF_InData* in_data,
-                               PF_OutData* out_data,
-                               PF_ParamDef* params[],
-                               const PF_UserChangedParamExtra* which_hit) {
-  PF_Err err = PF_Err_NONE;
-  AEGP_SuiteHandler suites(in_data->pica_basicP);
-
-  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
-
-  switch (which_hit->param_index) {
-    case Param_Edit: {
-      // Load a shader
-      vector<string> fileTypes = {"fs", "txt", "frag", "glsl"};
-
-      string isfDirectory = "";
-      ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
-                                          &isfDirectory));
-
-      string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
-
-      if (!err && !srcPath.empty()) {
-        string fsCode = SystemUtil::readTextFile(srcPath);
-
-        isfDirectory = getDirname(srcPath);
-        ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
-
-        if (!fsCode.empty()) {
-          params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
-
-          auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
-
-          u_int32_t userParamIndex = 0;
-
-          // Backup old params' values
-          auto oldScene = isf->desc->scene;
-          PF_ParamDefUnion oldParamValues[NumUserParams];
-          for (int i = 0; i < NumUserParams; i++) {
-            AEFX_CLR_STRUCT(oldParamValues[i]);
-          }
-          for (auto& oldInput : oldScene->inputs()) {
-            if (!isISFAttrVisibleInECW(oldInput)) {
-              continue;
-            }
-            UserParamType userParamType = getUserParamTypeForISFAttr(oldInput);
-            PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
-            oldParamValues[userParamIndex] = params[index]->u;
-            userParamIndex++;
-          }
-
-          // Load the optional vertex shader (same algorithm with ISFDoc.cpp:80)
-          string noExtPath = VVGL::StringByDeletingExtension(srcPath);
-          string vsCode = "";
-
-          vsCode = SystemUtil::readTextFile(noExtPath + ".vs");
-
-          if (vsCode.empty()) {
-            vsCode = SystemUtil::readTextFile(noExtPath + ".vert");
-          }
-
-          isf->name = getBasename(srcPath);
-          isf->desc = getCompiledSceneDesc(globalData, fsCode, vsCode);
-
-          ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isf->name));
-
-          // Set default values
-          auto desc = isf->desc;
-          bool isTransition = desc->scene->doc()->type() == VVISF::ISFFileType_Transition;
-
-          userParamIndex = 0;
-
-          for (auto& input : desc->scene->inputs()) {
-            if (!isISFAttrVisibleInECW(input)) {
-              continue;
-            }
-
-            auto userParamType = getUserParamTypeForISFAttr(input);
-            auto index = getIndexForUserParam(userParamIndex, userParamType);
-            auto& param = *params[index];
-
-            auto oldInput = oldScene->inputNamed(input->name());
-            PF_ParamDefUnion* oldValue = nullptr;
-            if (oldInput && oldInput->type() == input->type()) {
-              // When the old scene has an input with same name and type
-              auto idx = 0;
-              for (auto& oi : oldScene->inputs()) {
-                if (!isISFAttrVisibleInECW(oi)) {
-                  continue;
-                }
-                if (oldInput == oi) {
-                  oldValue = &oldParamValues[idx];
-                  break;
-                }
-
-                idx++;
-              }
-            }
-
-            param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
-
-            switch (userParamType) {
-              case UserParamType_Bool:
-                if (oldValue) {
-                  param.u.bd.value = oldValue->bd.value;
-                } else {
-                  param.u.bd.value = input->defaultVal().getBoolVal();
-                }
-                break;
-
-              case UserParamType_Long: {
-                A_long dephault = 1;
-                auto values = input->valArray();
-                if (oldValue) {
-                  dephault = oldValue->pd.value;
-                } else {
-                  auto dephaultIsfVal = input->defaultVal().getLongVal();
-                  dephault = mmax(1, findIndex(values, dephaultIsfVal) + 1);
-                }
-                param.u.pd.value = dephault;
-                break;
-              }
-
-              case UserParamType_Float: {
-                double dephault = 0.0;
-
-                if (oldValue) {
-                  dephault = oldValue->fs_d.value;
-                } else {
-                  dephault = input->defaultVal().getDoubleVal();
-
-                  auto unit = input->unit();
-
-                  if (unit == VVISF::ISFValUnit_Length) {
-                    dephault *= in_data->width;
-                  } else if (unit == VVISF::ISFValUnit_Percent) {
-                    dephault *= 100;
-                  }
-
-                  if (isTransition && input->name() == "progress") {
-                    dephault = 0;
-                  }
-                }
-
-                param.u.fs_d.value = dephault;
-                break;
-              }
-
-              case UserParamType_Angle:
-                if (oldValue) {
-                  param.u.ad.value = oldValue->ad.value;
-                } else {
-                  param.u.ad.value = getDefaultForAngleInput(input);
-                }
-                break;
-
-              case UserParamType_Point2D: {
-                if (oldValue) {
-                  param.u.td.x_value = oldValue->td.x_value;
-                  param.u.td.y_value = oldValue->td.y_value;
-                } else {
-                  auto x = input->defaultVal().getPointValByIndex(0);
-                  auto y = input->defaultVal().getPointValByIndex(1);
-
-                  param.u.td.x_value = FLOAT2FIX(x * in_data->width);
-                  param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
-                }
-                break;
-              }
-
-              case UserParamType_Color: {
-                if (oldValue) {
-                  param.u.cd.value = oldValue->cd.value;
-                } else {
-                  auto dephault = input->defaultVal();
-
-                  param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
-                  param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
-                  param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
-                  param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
-                }
-                break;
-              }
-
-              case UserParamType_Image:
-                if (oldValue) {
-                  param.u.ld = oldValue->ld;
-                }
-                break;
-
-              default:
-                break;
-            }
-
-            userParamIndex++;
-          }  // End of for-each ISF's inputs
-
-        } else {
-          // On failed reading the text file, or simply it's empty
-          suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg, "Cannot open the shader file: %s",
-                                                srcPath.c_str());
-          out_data->out_flags = PF_OutFlag_DISPLAY_ERROR_MESSAGE;
-        }
-      }
-    } break;
-    case Param_Save:
-      saveISF(in_data, out_data);
-      break;
-  }
-
-  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
-
-  return PF_Err_NONE;
-}
-
 static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output) {
   PF_Err err = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
@@ -792,12 +561,13 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
   bool isTransition = desc->scene->doc()->type() == VVISF::ISFFileType_Transition;
 
   // Toggle the visibility of ISF options
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
-  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
+  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISF, seqData->showISFOption));
+  //  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
+  //  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
 
   // Set the shader status as a label for 'Edit Shader'
   string statusLabel = "ISF: " + desc->status;
-  AEUtil::setParamName(globalData->aegpId, in_data, params, Param_ISFGroupStart, statusLabel);
+  AEUtil::setParamName(globalData->aegpId, in_data, params, Param_ISF, statusLabel);
 
   // Show the time parameters if the current shader is time dependant
   bool isTimeDependant = desc->scene->isTimeDependant();
@@ -1086,10 +856,6 @@ PF_Err EffectMain(PF_Cmd cmd,
 
       case PF_Cmd_SMART_RENDER:
         err = SmartRender(in_data, out_data, reinterpret_cast<PF_SmartRenderExtra*>(extra));
-        break;
-
-      case PF_Cmd_USER_CHANGED_PARAM:
-        err = UserChangedParam(in_data, out_data, params, reinterpret_cast<const PF_UserChangedParamExtra*>(extra));
         break;
 
       case PF_Cmd_UPDATE_PARAMS_UI:

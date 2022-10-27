@@ -52,14 +52,14 @@ using namespace std;
 #define DEFAULT_ISF_DIRECTORY "/Library/Graphics/ISF"
 #endif
 
+#define BUTTON_WIDTH 70
+#define BUTTON_HEIGHT 16
+#define BUTTON_MARGIN 10
+
 // Parameter indices
 enum {
   Param_Input = 0,
-  Param_ISFGroupStart,
   Param_ISF,
-  Param_Edit,
-  Param_Save,
-  Param_ISFGroupEnd,
   Param_UseLayerTime,
   Param_Time,
   Param_UserOffset
@@ -72,6 +72,19 @@ enum {
    index = userParamIndex * NumUserParamType + userParamType
    -- though in most cases, it'd be better to use the function getIndexForUserParam().
    */
+};
+
+// Parameter ID used in ParamSetup; they should not be changed over the plugin's versions.
+enum ParamID {
+  Input = 0,
+  // ISFGroupStart,
+  ISF = 2,
+  // Edit,
+  // Save,
+  // ISFGroupEnd,
+  UseLayerTime = 6,
+  Time,
+  UserOffset
 };
 
 // A subset of ISFValType supported by this plug-in
@@ -134,10 +147,12 @@ struct ParamInfo {
 
 // Implemented in ISF4AE_UtilFunc.cpp
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type);
+PF_ParamIndex getIdForUserParam(PF_ParamIndex index, UserParamType type);
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input);
 PF_Fixed getDefaultForAngleInput(VVISF::ISFAttrRef input);
 bool isISFAttrVisibleInECW(const VVISF::ISFAttrRef input);
 shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string& fsCode, const string& vsCode);
+PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]);
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data);
 VVGL::GLBufferRef createRGBATexWithBitdepth(const VVGL::Size& size, VVGL::GLContextRef context, short bitdepth);
 VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBufferSizeInPixels,
