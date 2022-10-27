@@ -562,8 +562,6 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
 
   // Toggle the visibility of ISF options
   ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISF, seqData->showISFOption));
-  //  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupStart, seqData->showISFOption));
-  //  ERR(AEUtil::setParamVisibility(globalData->aegpId, in_data, params, Param_ISFGroupEnd, seqData->showISFOption));
 
   // Set the shader status as a label for 'Edit Shader'
   string statusLabel = "ISF: " + desc->status;
@@ -859,7 +857,6 @@ PF_Err EffectMain(PF_Cmd cmd,
         break;
 
       case PF_Cmd_UPDATE_PARAMS_UI:
-        // To change the label for 'Edit Shader' button
         err = UpdateParamsUI(in_data, out_data, params, output);
         break;
 
