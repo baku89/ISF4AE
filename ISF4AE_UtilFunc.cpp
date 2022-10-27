@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "AEFX_SuiteHelper.h"
+#include "Smart_Utils.h"
 
 #include "AEUtil.h"
 #include "Debug.h"
@@ -11,6 +12,10 @@
 
 PF_ParamIndex getIndexForUserParam(PF_ParamIndex index, UserParamType type) {
   return Param_UserOffset + index * NumUserParamType + (int)type;
+}
+
+PF_ParamIndex getIdForUserParam(PF_ParamIndex index, UserParamType type) {
+  return ParamID::UserOffset + index * NumUserParamType + (int)type;
 }
 
 UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
@@ -179,10 +184,215 @@ shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string&
   return desc;
 }
 
+PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) {
+  PF_Err err = PF_Err_NONE;
+
+  AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+  // Load a shader
+  vector<string> fileTypes = {"fs", "txt", "frag", "glsl"};
+
+  string isfDirectory = "";
+  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
+                                      &isfDirectory));
+
+  string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
+
+  if (!err && !srcPath.empty()) {
+    string fsCode = SystemUtil::readTextFile(srcPath);
+
+    isfDirectory = getDirname(srcPath);
+    ERR(AEUtil::setStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", isfDirectory));
+
+    if (!fsCode.empty()) {
+      params[Param_ISF]->uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+
+      auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
+
+      u_int32_t userParamIndex = 0;
+
+      // Backup old params' values
+      auto oldScene = isf->desc->scene;
+      PF_ParamDefUnion oldParamValues[NumUserParams];
+      for (int i = 0; i < NumUserParams; i++) {
+        AEFX_CLR_STRUCT(oldParamValues[i]);
+      }
+      for (auto& oldInput : oldScene->inputs()) {
+        if (!isISFAttrVisibleInECW(oldInput)) {
+          continue;
+        }
+        UserParamType userParamType = getUserParamTypeForISFAttr(oldInput);
+        PF_ParamIndex index = getIndexForUserParam(userParamIndex, userParamType);
+        oldParamValues[userParamIndex] = params[index]->u;
+        userParamIndex++;
+      }
+
+      // Load the optional vertex shader (same algorithm with ISFDoc.cpp:80)
+      string noExtPath = VVGL::StringByDeletingExtension(srcPath);
+      string vsCode = "";
+
+      vsCode = SystemUtil::readTextFile(noExtPath + ".vs");
+
+      if (vsCode.empty()) {
+        vsCode = SystemUtil::readTextFile(noExtPath + ".vert");
+      }
+
+      isf->name = getBasename(srcPath);
+      isf->desc = getCompiledSceneDesc(globalData, fsCode, vsCode);
+
+      ERR(AEUtil::setEffectName(globalData->aegpId, in_data, isf->name));
+
+      // Set default values
+      auto desc = isf->desc;
+      bool isTransition = desc->scene->doc()->type() == VVISF::ISFFileType_Transition;
+
+      userParamIndex = 0;
+
+      for (auto& input : desc->scene->inputs()) {
+        if (!isISFAttrVisibleInECW(input)) {
+          continue;
+        }
+
+        auto userParamType = getUserParamTypeForISFAttr(input);
+        auto index = getIndexForUserParam(userParamIndex, userParamType);
+        auto& param = *params[index];
+
+        auto oldInput = oldScene->inputNamed(input->name());
+        PF_ParamDefUnion* oldValue = nullptr;
+        if (oldInput && oldInput->type() == input->type()) {
+          // When the old scene has an input with same name and type
+          auto idx = 0;
+          for (auto& oi : oldScene->inputs()) {
+            if (!isISFAttrVisibleInECW(oi)) {
+              continue;
+            }
+            if (oldInput == oi) {
+              oldValue = &oldParamValues[idx];
+              break;
+            }
+
+            idx++;
+          }
+        }
+
+        param.uu.change_flags |= PF_ChangeFlag_CHANGED_VALUE;
+
+        switch (userParamType) {
+          case UserParamType_Bool:
+            if (oldValue) {
+              param.u.bd.value = oldValue->bd.value;
+            } else {
+              param.u.bd.value = input->defaultVal().getBoolVal();
+            }
+            break;
+
+          case UserParamType_Long: {
+            A_long dephault = 1;
+            auto values = input->valArray();
+            if (oldValue) {
+              dephault = oldValue->pd.value;
+            } else {
+              auto dephaultIsfVal = input->defaultVal().getLongVal();
+              dephault = mmax(1, findIndex(values, dephaultIsfVal) + 1);
+            }
+            param.u.pd.value = dephault;
+            break;
+          }
+
+          case UserParamType_Float: {
+            double dephault = 0.0;
+
+            if (oldValue) {
+              dephault = oldValue->fs_d.value;
+            } else {
+              dephault = input->defaultVal().getDoubleVal();
+
+              auto unit = input->unit();
+
+              if (unit == VVISF::ISFValUnit_Length) {
+                dephault *= in_data->width;
+              } else if (unit == VVISF::ISFValUnit_Percent) {
+                dephault *= 100;
+              }
+
+              if (isTransition && input->name() == "progress") {
+                dephault = 0;
+              }
+            }
+
+            param.u.fs_d.value = dephault;
+            break;
+          }
+
+          case UserParamType_Angle:
+            if (oldValue) {
+              param.u.ad.value = oldValue->ad.value;
+            } else {
+              param.u.ad.value = getDefaultForAngleInput(input);
+            }
+            break;
+
+          case UserParamType_Point2D: {
+            if (oldValue) {
+              param.u.td.x_value = oldValue->td.x_value;
+              param.u.td.y_value = oldValue->td.y_value;
+            } else {
+              auto x = input->defaultVal().getPointValByIndex(0);
+              auto y = input->defaultVal().getPointValByIndex(1);
+
+              param.u.td.x_value = FLOAT2FIX(x * in_data->width);
+              param.u.td.y_value = FLOAT2FIX((1.0 - y) * in_data->height);
+            }
+            break;
+          }
+
+          case UserParamType_Color: {
+            if (oldValue) {
+              param.u.cd.value = oldValue->cd.value;
+            } else {
+              auto dephault = input->defaultVal();
+
+              param.u.cd.value.red = dephault.getColorValByChannel(0) * 255;
+              param.u.cd.value.green = dephault.getColorValByChannel(1) * 255;
+              param.u.cd.value.blue = dephault.getColorValByChannel(2) * 255;
+              param.u.cd.value.alpha = dephault.getColorValByChannel(3) * 255;
+            }
+            break;
+          }
+
+          case UserParamType_Image:
+            if (oldValue) {
+              param.u.ld = oldValue->ld;
+            }
+            break;
+
+          default:
+            break;
+        }
+
+        userParamIndex++;
+      }  // End of for-each ISF's inputs
+
+    } else {
+      // On failed reading the text file, or simply it's empty
+      suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg, "Cannot open the shader file: %s", srcPath.c_str());
+      out_data->out_flags = PF_OutFlag_DISPLAY_ERROR_MESSAGE;
+    }
+  }
+
+  suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+
+  return err;
+}
+
+/**
+ Save the current shader
+ */
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
 
-  // Save the current shader
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   PF_ParamDef paramIsf;
@@ -281,8 +491,8 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
     VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
 
     if (imageSize.width > outImageSize.width || imageSize.height > outImageSize.height) {
-      // I dunno why, but this case seems to occur without any exception when AE tries to generate thumanil for project
-      // pane.
+      // I dunno why, but this case seems to occur without any exception when AE tries to generate thumanil for
+      // project pane.
       FX_LOG("the size of image being done checkout exceeds the original dimension.");
       return err;
     }
