@@ -118,6 +118,7 @@ struct GlobalData {
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   shared_ptr<SceneDesc> notLoadedSceneDesc;
   shared_ptr<WeakMap<string, SceneDesc>> scenes;
+  NSLock* lock = [[NSLock alloc] init];
 };
 
 struct SequenceData {
