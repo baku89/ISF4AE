@@ -130,6 +130,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   globalData->gl2aeScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/gl2ae.fs"), "");
 
   globalData->scenes = make_shared<WeakMap<string, SceneDesc>>();
+  globalData->lock = [[NSLock alloc] init];
 
   auto notLoadedSceneDesc = make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
@@ -162,6 +163,7 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
     globalData->scenes = nullptr;
+    globalData->lock = nil;
 
     suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
