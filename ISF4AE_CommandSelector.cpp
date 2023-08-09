@@ -130,6 +130,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   globalData->gl2aeScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/gl2ae.fs"), "");
 
   globalData->scenes = make_shared<WeakMap<string, SceneDesc>>();
+  globalData->lock = [[NSLock alloc] init];
 
   auto notLoadedSceneDesc = make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
@@ -162,6 +163,7 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
     globalData->scenes = nullptr;
+    globalData->lock = nil;
 
     suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
@@ -370,6 +372,10 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
+  auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+  [globalData->lock lock];
+
   // Create paramInfo
   PF_Handle paramInfoH = suites.HandleSuite1()->host_new_handle(sizeof(ParamInfo));
 
@@ -461,6 +467,8 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
+  [globalData->lock unlock];
+
   return err;
 }
 
@@ -470,6 +478,8 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   AEGP_SuiteHandler suites(in_data->pica_basicP);
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+  [globalData->lock lock];
 
   globalData->context->makeCurrentIfNotCurrent();
 
@@ -545,6 +555,8 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   suites.HandleSuite1()->host_dispose_handle(paramInfoH);
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
+
+  [globalData->lock unlock];
 
   return err;
 }
@@ -799,13 +811,6 @@ PF_Err EffectMain(PF_Cmd cmd,
                   void* extra) {
   PF_Err err = PF_Err_NONE;
 
-  /**
-   * TODO: To make the plugin thread-safe forcebly, I applied a mutex lock to the whole main function.
-   * Yet this should be not a smart way and spoils the advantage of Multi-Frame Rendering.
-   */
-  static recursive_mutex commandSelectorLock;
-  lock_guard<recursive_mutex> lock(commandSelectorLock);
-
   try {
     switch (cmd) {
       case PF_Cmd_ABOUT:
@@ -871,5 +876,6 @@ PF_Err EffectMain(PF_Cmd cmd,
   } catch (PF_Err& thrown_err) {
     err = thrown_err;
   }
+
   return err;
 }
