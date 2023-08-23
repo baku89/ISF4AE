@@ -597,7 +597,12 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         case UserParamType_Long: {
           A_long index = 0;
           ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &index));
-          auto v = input->valArray()[index - 1];  // Index of popup UI begins from 1
+          auto v = index - 1;   // Index of popup UI begins from 1
+          if (input->valArray().size() > v) {
+              v = input->valArray()[index - 1];
+          } else {
+              v = v + input->minVal().getLongVal(); // ISFEditor behaviour
+          }
           val = new VVISF::ISFVal(isfType, v);
           break;
         }
