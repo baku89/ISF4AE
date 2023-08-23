@@ -31,7 +31,7 @@ Currently, the plugin does not support several types of inputs, [persistent buff
 Note that `"event"`, `"audio"`, and `"audioFFT"` are not yet supported currently.
 
 - `"bool"`: displayed as a checkbox.
-- `"long"`: displayed as a dropdown list.
+- `"long"`: displayed as a dropdown list by default. But if no `VALUES` key exists, an integer slider between `MIN` and `MAX` is used instead.
 - `"float"`: displayed as a slider by default. You can specify a type of UI by setting either constant below as a property `"UNIT"`.
   - `"default"`: just a scalar; the value will be passed as it is.
   - `"length"`: represents a length in px. It is also displayed as a slider, but the value will be mapped from 0...<layer's width> to 0...1 when passed to a shader.
