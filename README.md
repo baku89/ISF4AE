@@ -20,7 +20,7 @@ The plugin has been confirmed to work in the following environments. However, it
 
 ## Additional ISF Specification
 
-Since ISF was originally designed for real-time purposes, such as VJing, it has some limitations that do not align with After Effects' charasteristics. This section describes how the plugin interprets ISFs and interoperates with After Effects. The following explanation assumes that you have already understood [the specification of ISF](https://github.com/mrRay/ISF_Spec/).
+Since ISF was originally designed for real-time purposes, such as VJing, it has some limitations that do not align with After Effects' characteristics. This section describes how the plugin interprets ISFs and interoperates with After Effects. The following explanation assumes that you have already understood [the specification of ISF](https://github.com/mrRay/ISF_Spec/).
 
 ### Limitations
 
@@ -35,16 +35,16 @@ Note that `"event"`, `"audio"`, and `"audioFFT"` are not yet supported currently
 - `"float"`: displayed as a slider by default. You can specify a type of UI by setting either constant below as a property `"UNIT"`.
   - `"default"`: just a scalar; the value will be passed as it is.
   - `"length"`: represents a length in px. It is also displayed as a slider, but the value will be mapped from 0...<layer's width> to 0...1 when passed to a shader.
-  - `"percent"`: displayed with "%" suffix. The value will be bounded as a uniform with divided by 100. For example, 50% in the Effect Controls panel will be passed as 0.5 to the shader.
-  - `"direction"`: displayed as an angle input, and the range of value will be mapped so that radians in OpenGL coordinate (Y-up right-handed) match with a direction that the rotary knob UI is pointing. The internal conversion from AE to GLSL is equivalent to the following formula: `radians(90 - value)`. It would be suitable for representing absolute angle that should be consistent visually between the knob UI and the output.
-  - `"angle"`: similar to the above, displayed as an angle input, but uses a conversion formula `radians(-value)` instead. It is suitable for representing relative angle changes -- hue offset of HSL adjustment, for instance.
+  - `"percent"`: displayed with "%" suffix. The value will be bounded as a uniform divided by 100. For example, 50% in the Effect Controls panel will be passed as 0.5 to the shader.
+  - `"direction"`: displayed as an angle input, and the range of value will be mapped so that radians in OpenGL coordinate (Y-up right-handed) match the direction that the rotary knob UI is pointing. The internal conversion from AE to GLSL is equivalent to the formula `radians(90 - value)`. It would be suitable for representing an absolute angle that should be consistent visually between the knob UI and the output.
+  - `"angle"`: similar to the above, displayed as an angle input but uses a conversion formula `radians(-value)` instead. It is suitable for representing relative angle changes -- hue offset of HSL adjustment, for instance.
 - `"point2D"`: represents a position in px. It will be mapped to OpenGL's normalized coordinate; (0, 0) at the bottom-left corner, (1, 1) at the top-right corner of the layer.
 - `"color"`: displayed as a color picker.
 - `"image"`: displayed as a layer reference input.
 
 ### Other Addotional Properties for Inputs
 
-"MIN" and "MAX" only affects the range of slider UI in the Effect Controls panel and users can still set the values outside of the range. To forcibly constrain the value within the range, you can use the plugin's custom properties `"CLAMP_MIN"` and `"CLAMP_MAX"` in boolean value.
+"MIN" and "MAX" only affect the range of slider UI in the Effect Controls panel and users can still set the values outside of the range. To forcibly constrain the value within the range, you can use the plugin's custom properties `"CLAMP_MIN"` and `"CLAMP_MAX"` in a boolean value.
 
 ### ISF Built-in Uniforms
 
