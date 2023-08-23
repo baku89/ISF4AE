@@ -622,7 +622,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         // If the input doesn't define values, match ISFEditor's behaviour and list (min,max) range
         // TODO: for large ranges, should possibly switch to a different UI element as ISFEditor does
         if (values.size() == 0) {
-            for (long val = input->minVal().getLongVal(); val <=      input->maxVal().getLongVal(); val++) {
+            for (long val = input->minVal().getLongVal(); val <= input->maxVal().getLongVal(); val++) {
               values.push_back((int)val);
             }
         }
