@@ -619,22 +619,6 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         auto labels = input->labelArray();
         auto values = input->valArray();
 
-        // If the input doesn't define values, match ISFEditor's behaviour and list (min,max) range
-        // TODO: for large ranges, should possibly switch to a different UI element as ISFEditor does
-        if (values.size() == 0) {
-            for (long val = input->minVal().getLongVal(); val <= input->maxVal().getLongVal(); val++) {
-              values.push_back((int)val);
-            }
-        }
-
-        // If there are no labels, fill them in
-        // TODO: consider being defensive about possible size mismatch between values and and labels array with size > 1
-        if (labels.size() == 0) {
-          for (auto & val : values) {
-            labels.push_back(to_string(val));
-          }
-        }
-
         param.u.pd.num_choices = labels.size();
 
         auto joinedLabels = joinWith(labels, "|");
@@ -653,11 +637,27 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
       }
 
       case UserParamType_Float: {
-        auto dephault = input->defaultVal().getDoubleVal();
-        auto min = input->minVal().getDoubleVal();
-        auto max = input->maxVal().getDoubleVal();
-        auto clampMin = input->clampMin();
-        auto clampMax = input->clampMax();
+        double dephault, min, max;
+        bool clampMin, clampMax;
+        A_short precision;
+
+        if (input->type() == VVISF::ISFValType_Float) {
+          dephault = input->defaultVal().getDoubleVal();
+          min = input->minVal().getDoubleVal();
+          max = input->maxVal().getDoubleVal();
+          clampMin = input->clampMin();
+          clampMax = input->clampMax();
+          precision = 1;
+        } else {
+          // input->type() == VVISF::ISFValType_Long
+          dephault = (double)input->defaultVal().getLongVal();
+          min = input->minVal().getLongVal();
+          max = input->maxVal().getLongVal();
+          clampMin = true;
+          clampMax = true;
+          precision = 0;
+        }
+
         PF_ValueDisplayFlags displayFlags = PF_ValueDisplayFlag_NONE;
 
         if (input->unit() == VVISF::ISFValUnit_Length) {
@@ -685,6 +685,7 @@ static PF_Err UpdateParamsUI(PF_InData* in_data, PF_OutData* out_data, PF_ParamD
         param.u.fs_d.slider_max = max;
         param.u.fs_d.valid_min = clampMin ? min : MIN_SAFE_FLOAT;
         param.u.fs_d.valid_max = clampMax ? max : MAX_SAFE_FLOAT;
+        param.u.fs_d.precision = precision;
         param.u.fs_d.display_flags = displayFlags;
 
         break;

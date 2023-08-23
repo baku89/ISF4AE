@@ -24,7 +24,11 @@ UserParamType getUserParamTypeForISFAttr(const VVISF::ISFAttrRef input) {
       return UserParamType_Bool;
 
     case VVISF::ISFValType_Long:
-      return UserParamType_Long;
+      if (input->valArray().size() == 0) {
+        return UserParamType_Float;
+      } else {
+        return UserParamType_Long;
+      }
 
     case VVISF::ISFValType_Float:
       switch (input->unit()) {
@@ -307,7 +311,12 @@ PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) 
             if (oldValue) {
               dephault = oldValue->fs_d.value;
             } else {
-              dephault = input->defaultVal().getDoubleVal();
+              if (input->type() == VVISF::ISFValType_Float) {
+                dephault = input->defaultVal().getDoubleVal();
+              } else {
+                // input->type() == VVISF::ISFValType_Long
+                dephault = input->defaultVal().getLongVal();
+              }
 
               auto unit = input->unit();
 
@@ -597,32 +606,43 @@ PF_Err renderISFToCPUBuffer(PF_InData* in_data,
         case UserParamType_Long: {
           A_long index = 0;
           ERR(AEUtil::getPopupParam(in_data, out_data, paramIndex, &index));
-          auto v = index - 1;   // Index of popup UI begins from 1
+          auto v = index - 1;  // Index of popup UI begins from 1
           if (input->valArray().size() > v) {
-              v = input->valArray()[index - 1];
+            v = input->valArray()[index - 1];
           } else {
-              v = v + input->minVal().getLongVal(); // ISFEditor behaviour
+            v = v + input->minVal().getLongVal();  // ISFEditor behaviour
           }
           val = new VVISF::ISFVal(isfType, v);
           break;
         }
         case UserParamType_Float: {
-          A_FpLong v = 0.0;
-          ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
+          if (input->type() == VVISF::ISFValType_Float) {
+            A_FpLong v = 0.0;
+            ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &v));
 
-          VVISF::ISFValUnit unit = input->unit();
+            VVISF::ISFValUnit unit = input->unit();
 
-          if (scene.doc()->type() == VVISF::ISFFileType_Transition && input->name() == "progress") {
-            unit = VVISF::ISFValUnit_Percent;
+            if (scene.doc()->type() == VVISF::ISFFileType_Transition && input->name() == "progress") {
+              unit = VVISF::ISFValUnit_Percent;
+            }
+
+            if (unit == VVISF::ISFValUnit_Length) {
+              v /= in_data->width;
+            } else if (unit == VVISF::ISFValUnit_Percent) {
+              v /= 100;
+            }
+
+            val = new VVISF::ISFVal(isfType, v);
+          } else {
+            // input->type() == VVISF::ISFValType_Long
+
+            A_FpLong floatIndex = 0.0;
+            ERR(AEUtil::getFloatSliderParam(in_data, out_data, paramIndex, &floatIndex));
+
+            A_long index = (A_long)floatIndex;
+
+            val = new VVISF::ISFVal(isfType, index);
           }
-
-          if (unit == VVISF::ISFValUnit_Length) {
-            v /= in_data->width;
-          } else if (unit == VVISF::ISFValUnit_Percent) {
-            v /= 100;
-          }
-
-          val = new VVISF::ISFVal(isfType, v);
           break;
         }
         case UserParamType_Angle: {
