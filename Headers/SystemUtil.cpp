@@ -8,6 +8,34 @@
 
 namespace SystemUtil {
 
+#ifdef _WIN32
+string openFileDialog(const vector<string>& fileTypes, const string& directory, const string& title) {
+  OPENFILENAME ofn;
+  char szFile[260] = {0};
+
+  ZeroMemory(&ofn, sizeof(ofn));
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = NULL;
+  ofn.lpstrFile = szFile;
+  ofn.nMaxFile = sizeof(szFile);
+  ofn.lpstrTitle = title.c_str();
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+  // Convert fileTypes to filter pattern
+  string filter;
+  for (const auto& type : fileTypes) {
+    filter += "*." + type + '\0';
+  }
+  filter += '\0';
+  ofn.lpstrFilter = filter.c_str();
+
+  if (GetOpenFileName(&ofn) == TRUE) {
+    return ofn.lpstrFile;
+  }
+
+  return "";
+}
+#else
 string openFileDialog(const vector<string>& fileTypes, const string& directory, const string& title) {
   string path;
 
@@ -38,7 +66,29 @@ string openFileDialog(const vector<string>& fileTypes, const string& directory, 
 
   return path;
 }
+#endif
 
+#ifdef _WIN32
+string saveFileDialog(const string& filename, const string& directory, const string& title) {
+  OPENFILENAME ofn;
+  char szFile[260] = {0};
+  strcpy(szFile, filename.c_str());
+
+  ZeroMemory(&ofn, sizeof(ofn));
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = NULL;
+  ofn.lpstrFile = szFile;
+  ofn.nMaxFile = sizeof(szFile);
+  ofn.lpstrTitle = title.c_str();
+  ofn.Flags = OFN_OVERWRITEPROMPT;
+
+  if (GetSaveFileName(&ofn) == TRUE) {
+    return ofn.lpstrFile;
+  }
+
+  return "";
+}
+#else
 string saveFileDialog(const string& filename, const string& directory, const string& title) {
   string path;
 
@@ -61,6 +111,7 @@ string saveFileDialog(const string& filename, const string& directory, const str
 
   return path;
 }
+#endif
 
 string readTextFile(const string& path) {
   string text;
@@ -86,6 +137,51 @@ string readTextFile(const string& path) {
 
   return text;
 }
+
+#ifdef _WIN32
+static HMODULE GCM() {
+  HMODULE hModule = NULL;
+  GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)GCM, &hModule);
+
+  return hModule;
+}
+string readResourceShader(UINT resourceID) {
+  try {
+    const char* resourceType = "CUSTOM";
+    HMODULE hModule = GCM();  // Modeule Descriptor
+
+    HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(resourceID), resourceType);
+    if (hResource == NULL) {
+      throw std::runtime_error("Failed to find the resource.");
+    }
+
+    HGLOBAL hLoadedResource = LoadResource(hModule, hResource);
+    if (hLoadedResource == NULL) {
+      throw std::runtime_error("Failed to load the resource.");
+    }
+
+    LPVOID pLockedResource = LockResource(hLoadedResource);
+    if (pLockedResource == NULL) {
+      throw std::runtime_error("Failed to lock the resource.");
+    }
+
+    DWORD dwResourceSize = SizeofResource(hModule, hResource);
+    if (dwResourceSize == 0) {
+      throw std::runtime_error("Invalid resource size.");
+    }
+
+    // Converting resources data to a string
+    return std::string((char*)pLockedResource, dwResourceSize);
+  } catch (...) {
+    FX_LOG("Couldn't read a text from the resource with ID: " << resourceID);
+    return "";
+  }
+}
+#else
+string readResourceShader(const string& path) {
+  return readTextFile(path);
+}
+#endif  // _WIN32
 
 bool writeTextFile(const string& path, const string& text) {
   ofstream file;

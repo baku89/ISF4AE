@@ -45,12 +45,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [8] */
 		AE_Effect_Version {
-			// https://community.adobe.com/t5/after-effects-discussions/pipl-and-code-version-mismatch-warning/td-p/5531272
-			MAJOR_VERSION * 0x80000 +
-			MINOR_VERSION * 0x8000 +
-			BUG_VERSION   * 0x800 +
-			STAGE_VERSION * 0x200 +
-			BUILD_VERSION
+			(MAJOR_VERSION << 19) + (MINOR_VERSION << 15) + (BUG_VERSION << 11) + BUILD_VERSION
 		},
 		/* [9] */
 		AE_Effect_Info_Flags {

@@ -88,15 +88,28 @@ static DRAWBOT_MatrixF32 getLayer2FrameXform(PF_InData* in_data, PF_EventExtra* 
   return xform;
 }
 
+/**
+ * Convert a UTF-8 encoded std::string to a unique_ptr of DRAWBOT_UTF16Char.
+ *
+ * @param str The input string to be converted.
+ * @return A unique_ptr of DRAWBOT_UTF16Char containing the converted string.
+ */
 static unique_ptr<DRAWBOT_UTF16Char[]> convertStringToUTF16Char(const string& str) {
+  // Convert the UTF-8 string to a wide string using standard library's UTF-8 to UTF-16 converter.
   wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
   wstring wstr = converter.from_bytes(str);
 
+  // Get the length of the converted wide string.
   size_t length = wcslen(wstr.c_str());
 
-  unique_ptr<DRAWBOT_UTF16Char[]> utf16char(new DRAWBOT_UTF16Char[length]);
+  // Allocate memory for the DRAWBOT_UTF16Char array, adding 1 for the null terminator.
+  unique_ptr<DRAWBOT_UTF16Char[]> utf16char(new DRAWBOT_UTF16Char[length + 1]);
 
+  // Copy and convert the wide string to DRAWBOT_UTF16Char array.
   AEUtil::copyConvertStringLiteralIntoUTF16(wstr.c_str(), utf16char.get());
+
+  // Manually set the null terminator.
+  utf16char[length] = 0;
 
   return utf16char;
 }
@@ -254,7 +267,7 @@ static PF_Err DrawCompUIEvent(PF_InData* in_data,
       } /* End doRenderErrorLog */
 
       if (doRenderCustomUI) {
-        VVGL::Size outSize = {clipRect.width, clipRect.height};
+        VVGL::Size outSize = {static_cast<double>(clipRect.width), static_cast<double>(clipRect.height)};
 
         // Bind special uniforms reserved for ISF4AE
         scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, zoom, zoom), "i4a_Downsample");
