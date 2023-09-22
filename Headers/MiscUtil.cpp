@@ -42,7 +42,7 @@ void setBitFlag(int flag, bool value, int* target) {
 
 string getBasename(const string& path) {
   filesystem::path p(path);
-  return p.stem();
+  return p.stem().string();
 }
 
 string getDirname(const string& path) {

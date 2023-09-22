@@ -4,7 +4,17 @@
 #include <iostream>
 #endif
 
-#define FX_LOG(log) cout << "[BakuPlugin]" << log << endl
+#ifndef _WIN32
+static void OutputDebugString(const char* msg) { std::cout << msg; }
+#endif
+
+#define OUTPUT_DEBUG(msg) { \
+  std::stringstream ss; \
+  ss << msg << std::endl; \
+  OutputDebugString(ss.str().c_str()); \
+}
+
+#define FX_LOG(log) OUTPUT_DEBUG("[BakuPlugin]" << log)
 
 #define FX_LOG_TIME_START(name) auto name = chrono::system_clock::now();
 #define FX_LOG_TIME_END(name, message) \

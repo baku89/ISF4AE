@@ -12,9 +12,10 @@ After Effects plugin to allows you to use GLSL code written in the [Interactive 
 
 ### Supported Environments
 
-The plugin has been confirmed to work in the following environments. However, it should generally work in CC 2022 or later on any macOS:
+The plugin has been confirmed to work in the following environments. However, it should generally work in CC 2022 or later on any macOS and Windows:
 
  - CC 2023 on macOS Monterey (Apple Silicon, Intel)
+ - СС 2023 on Windows x86_64
 
 ---
 
@@ -79,12 +80,26 @@ Inputs with names beginning with `i4a_` are reserved by the plugin. When you def
 ```bash
 # At the root folder of SDK
 cd Examples/Effect
-git clone https://github.com/baku89/ISF4AE.git
+git clone https://github.com/bskl-xyz/ISF4AE.git
 cd ISF4AE
 git submodule update --init
 ```
 
+### On Mac
+
 3. Open the Xcode project and build it. The binary will automatically be copied under `/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/`.
+
+### On Windows
+
+3. Set environment variable `AE_PLUGIN_BUILD_DIR` to `C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore`.
+
+4. Copy the `glew32.dll` dynamic library from `VVISF-GL\external\GLEW\win_x64` to `C:\Windows\System32\` folder.
+
+5. Apply VVISF-GL patch in the root of this repo:
+
+```bash
+git apply VVISF-GL-Submodule.patch
+```
 
 ## License
 

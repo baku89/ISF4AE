@@ -15,7 +15,7 @@ typedef short int int16;
 
 #include "AEConfig.h"
 
-#ifdef AE_OS_WIN
+#ifdef _WIN32
 typedef unsigned short PixelType;
 #include <Windows.h>
 #endif
@@ -44,12 +44,28 @@ typedef unsigned short PixelType;
 
 using namespace std;
 
+#ifdef _WIN32
+//  global compilation flag configuring windows sdk headers
+//  preventing inclusion of min and max macros clashing with <limits>
+#define NOMINMAX 1
+//  override byte to prevent clashes with <cstddef>
+#define byte win_byte_override
+#include <Windows.h>
+//  Undefine min max macros so they won't collide with <limits> header content.
+#undef min
+#undef max
+//  Undefine byte macros so it won't collide with <cstddef> header content.
+#undef byte
+#endif
+
 // Magic numbers
 #define ARB_REFCON (void*)0xDEADBEEFDEADBEEF
 #define PI 3.14159265358979323846
 
 #ifdef AE_OS_MAC
 #define DEFAULT_ISF_DIRECTORY "/Library/Graphics/ISF"
+#else
+#define DEFAULT_ISF_DIRECTORY ".\\"
 #endif
 
 #define BUTTON_WIDTH 70
@@ -118,7 +134,9 @@ struct GlobalData {
   VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
   shared_ptr<SceneDesc> notLoadedSceneDesc;
   shared_ptr<WeakMap<string, SceneDesc>> scenes;
+#ifndef _WIN32
   NSLock* lock;
+#endif
 };
 
 struct SequenceData {

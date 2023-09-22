@@ -17,6 +17,15 @@
 #define MIN_SAFE_FLOAT -1000000
 #define MAX_SAFE_FLOAT +1000000
 
+#ifdef _WIN32
+#include "Win/resource.h"
+#else
+#define IDR_DEFAULT_FS resourcePath + "shaders/Default ISF4AE Shader.fs"
+#define IDR_AE2GL_FS resourcePath + "shaders/ae2gl.fs"
+#define IDR_GL2AE_FS resourcePath + "shaders/ae2gl.fs"
+#endif
+
+
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple
  * modal dialog.
@@ -104,7 +113,13 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   }
 
   // Initialize global OpenGL context
+#ifdef _WIN32
+  GLContext::bootstrapGLEnvironmentIfNecessary();
+  // VVGL on Windows Doesn't have pixel format functions
+  globalData->context = VVGL::CreateNewGLContextRef(nullptr, nullptr);
+#else
   globalData->context = VVGL::CreateNewGLContextRef(NULL, CreateCompatibilityGLPixelFormat());
+#endif
   VVGL::CreateGlobalBufferPool(globalData->context->newContextSharingMe());
 
   globalData->downloader = VVGL::CreateGLTexToCPUCopierRefUsing(globalData->context->newContextSharingMe());
@@ -120,17 +135,21 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   globalData->defaultScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
 
-  globalData->defaultScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/Default ISF4AE Shader.fs"), "");
+  globalData->defaultScene->useCode(SystemUtil::readResourceShader(IDR_DEFAULT_FS), "");
 
   globalData->ae2glScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
-  globalData->ae2glScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/ae2gl.fs"), "");
-  globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
+  globalData->ae2glScene->useCode(SystemUtil::readResourceShader(IDR_AE2GL_FS), "");
+  //IDK what the sense of the loading file. Maybe this critical, maybe not. Will see...
+  //globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
 
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
-  globalData->gl2aeScene->useCode(SystemUtil::readTextFile(resourcePath + "shaders/gl2ae.fs"), "");
+  globalData->gl2aeScene->useCode(SystemUtil::readResourceShader(IDR_GL2AE_FS), "");
 
   globalData->scenes = make_shared<WeakMap<string, SceneDesc>>();
+
+#ifndef _WIN32
   globalData->lock = [[NSLock alloc] init];
+#endif
 
   auto notLoadedSceneDesc = make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
@@ -163,8 +182,9 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
     globalData->scenes = nullptr;
+#ifndef _WIN32
     globalData->lock = nil;
-
+#endif  // !_WIN32
     suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
   }
@@ -374,7 +394,9 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
+#ifndef _WIN32
   [globalData->lock lock];
+#endif  // !_WIN32
 
   // Create paramInfo
   PF_Handle paramInfoH = suites.HandleSuite1()->host_new_handle(sizeof(ParamInfo));
@@ -467,7 +489,9 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
   suites.HandleSuite1()->host_unlock_handle(paramInfoH);
 
+#ifndef _WIN32
   [globalData->lock unlock];
+#endif  // !_WIN32
 
   return err;
 }
@@ -479,7 +503,9 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
+#ifndef _WIN32
   [globalData->lock lock];
+#endif  // !_WIN32
 
   globalData->context->makeCurrentIfNotCurrent();
 
@@ -556,7 +582,9 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
+#ifndef _WIN32
   [globalData->lock unlock];
+#endif  // !_WIN32
 
   return err;
 }

@@ -1,4 +1,3 @@
-Win
 .DS_Store
 .vscode/
 
@@ -37,3 +36,11 @@ xcuserdata/
 /*.gcno
 
 # End of https://www.gitignore.io/api/xcode
+
+## Visual Studio
+*.vcxproj.user
+*.aps
+Win/.vs
+Win/x64
+Win/ISF4AEPiPL.rc
+Win/ISF4AE.rc

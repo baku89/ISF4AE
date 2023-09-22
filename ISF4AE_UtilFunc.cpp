@@ -215,7 +215,7 @@ PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) 
 
       auto* isf = reinterpret_cast<ParamArbIsf*>(*params[Param_ISF]->u.arb_d.value);
 
-      u_int32_t userParamIndex = 0;
+      uint32_t userParamIndex = 0;
 
       // Backup old params' values
       auto oldScene = isf->desc->scene;
