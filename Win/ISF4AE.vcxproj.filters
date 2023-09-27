@@ -132,7 +132,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ISF4APiPL.rc">
+    <ResourceCompile Include="ISF4AEPiPL.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
   </ItemGroup>

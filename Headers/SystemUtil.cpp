@@ -24,7 +24,7 @@ string openFileDialog(const vector<string>& fileTypes, const string& directory, 
   // Convert fileTypes to filter pattern
   string filter;
   for (const auto& type : fileTypes) {
-    filter += "*." + type + '\0';
+    filter += type + " files" + '\0' + "*." + type + '\0';
   }
   filter += '\0';
   ofn.lpstrFilter = filter.c_str();
