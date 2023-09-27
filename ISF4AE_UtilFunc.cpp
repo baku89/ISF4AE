@@ -198,6 +198,11 @@ PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) 
   // Load a shader
   vector<string> fileTypes = {"fs", "txt", "frag", "glsl"};
 
+  // Without this USELESS variable I'm getting a glitch, where the scene
+  // doesn't work without any errors
+  // FIXME: Dig into it to figure it out the reason
+  ISF4AESceneRef useless = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
+
   string isfDirectory = "";
   ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
                                       &isfDirectory));

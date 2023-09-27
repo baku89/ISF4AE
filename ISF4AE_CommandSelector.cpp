@@ -145,6 +145,11 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->gl2aeScene->useCode(SystemUtil::readResourceShader(IDR_GL2AE_FS), "");
 
+  // Without this USELESS variable I'm getting a glitch, where the scene
+  // doesn't work without any errors
+  // FIXME: Dig into it to figure it out the reason
+  ISF4AESceneRef useless = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
+
   globalData->scenes = make_shared<WeakMap<string, SceneDesc>>();
 
 #ifndef _WIN32
