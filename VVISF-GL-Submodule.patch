@@ -1,3 +1,97 @@
+diff --git forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj forkDstPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
+index 86014831dc498cb9d25ed24789dd61a0fd726ac2..3feb6788b314962d75601b9684152e04d541b44c 100644
+--- forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
++++ forkDstPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
+@@ -40,13 +40,13 @@
+     <CharacterSet>Unicode</CharacterSet>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+-    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>true</UseDebugLibraries>
+     <PlatformToolset>v141</PlatformToolset>
+     <CharacterSet>Unicode</CharacterSet>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+-    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>false</UseDebugLibraries>
+     <PlatformToolset>v141</PlatformToolset>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+@@ -109,11 +109,11 @@
+       <WarningLevel>Level3</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <SDLCheck>true</SDLCheck>
+-      <PreprocessorDefinitions>_DEBUG;VVGL_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>GLEW_STATIC;_DEBUG;VVGL_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <ConformanceMode>true</ConformanceMode>
+       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+       <LanguageStandard>
+       </LanguageStandard>
+     </ClCompile>
+@@ -153,9 +153,9 @@
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <SDLCheck>true</SDLCheck>
+-      <PreprocessorDefinitions>NDEBUG;VVGL_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;VVGL_EXPORTS;_WIN32;_WIN32_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <ConformanceMode>true</ConformanceMode>
+-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+     </ClCompile>
+diff --git forkSrcPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj forkDstPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
+index 10a638c12b7b6d67e130119ad73fa092f3752835..eb366679441aaaad628deb2d855ca7bbc9fb2f29 100644
+--- forkSrcPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
++++ forkDstPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
+@@ -40,13 +40,13 @@
+     <CharacterSet>Unicode</CharacterSet>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+-    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>true</UseDebugLibraries>
+     <PlatformToolset>v141</PlatformToolset>
+     <CharacterSet>Unicode</CharacterSet>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+-    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>false</UseDebugLibraries>
+     <PlatformToolset>v141</PlatformToolset>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+@@ -92,11 +92,11 @@
+       <WarningLevel>Level3</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <SDLCheck>true</SDLCheck>
+-      <PreprocessorDefinitions>_DEBUG;VVISF_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>GLEW_STATIC;_DEBUG;VVISF_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <ConformanceMode>true</ConformanceMode>
+       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\VVISF\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+       <LanguageStandard>
+       </LanguageStandard>
+@@ -158,11 +158,12 @@
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <SDLCheck>true</SDLCheck>
+-      <PreprocessorDefinitions>NDEBUG;VVISF_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;VVISF_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <ConformanceMode>true</ConformanceMode>
+       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\VVISF\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
++      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+     </ClCompile>
+     <Link>
+       <SubSystem>Windows</SubSystem>
 diff --git forkSrcPrefix/VVISF-GL/external/GLEW/win_x64/glew32s.lib forkDstPrefix/VVISF-GL/external/GLEW/win_x64/glew32s.lib
 new file mode 100644
 index 0000000000000000000000000000000000000000..584c462e57f3a1bc85a38a823d3b6c3d21619718
@@ -13281,111 +13375,3 @@ A4gdfE
 literal 0
 HcmV?d00001
 
-diff --git forkSrcPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj forkDstPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
-index 10a638c12b7b6d67e130119ad73fa092f3752835..696db7dc6da1eb8afbd7be0d39c55a0a980fa07d 100644
---- forkSrcPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
-+++ forkDstPrefix/VVISF-GL/examples/Windows/VVISF/VVISF.vcxproj
-@@ -40,13 +40,13 @@
-     <CharacterSet>Unicode</CharacterSet>
-   </PropertyGroup>
-   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
--    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-     <UseDebugLibraries>true</UseDebugLibraries>
-     <PlatformToolset>v141</PlatformToolset>
-     <CharacterSet>Unicode</CharacterSet>
-   </PropertyGroup>
-   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
--    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-     <UseDebugLibraries>false</UseDebugLibraries>
-     <PlatformToolset>v141</PlatformToolset>
-     <WholeProgramOptimization>true</WholeProgramOptimization>
-@@ -92,11 +92,11 @@
-       <WarningLevel>Level3</WarningLevel>
-       <Optimization>Disabled</Optimization>
-       <SDLCheck>true</SDLCheck>
--      <PreprocessorDefinitions>_DEBUG;VVISF_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions>_DEBUG;VVISF_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-       <ConformanceMode>true</ConformanceMode>
-       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\VVISF\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
--      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-       <LanguageStandard>
-       </LanguageStandard>
-@@ -158,11 +158,12 @@
-       <FunctionLevelLinking>true</FunctionLevelLinking>
-       <IntrinsicFunctions>true</IntrinsicFunctions>
-       <SDLCheck>true</SDLCheck>
--      <PreprocessorDefinitions>NDEBUG;VVISF_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions>NDEBUG;VVISF_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVISF_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-       <ConformanceMode>true</ConformanceMode>
-       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\VVISF\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-     </ClCompile>
-     <Link>
-       <SubSystem>Windows</SubSystem>
-diff --git forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj.filters forkDstPrefix/examples/Windows/VVGL/VVGL.vcxproj.filters
-index 9b6af046ded7c3de50c9092f9761e7613f2f132f..79b274e3f85f0e34d0db6fecbc9798054804d0a7 100644
---- forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj.filters
-+++ forkDstPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj.filters
-@@ -102,6 +102,9 @@
-     <ClInclude Include="..\..\..\VVGL\include\GLContextWindowBacking.hpp">
-       <Filter>Header Files</Filter>
-     </ClInclude>
-+    <ClInclude Include="..\..\..\VVGL\include\stb\stb_image.h">
-+      <Filter>Header Files</Filter>
-+    </ClInclude>
-   </ItemGroup>
-   <ItemGroup>
-     <ClCompile Include="stdafx.cpp">
-diff --git forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj forkDstPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
-index 86014831dc498cb9d25ed24789dd61a0fd726ac2..858543969d3725bb62d7a4e8653a625fee08b269 100644
---- forkSrcPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
-+++ forkDstPrefix/VVISF-GL/examples/Windows/VVGL/VVGL.vcxproj
-@@ -40,13 +40,13 @@
-     <CharacterSet>Unicode</CharacterSet>
-   </PropertyGroup>
-   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
--    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-     <UseDebugLibraries>true</UseDebugLibraries>
-     <PlatformToolset>v141</PlatformToolset>
-     <CharacterSet>Unicode</CharacterSet>
-   </PropertyGroup>
-   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
--    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-     <UseDebugLibraries>false</UseDebugLibraries>
-     <PlatformToolset>v141</PlatformToolset>
-     <WholeProgramOptimization>true</WholeProgramOptimization>
-@@ -109,11 +109,11 @@
-       <WarningLevel>Level3</WarningLevel>
-       <Optimization>Disabled</Optimization>
-       <SDLCheck>true</SDLCheck>
--      <PreprocessorDefinitions>_DEBUG;VVGL_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions>_DEBUG;VVGL_EXPORTS;_WIN32;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-       <ConformanceMode>true</ConformanceMode>
-       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
--      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-       <LanguageStandard>
-       </LanguageStandard>
-     </ClCompile>
-@@ -153,9 +153,9 @@
-       <FunctionLevelLinking>true</FunctionLevelLinking>
-       <IntrinsicFunctions>true</IntrinsicFunctions>
-       <SDLCheck>true</SDLCheck>
--      <PreprocessorDefinitions>NDEBUG;VVGL_EXPORTS;_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions>NDEBUG;VVGL_EXPORTS;_WIN32;_WIN32_WINDOWS;_USRDLL;VVGL_SDK_WIN;VVGL_LIBRARY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-       <ConformanceMode>true</ConformanceMode>
--      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\OpenGL-Win;$(ProjectDir)..\..\..\VVGL\include;$(ProjectDir)..\..\..\external\GLEW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <DisableSpecificWarnings>4068;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-     </ClCompile>
