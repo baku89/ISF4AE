@@ -24,6 +24,7 @@
 #define IDR_AE2GL_FS resourcePath + "shaders/ae2gl.fs"
 #define IDR_GL2AE_FS resourcePath + "shaders/ae2gl.fs"
 #endif
+#include <cassert>
 
 
 /**
@@ -571,6 +572,14 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
     char* aeP = nullptr;  // for AE's layerDef
 
     auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+
+    if (!outputImageCPU->cpuBackingPtr) {
+      err = PF_Err_OUT_OF_MEMORY;
+      // A more explicit assert that appears with the new versions 
+      // of the Nvidia Studio driver described in this post:
+      // [link](https://github.com/baku89/ISF4AE/issues/19#issuecomment-1724631129)
+      assert("FATAL! CPU backing pointer is NULL! Cannot copy CPU buffer to EffectWorld!" && false);
+    }
 
     // Copy per row
     for (size_t y = 0; y < paramInfo->outSize.height; y++) {
