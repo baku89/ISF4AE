@@ -22,7 +22,7 @@
 #else
 #define IDR_DEFAULT_FS resourcePath + "shaders/Default ISF4AE Shader.fs"
 #define IDR_AE2GL_FS resourcePath + "shaders/ae2gl.fs"
-#define IDR_GL2AE_FS resourcePath + "shaders/ae2gl.fs"
+#define IDR_GL2AE_FS resourcePath + "shaders/gl2ae.fs"
 #endif
 #include <cassert>
 
