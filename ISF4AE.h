@@ -131,8 +131,12 @@ struct GlobalData {
   VVGL::GLContextRef context;
   VVGL::GLCPUToTexCopierRef uploader;
   VVGL::GLTexToCPUCopierRef downloader;
-  VVISF::ISF4AESceneRef defaultScene, ae2glScene, gl2aeScene;
+  // The UV gradient shader that is applied when no shaders loaded or failed to compile.
+  VVISF::ISF4AESceneRef defaultScene;
+  // For filling the gap between the format of OpenGL texture and After Effects' image buffer.
+  VVISF::ISF4AESceneRef ae2glScene, gl2aeScene;
   shared_ptr<SceneDesc> notLoadedSceneDesc;
+  // Caches shader program by using the code as a key.
   shared_ptr<WeakMap<string, SceneDesc>> scenes;
 #ifndef _WIN32
   NSLock* lock;
@@ -184,36 +188,18 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
                                     A_long checkoutIndex,
                                     const VVGL::Size outImageSize,
                                     VVGL::GLBufferRef& outImage);
-PF_Err renderISFToCPUBuffer(PF_InData* in_data,
-                            PF_OutData* out_data,
-                            ISF4AEScene& scene,
-                            short bitdepth,
-                            VVGL::Size& outSize,
-                            VVGL::Size& pointScale,
-                            VVGL::GLBufferRef* outBuffer);
+PF_Err
+renderISFToCPUBuffer(PF_InData* in_data, PF_OutData* out_data, ISF4AEScene& scene, short bitdepth, VVGL::Size& outSize, VVGL::Size& pointScale, VVGL::GLBufferRef* outBuffer);
 
 // Implemented in ISF4AE_ArbHandler.cpp
 PF_Err CreateDefaultArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbitraryH* dephault);
 
-PF_Err HandleArbitrary(PF_InData* in_data,
-                       PF_OutData* out_data,
-                       PF_ParamDef* params[],
-                       PF_LayerDef* output,
-                       PF_ArbParamsExtra* extra);
+PF_Err HandleArbitrary(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, PF_ArbParamsExtra* extra);
 
 // Implemented in ISF4AE_EventHandler.cpp
-PF_Err HandleEvent(PF_InData* in_data,
-                   PF_OutData* out_data,
-                   PF_ParamDef* params[],
-                   PF_LayerDef* output,
-                   PF_EventExtra* event_extraP);
+PF_Err HandleEvent(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, PF_EventExtra* event_extraP);
 
 extern "C" {
 
-DllExport PF_Err EffectMain(PF_Cmd cmd,
-                            PF_InData* in_data,
-                            PF_OutData* out_data,
-                            PF_ParamDef* params[],
-                            PF_LayerDef* output,
-                            void* extra);
+DllExport PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, void* extra);
 }

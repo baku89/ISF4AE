@@ -26,7 +26,6 @@
 #endif
 #include <cassert>
 
-
 /**
  * Display a dialog describing the plug-in. Populate out_data>return_msg and After Effects will display it in a simple
  * modal dialog.
@@ -90,10 +89,9 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   out_data->my_version = PF_VERSION(MAJOR_VERSION, MINOR_VERSION, BUG_VERSION, STAGE_VERSION, BUILD_VERSION);
 
-  out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG |
-                        PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_SEND_UPDATE_PARAMS_UI | PF_OutFlag_CUSTOM_UI;
-  out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER |
-                         PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS | PF_OutFlag2_SUPPORTS_THREADED_RENDERING;
+  out_data->out_flags =
+      PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG | PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_SEND_UPDATE_PARAMS_UI | PF_OutFlag_CUSTOM_UI;
+  out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS | PF_OutFlag2_SUPPORTS_THREADED_RENDERING;
 
   // Initialize globalData
   PF_Handle globalDataH = suites.HandleSuite1()->host_new_handle(sizeof(GlobalData));
@@ -140,8 +138,6 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   globalData->ae2glScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->ae2glScene->useCode(SystemUtil::readResourceShader(IDR_AE2GL_FS), "");
-  //IDK what the sense of the loading file. Maybe this critical, maybe not. Will see...
-  //globalData->ae2glScene->useFile(resourcePath + "shaders/ae2gl.fs");
 
   globalData->gl2aeScene = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
   globalData->gl2aeScene->useCode(SystemUtil::readResourceShader(IDR_GL2AE_FS), "");
@@ -285,8 +281,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   // Customize the name of the options button
   // Premiere Pro/Elements does not support this suite
   if (in_data->appl_id != 'PrMr') {
-    auto effectUISuite =
-        AEFX_SuiteScoper<PF_EffectUISuite1>(in_data, kPFEffectUISuite, kPFEffectUISuiteVersion1, out_data);
+    auto effectUISuite = AEFX_SuiteScoper<PF_EffectUISuite1>(in_data, kPFEffectUISuite, kPFEffectUISuiteVersion1, out_data);
 
     ERR(effectUISuite->PF_SetOptionsButtonName(in_data->effect_ref, "ISF Option.."));
   }
@@ -327,13 +322,11 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
   for (int userParamIndex = 0; userParamIndex < NumUserParams; userParamIndex++) {
     PF_SPRINTF(name, "Bool %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    PF_ADD_CHECKBOX(name, "", FALSE, PF_ParamFlag_COLLAPSE_TWIRLY,
-                    getIdForUserParam(userParamIndex, UserParamType_Bool));
+    PF_ADD_CHECKBOX(name, "", FALSE, PF_ParamFlag_COLLAPSE_TWIRLY, getIdForUserParam(userParamIndex, UserParamType_Bool));
 
     PF_SPRINTF(name, "Long %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
-    PF_ADD_POPUPX(name, 5, 1, "1|2|3|4|5", PF_ParamFlag_COLLAPSE_TWIRLY,
-                  getIdForUserParam(userParamIndex, UserParamType_Long));
+    PF_ADD_POPUPX(name, 5, 1, "1|2|3|4|5", PF_ParamFlag_COLLAPSE_TWIRLY, getIdForUserParam(userParamIndex, UserParamType_Long));
 
     PF_SPRINTF(name, "Float %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -342,8 +335,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
                          0, 1,                            // Slider range
                          0,                               // Default
                          1,                               // Precision
-                         PF_ValueDisplayFlag_NONE, PF_ParamFlag_COLLAPSE_TWIRLY,
-                         getIdForUserParam(userParamIndex, UserParamType_Float));
+                         PF_ValueDisplayFlag_NONE, PF_ParamFlag_COLLAPSE_TWIRLY, getIdForUserParam(userParamIndex, UserParamType_Float));
 
     PF_SPRINTF(name, "Angle %d", userParamIndex);
     AEFX_CLR_STRUCT(def);
@@ -425,8 +417,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   // Get the ISF scene from cache and save its pointer to ParamInfo
   {
     AEFX_CLR_STRUCT(paramDef);
-    ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale,
-                          &paramDef));
+    ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale, &paramDef));
 
     auto* isf = reinterpret_cast<ParamArbIsf*>(*paramDef.u.arb_d.value);
 
@@ -455,16 +446,14 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     UserParamType userParamType = getUserParamTypeForISFAttr(input);
 
     if (userParamType == UserParamType_Image) {
-      PF_ParamIndex paramIndex =
-          input->isFilterInputImage() ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
+      PF_ParamIndex paramIndex = input->isFilterInputImage() ? Param_Input : getIndexForUserParam(userParamIndex, UserParamType_Image);
 
       (extra->cb->checkout_layer(in_data->effect_ref,
                                  // A parameter index of layer to checkout
                                  paramIndex,
                                  // Unique index for retriving pixels in Cmd_SmartRender
                                  // -- just use paramIndex itself.
-                                 paramIndex, &req, in_data->current_time, in_data->time_step, in_data->time_scale,
-                                 &inResult));
+                                 paramIndex, &req, in_data->current_time, in_data->time_step, in_data->time_scale, &inResult));
 
       if (!input->isFilterInputImage()) {
         VVGL::Size& size = paramInfo->inputImageSizes[userParamIndex];
@@ -481,9 +470,8 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   // Compute the rect to render
   if (!err) {
     // Set the output region to an entire layer multiplied by downsample, regardless of input's mask.
-    PF_Rect outputRect = {
-        0, 0, (A_long)ceil((double)in_data->width * in_data->downsample_x.num / in_data->downsample_x.den),
-        (A_long)ceil((double)in_data->height * in_data->downsample_y.num / in_data->downsample_y.den)};
+    PF_Rect outputRect = {0, 0, (A_long)ceil((double)in_data->width * in_data->downsample_x.num / in_data->downsample_x.den),
+                          (A_long)ceil((double)in_data->height * in_data->downsample_y.num / in_data->downsample_y.den)};
 
     UnionLRect(&outputRect, &extra->output->result_rect);
     UnionLRect(&outputRect, &extra->output->max_result_rect);
@@ -552,8 +540,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   // Bind special uniforms reserved for ISF4AE
   VVISF::ISFVal i4aDownsample =
-      VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den,
-                    (float)in_data->downsample_y.num / in_data->downsample_y.den);
+      VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den, (float)in_data->downsample_y.num / in_data->downsample_y.den);
   scene->setValueForInputNamed(i4aDownsample, "i4a_Downsample");
   scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, false), "i4a_CustomUI");
 
@@ -575,7 +562,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
     if (!outputImageCPU->cpuBackingPtr) {
       err = PF_Err_OUT_OF_MEMORY;
-      // A more explicit assert that appears with the new versions 
+      // A more explicit assert that appears with the new versions
       // of the Nvidia Studio driver described in this post:
       // [link](https://github.com/baku89/ISF4AE/issues/19#issuecomment-1724631129)
       assert("FATAL! CPU backing pointer is NULL! Cannot copy CPU buffer to EffectWorld!" && false);
@@ -836,8 +823,7 @@ static PF_Err QueryDynamicFlags(PF_InData* in_data, PF_OutData* out_data, PF_Par
   //    contains invalid values; use PF_CHECKOUT_PARAM() to obtain
   //    valid values.
 
-  ERR(PF_CHECKOUT_PARAM(in_data, Param_UseLayerTime, in_data->current_time, in_data->time_step, in_data->time_scale,
-                        &def));
+  ERR(PF_CHECKOUT_PARAM(in_data, Param_UseLayerTime, in_data->current_time, in_data->time_step, in_data->time_scale, &def));
 
   if (!err) {
     auto useLayerTime = def.u.bd.value;
@@ -849,11 +835,8 @@ static PF_Err QueryDynamicFlags(PF_InData* in_data, PF_OutData* out_data, PF_Par
   return err;
 }
 
-extern "C" DllExport PF_Err PluginDataEntryFunction(PF_PluginDataPtr inPtr,
-                                                    PF_PluginDataCB inPluginDataCallBackPtr,
-                                                    SPBasicSuite* inSPBasicSuitePtr,
-                                                    const char* inHostName,
-                                                    const char* inHostVersion) {
+extern "C" DllExport PF_Err
+PluginDataEntryFunction(PF_PluginDataPtr inPtr, PF_PluginDataCB inPluginDataCallBackPtr, SPBasicSuite* inSPBasicSuitePtr, const char* inHostName, const char* inHostVersion) {
   PF_Err result = PF_Err_INVALID_CALLBACK;
 
   result = PF_REGISTER_EFFECT(inPtr, inPluginDataCallBackPtr, CONFIG_NAME, CONFIG_MATCH_NAME, CONFIG_CATEGORY,
@@ -862,12 +845,7 @@ extern "C" DllExport PF_Err PluginDataEntryFunction(PF_PluginDataPtr inPtr,
   return result;
 }
 
-PF_Err EffectMain(PF_Cmd cmd,
-                  PF_InData* in_data,
-                  PF_OutData* out_data,
-                  PF_ParamDef* params[],
-                  PF_LayerDef* output,
-                  void* extra) {
+PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, void* extra) {
   PF_Err err = PF_Err_NONE;
 
   try {
