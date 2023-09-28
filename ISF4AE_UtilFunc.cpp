@@ -130,8 +130,7 @@ shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string&
       map<string, string> errDict;
 
       stringstream ss;
-      ss << "The number of inputs (" << scene->inputs().size() << ") exceeds the maximum number of supported inputs ("
-         << NumUserParams << ")";
+      ss << "The number of inputs (" << scene->inputs().size() << ") exceeds the maximum number of supported inputs (" << NumUserParams << ")";
 
       errDict["ia4ErrLog"] = ss.str();
 
@@ -188,6 +187,9 @@ shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string&
   return desc;
 }
 
+/**
+ * Open the file dialog and load a shader, then set it to the ISF parameter.
+ */
 PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) {
   PF_Err err = PF_Err_NONE;
 
@@ -204,8 +206,7 @@ PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) 
   ISF4AESceneRef useless = VVISF::CreateISF4AESceneRefUsing(globalData->context->newContextSharingMe());
 
   string isfDirectory = "";
-  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
-                                      &isfDirectory));
+  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY, &isfDirectory));
 
   string srcPath = SystemUtil::openFileDialog(fileTypes, isfDirectory, "Open ISF File");
 
@@ -402,7 +403,7 @@ PF_Err loadISF(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[]) 
 }
 
 /**
- Save the current shader
+ * Save the current shader.
  */
 PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
@@ -416,8 +417,7 @@ PF_Err saveISF(PF_InData* in_data, PF_OutData* out_data) {
   auto* isf = reinterpret_cast<ParamArbIsf*>(*paramIsf.u.arb_d.value);
 
   string isfDirectory = "";
-  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY,
-                                      &isfDirectory));
+  ERR(AEUtil::getStringPersistentData(in_data, CONFIG_MATCH_NAME, "ISF Directory", DEFAULT_ISF_DIRECTORY, &isfDirectory));
 
   // Set name of an effect instance as default file name
   string effectName = isf->name;
@@ -471,12 +471,10 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
       return VVGL::CreateRGBACPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL, NULL);
 
     case 16:
-      return VVGL::CreateRGBAShortCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL,
-                                                 NULL);
+      return VVGL::CreateRGBAShortCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL, NULL);
 
     case 32:
-      return VVGL::CreateRGBAFloatCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL,
-                                                 NULL);
+      return VVGL::CreateRGBAFloatCPUBufferUsing(inCPUBufferSizeInPixels, inCPUBackingPtr, inImageSizeInPixels, NULL, NULL);
 
     default:
       throw invalid_argument("Invalid bitdepth");
@@ -511,8 +509,7 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
       return err;
     }
 
-    VVGL::GLBufferRef imageAECPU =
-        createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
+    VVGL::GLBufferRef imageAECPU = createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
 
     auto imageAE = globalData->uploader->uploadCPUToTex(imageAECPU);
 
@@ -548,13 +545,8 @@ PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
  * Renders ISF scene to CPU buffer. It's used at SmartRender() and DrawEvent(), and assuming image inputs are already
  * bounded by the callees.
  */
-PF_Err renderISFToCPUBuffer(PF_InData* in_data,
-                            PF_OutData* out_data,
-                            ISF4AEScene& scene,
-                            short bitdepth,
-                            VVGL::Size& outSize,
-                            VVGL::Size& pointScale,
-                            VVGL::GLBufferRef* outBuffer) {
+PF_Err
+renderISFToCPUBuffer(PF_InData* in_data, PF_OutData* out_data, ISF4AEScene& scene, short bitdepth, VVGL::Size& outSize, VVGL::Size& pointScale, VVGL::GLBufferRef* outBuffer) {
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
