@@ -147,15 +147,16 @@ struct SequenceData {
   bool showISFOption;
 };
 
+// A struct for representing arbitrary parmaeter type that stores shader data.
 struct ParamArbIsf {
   string name;
   shared_ptr<SceneDesc> desc;
 };
 
-#define ARB_ISF_MAGIC_NUMBER 0x01
+#define ARB_ISF_FLAT_V1_MAGIC_NUMBER 0x01
 
 struct ParamArbIsfFlatV1 {
-  A_u_char magicNumber;  // Always should be set to ARB_ISF_MAGIC_NUMBER
+  A_u_char magicNumber;  // Always should be set to ARB_ISF_FLAT_V1_MAGIC_NUMBER
   A_u_long version;
   A_u_long offsetName;
   A_u_long offsetFragCode;

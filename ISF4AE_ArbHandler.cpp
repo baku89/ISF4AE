@@ -48,8 +48,7 @@ static PF_Err DisposeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
-  auto* isf =
-      reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.dispose_func_params.arbH));
+  auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.dispose_func_params.arbH));
 
   isf->name.clear();
   isf->desc = nullptr;
@@ -135,8 +134,7 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
-  auto* isf =
-      reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
+  auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flat_size_func_params.arbH));
 
   string fsCode = isf->desc->scene->getFragCode();
   string& vsCode = *isf->desc->scene->doc()->vertShaderSource();
@@ -145,8 +143,7 @@ static PF_Err FlatSizeArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParams
     vsCode = "";
   }
 
-  A_u_long size =
-      (A_u_long)(sizeof(ParamArbIsfFlatV1) + (isf->name.size() + fsCode.size() + vsCode.size()) * sizeof(char));
+  A_u_long size = (A_u_long)(sizeof(ParamArbIsfFlatV1) + (isf->name.size() + fsCode.size() + vsCode.size()) * sizeof(char));
 
   *(extra->u.flat_size_func_params.flat_data_sizePLu) = size;
 
@@ -163,8 +160,7 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
-  auto* isf =
-      reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flatten_func_params.arbH));
+  auto* isf = reinterpret_cast<ParamArbIsf*>(suites.HandleSuite1()->host_lock_handle(extra->u.flatten_func_params.arbH));
   ParamArbIsfFlatV1* dstHeader = (ParamArbIsfFlatV1*)extra->u.flatten_func_params.flat_dataPV;
   char* dstPV = (char*)extra->u.flatten_func_params.flat_dataPV;
 
@@ -179,7 +175,7 @@ static PF_Err FlattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParamsE
   A_u_long fsCodeSize = (A_u_long)fsCode.size();
   A_u_long vsCodeSize = (A_u_long)vsCode.size();
 
-  dstHeader->magicNumber = ARB_ISF_MAGIC_NUMBER;
+  dstHeader->magicNumber = ARB_ISF_FLAT_V1_MAGIC_NUMBER;
   dstHeader->version = 1;
   dstHeader->offsetName = sizeof(ParamArbIsfFlatV1);
   dstHeader->offsetFragCode = dstHeader->offsetName + nameSize;
@@ -237,7 +233,7 @@ static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParam
 
   char* flatData = (char*)extra->u.unflatten_func_params.flat_dataPV;
 
-  if (flatData[0] != ARB_ISF_MAGIC_NUMBER) {
+  if (flatData[0] != ARB_ISF_FLAT_V1_MAGIC_NUMBER) {
     // Means version 0
     UnflattenArbV0(globalData, flatData, extra->u.unflatten_func_params.buf_sizeLu, isf);
   } else {
@@ -250,11 +246,7 @@ static PF_Err UnflattenArb(PF_InData* in_data, PF_OutData* out_data, PF_ArbParam
   return err;
 }
 
-PF_Err HandleArbitrary(PF_InData* in_data,
-                       PF_OutData* out_data,
-                       PF_ParamDef* params[],
-                       PF_LayerDef* output,
-                       PF_ArbParamsExtra* extra) {
+PF_Err HandleArbitrary(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, PF_ArbParamsExtra* extra) {
   PF_Err err = PF_Err_NONE;
 
   AEGP_SuiteHandler suites(in_data->pica_basicP);
