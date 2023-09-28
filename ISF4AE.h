@@ -147,7 +147,15 @@ struct SequenceData {
   bool showISFOption;
 };
 
+// The data that is initialized in SmartPreRender and passed to SmartRender.
+struct PreRenderData {
+  VVISF::ISF4AEScene* scene;
+  VVGL::Size outSize;
+  VVGL::Size inputImageSizes[NumUserParams];
+};
+
 // A struct for representing arbitrary parmaeter type that stores shader data.
+// The reason why it contains the name is that there is a case that two parameters have the same code but different names. The SceneDesc is memoized by the code as a key.
 struct ParamArbIsf {
   string name;
   shared_ptr<SceneDesc> desc;
@@ -161,12 +169,6 @@ struct ParamArbIsfFlatV1 {
   A_u_long offsetName;
   A_u_long offsetFragCode;
   A_u_long offsetVertCode;
-};
-
-struct ParamInfo {
-  VVISF::ISF4AEScene* scene;
-  VVGL::Size outSize;
-  VVGL::Size inputImageSizes[NumUserParams];
 };
 
 // Implemented in ISF4AE_UtilFunc.cpp

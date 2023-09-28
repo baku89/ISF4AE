@@ -396,25 +396,25 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   [globalData->lock lock];
 #endif  // !_WIN32
 
-  // Create paramInfo
-  PF_Handle paramInfoH = suites.HandleSuite1()->host_new_handle(sizeof(ParamInfo));
+  // Create preRenderData
+  PF_Handle preRenderDataH = suites.HandleSuite1()->host_new_handle(sizeof(PreRenderData));
 
-  if (!paramInfoH) {
+  if (!preRenderDataH) {
     return PF_Err_OUT_OF_MEMORY;
   }
 
   // Set handler
-  extra->output->pre_render_data = paramInfoH;
+  extra->output->pre_render_data = preRenderDataH;
 
-  auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
+  auto* preRenderData = reinterpret_cast<PreRenderData*>(suites.HandleSuite1()->host_lock_handle(preRenderDataH));
 
-  if (!paramInfo) {
+  if (!preRenderData) {
     return PF_Err_OUT_OF_MEMORY;
   }
 
   PF_ParamDef paramDef;
 
-  // Get the ISF scene from cache and save its pointer to ParamInfo
+  // Get the ISF scene from cache and save its pointer to PreRenderData
   {
     AEFX_CLR_STRUCT(paramDef);
     ERR(PF_CHECKOUT_PARAM(in_data, Param_ISF, in_data->current_time, in_data->time_step, in_data->time_scale, &paramDef));
@@ -424,7 +424,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     if (isf) {
       auto desc = isf->desc;
 
-      paramInfo->scene = desc->scene.get();
+      preRenderData->scene = desc->scene.get();
     }
 
     ERR2(PF_CHECKIN_PARAM(in_data, &paramDef));
@@ -442,7 +442,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
   req.rect.bottom = 10000;
   req.preserve_rgb_of_zero_alpha = true;
 
-  for (auto input : paramInfo->scene->inputs()) {
+  for (auto input : preRenderData->scene->inputs()) {
     UserParamType userParamType = getUserParamTypeForISFAttr(input);
 
     if (userParamType == UserParamType_Image) {
@@ -456,7 +456,7 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
                                  paramIndex, &req, in_data->current_time, in_data->time_step, in_data->time_scale, &inResult));
 
       if (!input->isFilterInputImage()) {
-        VVGL::Size& size = paramInfo->inputImageSizes[userParamIndex];
+        VVGL::Size& size = preRenderData->inputImageSizes[userParamIndex];
         size.width = inResult.ref_width * in_data->downsample_x.num / in_data->downsample_x.den;
         size.height = inResult.ref_height * in_data->downsample_y.num / in_data->downsample_y.den;
       }
@@ -476,12 +476,12 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
     UnionLRect(&outputRect, &extra->output->result_rect);
     UnionLRect(&outputRect, &extra->output->max_result_rect);
 
-    paramInfo->outSize = VVGL::Size(outputRect.right, outputRect.bottom);
+    preRenderData->outSize = VVGL::Size(outputRect.right, outputRect.bottom);
 
     extra->output->flags |= PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS;
   }
 
-  suites.HandleSuite1()->host_unlock_handle(paramInfoH);
+  suites.HandleSuite1()->host_unlock_handle(preRenderDataH);
 
 #ifndef _WIN32
   [globalData->lock unlock];
@@ -503,27 +503,27 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   globalData->context->makeCurrentIfNotCurrent();
 
-  auto paramInfoH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
+  auto preRenderDataH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
 
-  auto* paramInfo = reinterpret_cast<ParamInfo*>(suites.HandleSuite1()->host_lock_handle(paramInfoH));
+  auto* preRenderData = reinterpret_cast<PreRenderData*>(suites.HandleSuite1()->host_lock_handle(preRenderDataH));
 
   auto bitdepth = extra->input->bitdepth;
   auto pixelBytes = bitdepth * 4 / 8;
-  auto& scene = paramInfo->scene;
+  auto& scene = preRenderData->scene;
 
   // It has to be done by callee to bind all of layer inputs, before calling renderISFToCPUBuffer
   int userParamIndex = 0;
-  for (auto& input : paramInfo->scene->inputs()) {
+  for (auto& input : preRenderData->scene->inputs()) {
     if (input->type() == VVISF::ISFValType_Image) {
       PF_ParamIndex checkoutIndex;
       VVGL::Size layerSize;
 
       if (input->isFilterInputImage()) {
         checkoutIndex = Param_Input;
-        layerSize = paramInfo->outSize;
+        layerSize = preRenderData->outSize;
       } else {
         checkoutIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
-        layerSize = paramInfo->inputImageSizes[userParamIndex];
+        layerSize = preRenderData->inputImageSizes[userParamIndex];
       }
 
       VVGL::GLBufferRef image;
@@ -547,7 +547,7 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   // Render
   VVGL::GLBufferRef outputImageCPU = nullptr;
   VVGL::Size pointScale = {1.0, 1.0};
-  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, paramInfo->outSize, pointScale, &outputImageCPU);
+  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, preRenderData->outSize, pointScale, &outputImageCPU);
 
   // Check-in output pixels
   PF_EffectWorld* outputWorld = nullptr;
@@ -569,17 +569,17 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
     }
 
     // Copy per row
-    for (size_t y = 0; y < paramInfo->outSize.height; y++) {
+    for (size_t y = 0; y < preRenderData->outSize.height; y++) {
       glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
       aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
-      memcpy(aeP, glP, paramInfo->outSize.width * pixelBytes);
+      memcpy(aeP, glP, preRenderData->outSize.width * pixelBytes);
     }
   } else {
     FX_LOG("Cannot checkout outputWorld");
   }
 
-  suites.HandleSuite1()->host_unlock_handle(paramInfoH);
-  suites.HandleSuite1()->host_dispose_handle(paramInfoH);
+  suites.HandleSuite1()->host_unlock_handle(preRenderDataH);
+  suites.HandleSuite1()->host_dispose_handle(preRenderDataH);
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
