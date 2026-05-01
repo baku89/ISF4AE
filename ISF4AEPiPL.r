@@ -57,7 +57,10 @@ resource 'PiPL' (16000) {
 
 		},
 		AE_Effect_Global_OutFlags_2 {
-            0x08001401
+            // FLOAT_COLOR_AWARE | SUPPORTS_SMART_RENDER | SUPPORTS_QUERY_DYNAMIC_FLAGS
+            // (SUPPORTS_THREADED_RENDERING = 0x08000000 intentionally cleared,
+            //  see GlobalSetup() in ISF4AE_CommandSelector.cpp)
+            0x00001401
 		},
 		/* [11] */
 		AE_Effect_Match_Name {

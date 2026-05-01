@@ -92,7 +92,11 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   out_data->out_flags =
       PF_OutFlag_DEEP_COLOR_AWARE | PF_OutFlag_CUSTOM_UI | PF_OutFlag_I_DO_DIALOG | PF_OutFlag_NON_PARAM_VARY | PF_OutFlag_SEND_UPDATE_PARAMS_UI | PF_OutFlag_CUSTOM_UI;
-  out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS | PF_OutFlag2_SUPPORTS_THREADED_RENDERING;
+  // PF_OutFlag2_SUPPORTS_THREADED_RENDERING is intentionally NOT set: the
+  // plug-in shares a single GL context across all instances and serializes
+  // SmartRender via globalData->renderLock. Advertising MFR support would only
+  // force AE to fan out work that we then serialize again.
+  out_data->out_flags2 = PF_OutFlag2_FLOAT_COLOR_AWARE | PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS;
 
   // Initialize globalData
   PF_Handle globalDataH = suites.HandleSuite1()->host_new_handle(sizeof(GlobalData));

@@ -1,5 +1,6 @@
 #include "ISF4AE.h"
 
+#include <mutex>
 #include <regex>
 #include <sstream>
 
@@ -95,6 +96,12 @@ shared_ptr<SceneDesc> getCompiledSceneDesc(GlobalData* globalData, const string&
   if (fsCode.empty()) {
     return globalData->notLoadedSceneDesc;
   }
+
+  // Hold the GL lock for the entire compile path: this function touches
+  // globalData->context (creating new shared contexts), the WeakMap that
+  // memoizes scenes, and the GL state used by VVISF::useCode(). Any of those
+  // races with a concurrent SmartRender / EventHandler if left unsynchronized.
+  std::lock_guard<std::mutex> guard(*globalData->renderLock);
 
   string key = fsCode + "__ISF_VERTEX__" + vsCode;
 

@@ -4,6 +4,7 @@
 #include "AEFX_SuiteHelper.h"
 
 #include <codecvt>
+#include <mutex>
 #include <string>
 
 #include "AEUtil.h"
@@ -269,20 +270,6 @@ static PF_Err DrawCompUIEvent(PF_InData* in_data,
       if (doRenderCustomUI) {
         VVGL::Size outSize = {static_cast<double>(clipRect.width), static_cast<double>(clipRect.height)};
 
-        // Bind special uniforms reserved for ISF4AE
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, zoom, zoom), "i4a_Downsample");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, true), "i4a_CustomUI");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, foregroundColor.red, foregroundColor.green,
-                                                   foregroundColor.blue, foregroundColor.alpha),
-                                     "i4a_UIForegroundColor");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, shadowColor.red, shadowColor.green,
-                                                   shadowColor.blue, shadowColor.alpha),
-                                     "i4a_UIShadowColor");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, shadowOffset.x, shadowOffset.y),
-                                     "i4a_UIShadowOffset");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, strokeWidth), "i4a_UIStrokeWidth");
-        scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, vertexSize), "i4a_UIVertexSize");
-
         // Prepare output buffer
         short bitdepth = 8;
         VVGL::GLBufferRef overlayImage = nullptr;
@@ -290,7 +277,37 @@ static PF_Err DrawCompUIEvent(PF_InData* in_data,
         pointScale.width = zoom * (double)in_data->downsample_x.den / in_data->downsample_x.num;
         pointScale.height = zoom * (double)in_data->downsample_y.den / in_data->downsample_y.num;
 
-        ERR(renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, outSize, pointScale, &overlayImage));
+        // Custom UI is drawn from the main thread while SmartRender runs on a
+        // render thread. They share the same GL context and the same cached
+        // ISF4AEScene, so guard the uniform setup + render with the same lock
+        // SmartRender uses. None of the calls below re-enter AE, so this lock
+        // can be held safely. Keep the AE handle locked until after the mutex
+        // is released so AE cannot relocate the GlobalData (which owns the
+        // mutex) while we still reference it.
+        auto* uiGlobalData = reinterpret_cast<GlobalData*>(
+            suites.HandleSuite1()->host_lock_handle(in_data->global_data));
+
+        {
+          std::lock_guard<std::mutex> guard(*uiGlobalData->renderLock);
+
+          // Bind special uniforms reserved for ISF4AE
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, zoom, zoom), "i4a_Downsample");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, true), "i4a_CustomUI");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, foregroundColor.red, foregroundColor.green,
+                                                     foregroundColor.blue, foregroundColor.alpha),
+                                       "i4a_UIForegroundColor");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Color, shadowColor.red, shadowColor.green,
+                                                     shadowColor.blue, shadowColor.alpha),
+                                       "i4a_UIShadowColor");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Point2D, shadowOffset.x, shadowOffset.y),
+                                       "i4a_UIShadowOffset");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, strokeWidth), "i4a_UIStrokeWidth");
+          scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Float, vertexSize), "i4a_UIVertexSize");
+
+          ERR(renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, outSize, pointScale, &overlayImage));
+        }
+
+        suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
 
         if (overlayImage) {
           DRAWBOT_ImageRef imageRef = nullptr;
