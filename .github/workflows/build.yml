@@ -1,0 +1,36 @@
+name: Build (validation)
+
+# Validates that the plugin builds. No signing, no release upload.
+# Triggered on pushes to `dev` and on PRs targeting `main` or `dev`.
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build (unsigned)
+        run: |
+          xcodebuild build \
+            -project Mac/ISF4AE.xcodeproj \
+            -scheme ISF4AE \
+            -destination "generic/platform=macOS" \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build" \
+            PLUGIN_DIR="$GITHUB_WORKSPACE/build/install" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO

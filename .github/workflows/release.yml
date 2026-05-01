@@ -1,0 +1,197 @@
+name: Release (signed)
+
+# Triggered by pushing a tag like `v0.5.0` or `v0.5.0-beta.1`.
+# Builds, code-signs with Developer ID Application, notarizes with notarytool,
+# staples the ticket, and attaches the zipped .plugin to a GitHub Release.
+#
+# Required repository secrets:
+#   MACOS_CERTIFICATE          base64-encoded .p12 of "Developer ID Application" cert
+#                              (export from Keychain, then `base64 -i cert.p12 | pbcopy`)
+#   MACOS_CERTIFICATE_PWD      password used when exporting the .p12
+#   MACOS_SIGN_IDENTITY        e.g. "Developer ID Application: Name (TEAMID)"
+#   KEYCHAIN_PASSWORD          any random string; used for the temporary keychain
+#   APPLE_API_KEY              base64-encoded .p8 from App Store Connect
+#                              (Users and Access -> Keys -> create with role "Developer")
+#   APPLE_API_KEY_ID           10-character key ID shown next to the .p8
+#   APPLE_API_ISSUER           Issuer ID (UUID) shown above the keys table
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write   # required to create a GitHub Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # e.g. v0.5.0 or v0.5.0-beta.1
+          VERSION="${TAG#v}"                # 0.5.0 / 0.5.0-beta.1
+          CORE="${VERSION%%-*}"             # 0.5.0 (drop pre-release suffix)
+          IFS='.' read -r MAJOR MINOR BUG <<< "$CORE"
+          : "${MAJOR:=0}"
+          : "${MINOR:=0}"
+          : "${BUG:=0}"
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "major=$MAJOR"
+            echo "minor=$MINOR"
+            echo "bug=$BUG"
+            echo "prerelease=$PRERELEASE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version into Config.h and Info.plist
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          MAJOR: ${{ steps.version.outputs.major }}
+          MINOR: ${{ steps.version.outputs.minor }}
+          BUG: ${{ steps.version.outputs.bug }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          # Config.h drives the version surfaced inside After Effects via PiPL.
+          /usr/bin/sed -i '' -E "s/^#define MAJOR_VERSION .*/#define MAJOR_VERSION ${MAJOR}/" Config.h
+          /usr/bin/sed -i '' -E "s/^#define MINOR_VERSION .*/#define MINOR_VERSION ${MINOR}/" Config.h
+          /usr/bin/sed -i '' -E "s/^#define BUG_VERSION .*/#define BUG_VERSION ${BUG}/" Config.h
+          if [ "$PRERELEASE" = "true" ]; then
+            /usr/bin/sed -i '' -E "s/^#define STAGE_VERSION .*/#define STAGE_VERSION PF_Stage_BETA/" Config.h
+          else
+            /usr/bin/sed -i '' -E "s/^#define STAGE_VERSION .*/#define STAGE_VERSION PF_Stage_RELEASE/" Config.h
+          fi
+          # PiPL packs BUILD_VERSION into 11 bits, so wrap to fit.
+          BUILD=$((GITHUB_RUN_NUMBER % 2048))
+          /usr/bin/sed -i '' -E "s/^#define BUILD_VERSION .*/#define BUILD_VERSION ${BUILD}/" Config.h
+
+          # Info.plist: keep CoreFoundation keys aligned with the tag.
+          PLIST=Mac/ISF4AE.plugin-Info.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string ${VERSION}" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${VERSION}" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" "$PLIST"
+
+          echo "--- Config.h ---"; cat Config.h
+          echo "--- Info.plist ---"; /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+
+      - name: Import signing certificate into a temporary keychain
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          printf '%s' "$MACOS_CERTIFICATE" | base64 -d > "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PWD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          # Make the temp keychain searchable alongside the existing login keychain
+          # so codesign + xcodebuild can find both the imported identity and Apple
+          # intermediates. The keychain is deleted in the final cleanup step.
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
+          rm -f "$CERT_PATH"
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project Mac/ISF4AE.xcodeproj \
+            -scheme ISF4AE \
+            -destination "generic/platform=macOS" \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build" \
+            PLUGIN_DIR="$GITHUB_WORKSPACE/build/install" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Codesign with hardened runtime
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: |
+          set -euo pipefail
+          PLUGIN="$GITHUB_WORKSPACE/build/install/ISF4AE.plugin"
+          test -d "$PLUGIN" || { echo "Plugin not found at $PLUGIN"; ls -R "$GITHUB_WORKSPACE/build"; exit 1; }
+          codesign --force --options runtime --timestamp \
+            --entitlements Mac/entitlements.plist \
+            --sign "$MACOS_SIGN_IDENTITY" \
+            "$PLUGIN"
+          codesign --verify --strict --verbose=2 "$PLUGIN"
+
+      - name: Notarize with notarytool
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          set -euo pipefail
+          KEY_DIR="$RUNNER_TEMP/private_keys"
+          mkdir -p "$KEY_DIR"
+          KEY_FILE="$KEY_DIR/AuthKey_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY" | base64 -d > "$KEY_FILE"
+
+          PLUGIN="$GITHUB_WORKSPACE/build/install/ISF4AE.plugin"
+          SUBMIT_ZIP="$RUNNER_TEMP/ISF4AE-submit.zip"
+          ditto -c -k --keepParent "$PLUGIN" "$SUBMIT_ZIP"
+
+          xcrun notarytool submit "$SUBMIT_ZIP" \
+            --key "$KEY_FILE" \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER" \
+            --wait
+
+          xcrun stapler staple "$PLUGIN"
+          spctl --assess --type install --verbose=2 "$PLUGIN" || true
+
+          rm -f "$KEY_FILE"
+
+      - name: Package release artifact
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          PLUGIN="$GITHUB_WORKSPACE/build/install/ISF4AE.plugin"
+          OUT="$GITHUB_WORKSPACE/ISF4AE-${VERSION}-macOS.zip"
+          ditto -c -k --keepParent "$PLUGIN" "$OUT"
+          shasum -a 256 "$OUT" | tee "${OUT}.sha256"
+          ls -lh "$OUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          generate_release_notes: true
+          files: |
+            ISF4AE-${{ steps.version.outputs.version }}-macOS.zip
+            ISF4AE-${{ steps.version.outputs.version }}-macOS.zip.sha256
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
