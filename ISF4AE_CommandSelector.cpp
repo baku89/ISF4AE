@@ -12,6 +12,7 @@
 #include <VVGL.hpp>
 #include <iostream>
 #include <mutex>
+#include <vector>
 
 #define GL_SILENCE_DEPRECATION
 #define MIN_SAFE_FLOAT -1000000
@@ -149,9 +150,7 @@ static PF_Err GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 
   globalData->scenes = make_shared<WeakMap<string, SceneDesc>>();
 
-#ifndef _WIN32
-  globalData->lock = [[NSLock alloc] init];
-#endif
+  globalData->renderLock = make_shared<std::mutex>();
 
   auto notLoadedSceneDesc = make_shared<SceneDesc>();
   notLoadedSceneDesc->status = "Not Loaded";
@@ -184,9 +183,7 @@ static PF_Err GlobalSetdown(PF_InData* in_data, PF_OutData* out_data, PF_ParamDe
     globalData->ae2glScene = nullptr;
     globalData->notLoadedSceneDesc = nullptr;
     globalData->scenes = nullptr;
-#ifndef _WIN32
-    globalData->lock = nil;
-#endif  // !_WIN32
+    globalData->renderLock = nullptr;
     suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
     suites.HandleSuite1()->host_dispose_handle(in_data->global_data);
   }
@@ -392,9 +389,11 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
-#ifndef _WIN32
-  [globalData->lock lock];
-#endif  // !_WIN32
+  // SmartPreRender intentionally does not hold globalData->renderLock. The
+  // checkout_layer callback below can recurse into nested ISF4AE instances
+  // (when the input layer also carries this effect), and a non-recursive lock
+  // here would deadlock RAM Preview as soon as more than one instance of the
+  // effect is in play.
 
   // Create preRenderData
   PF_Handle preRenderDataH = suites.HandleSuite1()->host_new_handle(sizeof(PreRenderData));
@@ -483,10 +482,6 @@ static PF_Err SmartPreRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRen
 
   suites.HandleSuite1()->host_unlock_handle(preRenderDataH);
 
-#ifndef _WIN32
-  [globalData->lock unlock];
-#endif  // !_WIN32
-
   return err;
 }
 
@@ -497,12 +492,6 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
 
   auto* globalData = reinterpret_cast<GlobalData*>(suites.HandleSuite1()->host_lock_handle(in_data->global_data));
 
-#ifndef _WIN32
-  [globalData->lock lock];
-#endif  // !_WIN32
-
-  globalData->context->makeCurrentIfNotCurrent();
-
   auto preRenderDataH = reinterpret_cast<PF_Handle>(extra->input->pre_render_data);
 
   auto* preRenderData = reinterpret_cast<PreRenderData*>(suites.HandleSuite1()->host_lock_handle(preRenderDataH));
@@ -511,81 +500,109 @@ static PF_Err SmartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRend
   auto pixelBytes = bitdepth * 4 / 8;
   auto& scene = preRenderData->scene;
 
-  // It has to be done by callee to bind all of layer inputs, before calling renderISFToCPUBuffer
-  int userParamIndex = 0;
-  for (auto& input : preRenderData->scene->inputs()) {
-    if (input->type() == VVISF::ISFValType_Image) {
-      PF_ParamIndex checkoutIndex;
-      VVGL::Size layerSize;
+  // Phase 1: Check out all image-typed inputs *before* taking the GL lock.
+  // checkout_layer_pixels can recurse into another ISF4AE instance on the same
+  // thread, which used to deadlock on the non-recursive globalData lock.
+  struct CheckedOutInput {
+    VVISF::ISFAttrRef input;
+    PF_ParamIndex checkoutIndex;
+    VVGL::Size layerSize;
+    PF_LayerDef* layerDef;
+  };
+  std::vector<CheckedOutInput> checkedOut;
 
-      if (input->isFilterInputImage()) {
-        checkoutIndex = Param_Input;
-        layerSize = preRenderData->outSize;
-      } else {
-        checkoutIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
-        layerSize = preRenderData->inputImageSizes[userParamIndex];
+  {
+    int userParamIndex = 0;
+    for (auto& input : preRenderData->scene->inputs()) {
+      if (input->type() == VVISF::ISFValType_Image) {
+        PF_ParamIndex checkoutIndex;
+        VVGL::Size layerSize;
+
+        if (input->isFilterInputImage()) {
+          checkoutIndex = Param_Input;
+          layerSize = preRenderData->outSize;
+        } else {
+          checkoutIndex = getIndexForUserParam(userParamIndex, UserParamType_Image);
+          layerSize = preRenderData->inputImageSizes[userParamIndex];
+        }
+
+        PF_LayerDef* layerDef = nullptr;
+        ERR(extra->cb->checkout_layer_pixels(in_data->effect_ref, checkoutIndex, &layerDef));
+
+        checkedOut.push_back({input, checkoutIndex, layerSize, layerDef});
       }
 
-      VVGL::GLBufferRef image;
-
-      ERR(uploadCPUBufferInSmartRender(globalData, in_data->effect_ref, extra, checkoutIndex, layerSize, image));
-
-      input->setCurrentImageBuffer(image);
-    }
-
-    if (isISFAttrVisibleInECW(input)) {
-      userParamIndex++;
+      if (isISFAttrVisibleInECW(input)) {
+        userParamIndex++;
+      }
     }
   }
 
-  // Bind special uniforms reserved for ISF4AE
-  VVISF::ISFVal i4aDownsample =
-      VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den, (float)in_data->downsample_y.num / in_data->downsample_y.den);
-  scene->setValueForInputNamed(i4aDownsample, "i4a_Downsample");
-  scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, false), "i4a_CustomUI");
+  // Phase 2: With the GL context exclusively held, upload the checked-out
+  // buffers, set uniforms, render, and copy the result into the output world.
+  {
+    std::lock_guard<std::mutex> guard(*globalData->renderLock);
 
-  // Render
-  VVGL::GLBufferRef outputImageCPU = nullptr;
-  VVGL::Size pointScale = {1.0, 1.0};
-  renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, preRenderData->outSize, pointScale, &outputImageCPU);
+    globalData->context->makeCurrentIfNotCurrent();
 
-  // Check-in output pixels
-  PF_EffectWorld* outputWorld = nullptr;
-  ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
-
-  if (outputWorld) {
-    // Download
-    char* glP = nullptr;  // Pointer offset for OpenGL buffer
-    char* aeP = nullptr;  // for AE's layerDef
-
-    auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
-
-    if (!outputImageCPU->cpuBackingPtr) {
-      err = PF_Err_OUT_OF_MEMORY;
-      // A more explicit assert that appears with the new versions
-      // of the Nvidia Studio driver described in this post:
-      // [link](https://github.com/baku89/ISF4AE/issues/19#issuecomment-1724631129)
-      assert("FATAL! CPU backing pointer is NULL! Cannot copy CPU buffer to EffectWorld!" && false);
+    for (auto& co : checkedOut) {
+      VVGL::GLBufferRef image;
+      ERR(uploadCPUBufferInSmartRender(globalData, co.layerDef, bitdepth, co.layerSize, image));
+      co.input->setCurrentImageBuffer(image);
     }
 
-    // Copy per row
-    for (size_t y = 0; y < preRenderData->outSize.height; y++) {
-      glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
-      aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
-      memcpy(aeP, glP, preRenderData->outSize.width * pixelBytes);
+    // Bind special uniforms reserved for ISF4AE
+    VVISF::ISFVal i4aDownsample =
+        VVISF::ISFVal(VVISF::ISFValType_Point2D, (float)in_data->downsample_x.num / in_data->downsample_x.den, (float)in_data->downsample_y.num / in_data->downsample_y.den);
+    scene->setValueForInputNamed(i4aDownsample, "i4a_Downsample");
+    scene->setValueForInputNamed(VVISF::ISFVal(VVISF::ISFValType_Bool, false), "i4a_CustomUI");
+
+    // Render
+    VVGL::GLBufferRef outputImageCPU = nullptr;
+    VVGL::Size pointScale = {1.0, 1.0};
+    renderISFToCPUBuffer(in_data, out_data, *scene, bitdepth, preRenderData->outSize, pointScale, &outputImageCPU);
+
+    // checkout_output only returns the destination buffer; it does not trigger
+    // upstream rendering, so it is safe to call inside the GL lock.
+    PF_EffectWorld* outputWorld = nullptr;
+    ERR(extra->cb->checkout_output(in_data->effect_ref, &outputWorld));
+
+    if (outputWorld) {
+      char* glP = nullptr;
+      char* aeP = nullptr;
+
+      auto bytesPerRowGl = outputImageCPU->calculateBackingBytesPerRow();
+
+      if (!outputImageCPU->cpuBackingPtr) {
+        err = PF_Err_OUT_OF_MEMORY;
+        // A more explicit assert that appears with the new versions
+        // of the Nvidia Studio driver described in this post:
+        // [link](https://github.com/baku89/ISF4AE/issues/19#issuecomment-1724631129)
+        assert("FATAL! CPU backing pointer is NULL! Cannot copy CPU buffer to EffectWorld!" && false);
+      }
+
+      for (size_t y = 0; y < preRenderData->outSize.height; y++) {
+        glP = (char*)outputImageCPU->cpuBackingPtr + y * bytesPerRowGl;
+        aeP = (char*)outputWorld->data + y * outputWorld->rowbytes;
+        memcpy(aeP, glP, preRenderData->outSize.width * pixelBytes);
+      }
+    } else {
+      FX_LOG("Cannot checkout outputWorld");
     }
-  } else {
-    FX_LOG("Cannot checkout outputWorld");
+  }
+
+  // Phase 3: release all checked-out input layers outside of the GL lock.
+  for (auto& co : checkedOut) {
+    PF_Err err2 = extra->cb->checkin_layer_pixels(in_data->effect_ref, co.checkoutIndex);
+    if (!err) {
+      err = err2;
+    }
   }
 
   suites.HandleSuite1()->host_unlock_handle(preRenderDataH);
   suites.HandleSuite1()->host_dispose_handle(preRenderDataH);
 
   suites.HandleSuite1()->host_unlock_handle(in_data->global_data);
-
-#ifndef _WIN32
-  [globalData->lock unlock];
-#endif  // !_WIN32
 
   return err;
 }

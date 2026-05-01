@@ -34,6 +34,7 @@ typedef unsigned short PixelType;
 #include "AEGP_SuiteHandler.h"
 
 #include <unordered_map>
+#include <mutex>
 
 #include <VVISF.hpp>
 
@@ -138,9 +139,10 @@ struct GlobalData {
   shared_ptr<SceneDesc> notLoadedSceneDesc;
   // Caches shader program by using the code as a key.
   shared_ptr<WeakMap<string, SceneDesc>> scenes;
-#ifndef _WIN32
-  NSLock* lock;
-#endif
+  // Serializes access to the shared GL context. Heap-allocated so that
+  // AEFX_CLR_STRUCT'ing GlobalData leaves it in a valid (null) state until
+  // GlobalSetup constructs the mutex.
+  shared_ptr<std::mutex> renderLock;
 };
 
 struct SequenceData {
@@ -185,10 +187,13 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
                                                        const void* inCPUBackingPtr,
                                                        const VVGL::Size& inImageSizeInPixels,
                                                        const short bitdepth);
+// Uploads a checked-out PF_LayerDef into a GL texture sized to outImageSize.
+// The caller is responsible for calling checkout_layer_pixels / checkin_layer_pixels
+// outside of any lock that the GL context is using, since checkout_layer_pixels
+// can recursively re-enter the plug-in for upstream effects.
 PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
-                                    PF_ProgPtr effectRef,
-                                    PF_SmartRenderExtra* extra,
-                                    A_long checkoutIndex,
+                                    PF_LayerDef* layerDef,
+                                    short bitdepth,
                                     const VVGL::Size outImageSize,
                                     VVGL::GLBufferRef& outImage);
 PF_Err

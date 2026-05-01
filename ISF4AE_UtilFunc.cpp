@@ -482,61 +482,55 @@ VVGL::GLBufferRef createRGBACPUBufferWithBitdepthUsing(const VVGL::Size& inCPUBu
 }
 
 PF_Err uploadCPUBufferInSmartRender(GlobalData* globalData,
-                                    PF_ProgPtr effectRef,
-                                    PF_SmartRenderExtra* extra,
-                                    A_long checkoutIndex,
+                                    PF_LayerDef* layerDef,
+                                    short bitdepth,
                                     const VVGL::Size outImageSize,
                                     VVGL::GLBufferRef& outImage) {
-  PF_Err err = PF_Err_NONE, err2 = PF_Err_NONE;
+  PF_Err err = PF_Err_NONE;
 
-  auto bitdepth = extra->input->bitdepth;
-  auto pixelBytes = bitdepth * 4 / 8;
-
-  PF_LayerDef* layerDef = nullptr;
-
-  ERR(extra->cb->checkout_layer_pixels(effectRef, checkoutIndex, &layerDef));
-
-  if (layerDef != nullptr) {
-    // Stores the actual buffer size of images which has just done checkout-- affected by downsamples and cropping.
-    VVGL::Size imageSize(layerDef->width, layerDef->height);
-
-    VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
-
-    if (imageSize.width > outImageSize.width || imageSize.height > outImageSize.height) {
-      // I dunno why, but this case seems to occur without any exception when AE tries to generate thumanil for
-      // project pane.
-      FX_LOG("the size of image being done checkout exceeds the original dimension.");
-      return err;
-    }
-
-    VVGL::GLBufferRef imageAECPU = createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
-
-    auto imageAE = globalData->uploader->uploadCPUToTex(imageAECPU);
-
-    // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
-    glBindTexture(GL_TEXTURE_2D, imageAE->name);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, layerDef->origin_x, layerDef->origin_y);
-
-    globalData->ae2glScene->setBufferForInputNamed(imageAE, "inputImage");
-    globalData->ae2glScene->setValueForInputNamed(origin, "origin");
-
-    outImage = createRGBATexWithBitdepth(outImageSize, globalData->context, bitdepth);
-
-    globalData->ae2glScene->renderToBuffer(outImage);
-
-    // Though ISF specs does not specify the wrap mode of texture, set it to CLAMP_TO_EDGE to match with online ISF
-    // editor's behavior.
-    glBindTexture(GL_TEXTURE_2D, outImage->name);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
+  if (layerDef == nullptr) {
+    return err;
   }
 
-  ERR2(extra->cb->checkin_layer_pixels(effectRef, checkoutIndex));
+  auto pixelBytes = bitdepth * 4 / 8;
+
+  // Stores the actual buffer size of images which has just done checkout-- affected by downsamples and cropping.
+  VVGL::Size imageSize(layerDef->width, layerDef->height);
+
+  VVGL::Size bufferSizeInPixel(layerDef->rowbytes / pixelBytes, imageSize.height);
+
+  if (imageSize.width > outImageSize.width || imageSize.height > outImageSize.height) {
+    // I dunno why, but this case seems to occur without any exception when AE tries to generate thumanil for
+    // project pane.
+    FX_LOG("the size of image being done checkout exceeds the original dimension.");
+    return err;
+  }
+
+  VVGL::GLBufferRef imageAECPU = createRGBACPUBufferWithBitdepthUsing(bufferSizeInPixel, layerDef->data, imageSize, bitdepth);
+
+  auto imageAE = globalData->uploader->uploadCPUToTex(imageAECPU);
+
+  // Note that AE's inputImage is cropped by mask's region and smaller than ISF resolution.
+  glBindTexture(GL_TEXTURE_2D, imageAE->name);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  auto origin = VVISF::ISFVal(VVISF::ISFValType_Point2D, layerDef->origin_x, layerDef->origin_y);
+
+  globalData->ae2glScene->setBufferForInputNamed(imageAE, "inputImage");
+  globalData->ae2glScene->setValueForInputNamed(origin, "origin");
+
+  outImage = createRGBATexWithBitdepth(outImageSize, globalData->context, bitdepth);
+
+  globalData->ae2glScene->renderToBuffer(outImage);
+
+  // Though ISF specs does not specify the wrap mode of texture, set it to CLAMP_TO_EDGE to match with online ISF
+  // editor's behavior.
+  glBindTexture(GL_TEXTURE_2D, outImage->name);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   return err;
 }
